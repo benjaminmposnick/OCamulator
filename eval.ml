@@ -3,8 +3,9 @@ open Ast
 exception InvalidInput
 
 (** [modulo p q] is p modulo q.
-    Requires: [p] and [q] are*)
+    Requires: [p] and [q] are floats representing integers. *)
 let modulo p q = 
+  assert (Float.is_integer p && Float.is_integer q);
   let p' = int_of_float p in
   let q' = int_of_float q in
   p' mod q' |> float_of_int 
