@@ -7,7 +7,7 @@ let digit = ['0'-'9']
 let float = digit+ '.' digit*
 let int = digit+
 let letter = ['a'-'z' 'A'-'Z']
-let id = letter
+let id = letter+
 
 rule read = 
   parse

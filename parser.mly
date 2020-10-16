@@ -37,6 +37,7 @@ open Ast
 %%
 
 prog:
+	| kw = ID; e = expr; EOF { print_endline (kw); e }
 	| e = expr; EOF { e }
 	;
 	
