@@ -33,11 +33,15 @@ let rec eval ast =
         else raise InvalidInput
       | Pow -> failwith "Unimplemented"
       (** Matty Light *)
-      | Eq -> if var_present ast = true then failwith "Unimplemented"
-        else failwith "Unimplemented"
-      | LT -> failwith "Unimplemented"
-      | GT -> failwith "Unimplemented"
-      | LTE -> failwith "Unimplemented"
-      | GTE -> failwith "Unimplemented"
+      | Eq -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) = (eval e2) |> Bool.to_float
+      | LT -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) < (eval e2) |> Bool.to_float
+      | GT -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) > (eval e2) |> Bool.to_float
+      | LTE -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) <= (eval e2) |> Bool.to_float
+      | GTE -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) >= (eval e2) |> Bool.to_float
     end
 
