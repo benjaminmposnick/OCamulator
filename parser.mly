@@ -17,6 +17,10 @@ open Ast
 %token LTE
 %token LPAREN
 %token RPAREN
+%token BEGINARRAY
+%token ENDARRAY
+%token <string> VECTOR_CONTENTS
+%token <string> MATRIX_CONTENTS
 %token MINUS  
 %token EOF
 
@@ -37,7 +41,7 @@ open Ast
 %%
 
 prog:
-	| kw = ID; e = expr; EOF { print_endline (kw); e }
+	| kw = ID; e = expr; EOF { print_string (kw ^ " "); e }
 	| e = expr; EOF { e }
 	;
 	
@@ -61,5 +65,15 @@ expr:
 	| e1 = expr; GTE; e2 = expr { Binop (GTE, e1, e2) } 
 	| e1 = expr; LTE; e2 = expr { Binop (LTE, e1, e2) } 
 	| LPAREN; e=expr; RPAREN { e } 
+	| BEGINARRAY; c=VECTOR_CONTENTS; ENDARRAY {
+		let num_list = String.split_on_char ',' c in
+		Vector (List.map Float.of_string num_list)
+	}
+	| BEGINARRAY; c=MATRIX_CONTENTS; ENDARRAY {
+		let vec_list = String.split_on_char ';' c in
+		let num_list = List.map (fun lst -> String.split_on_char ',' lst |> List.map Float.of_string) vec_list in
+		Matrix (num_list)
+	}
+
 	;
 	

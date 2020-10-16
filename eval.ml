@@ -26,14 +26,12 @@ let rec eval ast =
       | Sub -> (eval e1) -. (eval e2)
       | Mul -> (eval e1) *. (eval e2)
       | Div -> (eval e1) /. (eval e2)
-      (** Benny P *)
       | Mod -> 
         let p = eval e1 in
         let q = eval e2 in
         if Float.is_integer p && Float.is_integer q then modulo p q
         else raise InvalidInput
-      | Pow -> failwith "Unimplemented"
-      (** Matty Light *)
+      | Pow -> Float.pow (eval e1) (eval e2)
       | Eq -> if var_present ast = true then failwith "Unimplemented"
         else failwith "Unimplemented"
       | LT -> failwith "Unimplemented"
@@ -41,4 +39,6 @@ let rec eval ast =
       | LTE -> failwith "Unimplemented"
       | GTE -> failwith "Unimplemented"
     end
+  | Vector _ -> failwith "Unimplemented"
+  | Matrix _ -> failwith "Unimplemented"
 

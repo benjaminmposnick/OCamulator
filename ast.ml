@@ -11,11 +11,15 @@ type op =
   | LTE
   | GTE
 
+type vector = float list
+
 type expr = 
   | Var of string
   | Int of int
   | Float of float
   | Binop of op * expr * expr
+  | Vector of vector
+  | Matrix of vector list 
 
 let string_of_binop = function
   | Add -> "Add"
@@ -37,3 +41,5 @@ let rec string_of_expr = function
   | Binop (op, e1, e2) -> 
     "Binop (" ^ (string_of_binop op) ^ ", "  ^ (string_of_expr e1) ^
     ", " ^ (string_of_expr e2) ^ ")"
+  | Vector vec -> "Vector [" ^ (String.concat ", " (List.map string_of_float vec))  ^ "]"
+  | Matrix mat -> "Matrix"
