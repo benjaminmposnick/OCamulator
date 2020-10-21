@@ -11,11 +11,23 @@ let modulo_tests = let open Eval in [
     test "modulo with -p" (~-3 mod 4 |> float_of_int) (Eval.modulo ~-.3. 4.) string_of_float;
   ]
 
+let var_present_tests = let open Eval in [
+    test "var_present with no var"
+      false (Eval.var_present (Binop (Add, Int 3, Int 3)) ) string_of_bool;
+    test "var_present with var"
+      true (Eval.var_present (Binop (Add, Int 3, Var "x")) ) string_of_bool;  
+    test "var_present with var nested"
+      true (Eval.var_present (Binop (Add, Binop (Mul, Int 2, Var "y" ), Int 6)))
+      string_of_bool;  
+    test "var_present with multiple vars"
+      true (Eval.var_present (Binop (Add, Var "x", Var "y")) ) string_of_bool;  
+  ]
+
 let eval_tests = []
 
 let suite =
   "test suite for OCamulator"  >::: List.flatten [
-    modulo_tests
+    modulo_tests;
+    var_present_tests
   ]
-
 let _ = run_test_tt_main suite

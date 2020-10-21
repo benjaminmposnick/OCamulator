@@ -10,6 +10,7 @@ let modulo p q =
   let q' = int_of_float q in
   p' mod q' |> float_of_int 
 
+
 let rec var_present = function
   | Binop (op, e1, e2) -> var_present e1 || var_present e2
   | Var x -> true
@@ -32,12 +33,16 @@ let rec eval ast =
         if Float.is_integer p && Float.is_integer q then modulo p q
         else raise InvalidInput
       | Pow -> Float.pow (eval e1) (eval e2)
-      | Eq -> if var_present ast = true then failwith "Unimplemented"
-        else failwith "Unimplemented"
-      | LT -> failwith "Unimplemented"
-      | GT -> failwith "Unimplemented"
-      | LTE -> failwith "Unimplemented"
-      | GTE -> failwith "Unimplemented"
+      | Eq -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) = (eval e2) |> Bool.to_float
+      | LT -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) < (eval e2) |> Bool.to_float
+      | GT -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) > (eval e2) |> Bool.to_float
+      | LTE -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) <= (eval e2) |> Bool.to_float
+      | GTE -> if var_present ast then failwith "Unimplemented"
+        else (eval e1) >= (eval e2) |> Bool.to_float
     end
   | Vector _ -> failwith "Unimplemented"
   | Matrix _ -> failwith "Unimplemented"
