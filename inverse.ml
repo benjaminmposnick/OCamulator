@@ -20,12 +20,22 @@ let inverse_add outer_ast left_ast var =
     Binop(Eq, left_e2, Binop(Sub, e2, left_e1))
   else failwith "No add operator given"
 
+let inverse_subtract outer_ast left_ast var =
+  let (op, e1, e2) = match_ast outer_ast in
+  let (left_op, left_e1, left_e2) = match_ast left_ast in
+  if left_e1 = Var var then
+    Binop(Eq, left_e1, Binop(Add, e2, left_e2))
+  else if left_e2 = Var var then
+    Binop(Eq, Binop(Sub, left_e1, e2), left_e2)
+  else failwith "No add operator given"
+
 (** TODO: specification *)
 let inverse ast var = 
   let (op, e1, e2) = match_ast ast in
   let (left_op, left_e1, left_e2) = match_ast e1 in
   match left_op with
   | Add -> inverse_add ast e1 var  
-  | _ -> failwith "Unimplimented"
+  | Sub -> inverse_subtract ast e1 var
+  | _ -> failwith "Unimplimented equation type"
 
 
