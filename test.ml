@@ -1,5 +1,6 @@
 open OUnit2
-open Ast *)
+open Ast
+
 let test name expected_output fn_output print_fn =
   name >:: (fun _ -> assert_equal expected_output fn_output ~printer:print_fn)
 
@@ -239,5 +240,4 @@ let suite =
     var_present_tests;
     inverse_tests
   ]
-let _ = run_test_tt_main suite
 let _ = run_test_tt_main suite
