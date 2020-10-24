@@ -23,7 +23,13 @@ let var_present_tests = let open Eval in [
       true (Eval.var_present (Binop (Add, Var "x", Var "y")) ) string_of_bool;  
   ]
 
-let eval_tests = []
+let inverse_tests = let open Inverse in [
+    test "basic inverse for addition equation x + 4 = 5" 
+      (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
+      (inverse (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+  ]
+
+let eval_tests = [] 
 
 let suite =
   "test suite for OCamulator"  >::: List.flatten [
