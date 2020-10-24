@@ -5,6 +5,7 @@ open Ast
 %token <int> INT
 %token <float> FLOAT
 %token <string> ID
+%token CONST_PI
 %token PLUS
 %token TIMES  
 %token OVER  
@@ -17,10 +18,8 @@ open Ast
 %token LTE
 %token LPAREN
 %token RPAREN
-%token BEGINARRAY
-%token ENDARRAY
-%token <string> VECTOR_CONTENTS
-%token <string> MATRIX_CONTENTS
+%token <string> VECTOR
+%token <string> MATRIX
 %token MINUS  
 %token EOF
 
@@ -41,14 +40,15 @@ open Ast
 %%
 
 prog:
-	| kw = ID; e = expr; EOF { print_string (kw ^ " "); e }
 	| e = expr; EOF { e }
+	// | kw = ID; e = expr; EOF { print_string (kw ^ " "); e }
 	;
 	
 expr:
 	| x = ID { Var x }
 	| i = INT { Int i }
 	| f = FLOAT { Float f }
+	| CONST_PI { Float (Float.pi) }
 	| MINUS; i = INT { Int (~-i) }
 	| MINUS; f = FLOAT { Float (~-.f) }
 	| e1 = expr; PLUS; e2 = expr { Binop (Add, e1, e2) }
@@ -56,6 +56,8 @@ expr:
 	| e1 = expr; TIMES; e2 = expr { Binop (Mul, e1, e2) } 
 	| i = INT; x = ID { Binop (Mul, Int i, Var x) } 
 	| f = FLOAT; x = ID { Binop (Mul, Float f, Var x) } 
+	| MINUS; i = INT; x = ID { Binop (Mul, Int ~-i, Var x) } 
+	| MINUS; f = FLOAT; x = ID { Binop (Mul, Float ~-.f, Var x) } 
 	| e1 = expr; OVER; e2 = expr { Binop (Div, e1, e2) } 
 	| e1 = expr; MOD; e2 = expr { Binop (Mod, e1, e2) } 
 	| e1 = expr; TOTHEPOWER; e2 = expr { Binop (Pow, e1, e2) } 
@@ -65,15 +67,16 @@ expr:
 	| e1 = expr; GTE; e2 = expr { Binop (GTE, e1, e2) } 
 	| e1 = expr; LTE; e2 = expr { Binop (LTE, e1, e2) } 
 	| LPAREN; e=expr; RPAREN { e } 
-	| BEGINARRAY; c=VECTOR_CONTENTS; ENDARRAY {
-		let num_list = String.split_on_char ',' c in
+	| v=VECTOR {
+		let v' = String.sub v 1 (String.length v - 2) in
+		let num_list = String.split_on_char ',' v' in
 		Vector (List.map Float.of_string num_list)
 	}
-	| BEGINARRAY; c=MATRIX_CONTENTS; ENDARRAY {
-		let vec_list = String.split_on_char ';' c in
+	| m=MATRIX {
+		let m' = String.sub m 1 (String.length m - 2) in
+		let vec_list = String.split_on_char ';' m' in
 		let num_list = List.map (fun lst -> String.split_on_char ',' lst |> List.map Float.of_string) vec_list in
 		Matrix (num_list)
 	}
-
 	;
 	

@@ -2,6 +2,11 @@ open Ast
 
 exception InvalidInput
 
+let parse (s : string) : expr =
+  let lexbuf = Lexing.from_string s in
+  let ast = Parser.prog Lexer.read lexbuf in
+  ast
+
 (** [modulo p q] is p modulo q.
     Requires: [p] and [q] are floats representing integers. *)
 let modulo p q = 

@@ -4,12 +4,16 @@ open Parser
 
 let white = [' ' '\t']+
 let digit = ['0'-'9']
-let float = digit? '.' digit*
+let float = digit* '.' digit+
 let int = digit+
 let letter = ['a'-'z' 'A'-'Z']
 let id = letter+
-let vector_contents = (int | float) (',' (int | float))*
-let matrix_contents = vector_contents ';' vector_contents (';' vector_contents)*
+let comma_sep = white* ',' white*
+let semicolon_sep = white* ';' white*
+let entry = int | float
+let vector = '[' entry (comma_sep entry)* ']'
+let at_least_2d_vector = entry (comma_sep entry)+
+let matrix = '[' at_least_2d_vector (semicolon_sep at_least_2d_vector)+ ']'
 
 rule read = 
   parse
@@ -18,10 +22,6 @@ rule read =
   | float { FLOAT (float_of_string (Lexing.lexeme lexbuf)) }
   | "(" { LPAREN }
   | ")" { RPAREN }
-  | "[" { BEGINARRAY }
-  | "]" { ENDARRAY }
-  | vector_contents { VECTOR_CONTENTS (Lexing.lexeme lexbuf)}
-  | matrix_contents { MATRIX_CONTENTS (Lexing.lexeme lexbuf)}
   | "+" { PLUS }
   | "-" { MINUS }
   | "*" { TIMES }
@@ -33,5 +33,8 @@ rule read =
   | "<" { LT }
   | ">=" { GTE }
   | "<=" { LTE }
+  | "pi" { CONST_PI }
+  | vector { VECTOR (Lexing.lexeme lexbuf)}
+  | matrix { MATRIX (Lexing.lexeme lexbuf)}
   | id { ID (Lexing.lexeme lexbuf) }
-  | eof { EOF }
+  | eof { EOF; }
