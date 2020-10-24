@@ -1,11 +1,6 @@
 open Ast 
 open Eval
 
-let parse (s : string) : expr =
-  let lexbuf = Lexing.from_string s in
-  let ast = Parser.prog Lexer.read lexbuf in
-  ast
-
 (** Prints [string] (with '\n') to the terminal styled with [color]. *)
 let print_in_color color string =
   string ^ "\n" |> ANSITerminal.print_string [color]
