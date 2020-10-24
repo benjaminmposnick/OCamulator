@@ -25,6 +25,7 @@ let inverse ast var =
   let (op, e1, e2) = match_ast ast in
   let (left_op, left_e1, left_e2) = match_ast e1 in
   match left_op with
-  | Add -> inverse_add ast e1 var  | _ -> failwith "Unimplimented"
+  | Add -> inverse_add ast e1 var  
+  | _ -> failwith "Unimplimented"
 
 

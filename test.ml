@@ -1,5 +1,5 @@
 open OUnit2
-
+open Ast *)
 let test name expected_output fn_output print_fn =
   name >:: (fun _ -> assert_equal expected_output fn_output ~printer:print_fn)
 
@@ -224,7 +224,10 @@ let var_present_tests = let open Eval in [
 let inverse_tests = let open Inverse in [
     test "basic inverse for addition equation x + 4 = 5" 
       (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
-      (inverse (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+    test "basic inverse for addition equation 4 + x = 5" 
+      (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
+      (Inverse.inverse (Binop(Eq, Binop(Add, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
   ]
 
 let eval_tests = [] 
@@ -233,6 +236,8 @@ let suite =
   "test suite for OCamulator"  >::: List.flatten [
     parse_tests;
     modulo_tests;
-    var_present_tests
+    var_present_tests;
+    inverse_tests
   ]
+let _ = run_test_tt_main suite
 let _ = run_test_tt_main suite
