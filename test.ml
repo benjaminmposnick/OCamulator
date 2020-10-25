@@ -1,4 +1,5 @@
 open OUnit2
+open Ast
 
 (** [test name expected_output fn_output print_fn] is an OUnit test case named
     [name] that asserts equality between [expected_output] and [fn_output].
@@ -239,13 +240,29 @@ let var_present_tests = let open Eval in [
       true (Eval.var_present (Binop (Add, Var "x", Var "y")) ) string_of_bool;  
   ]
 
-let eval_tests = []
+let inverse_tests = let open Inverse in [
+    test "basic inverse for addition equation x + 4 = 5" 
+      (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
+      (Inverse.inverse (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+    test "basic inverse for addition equation 4 + x = 5" 
+      (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
+      (Inverse.inverse (Binop(Eq, Binop(Add, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+    test "basic inverse for subtraction equation x - 4 = 5" 
+      (Binop(Eq, Var "x", Binop(Add, Int 5, Int 4))) 
+      (Inverse.inverse (Binop(Eq, Binop(Sub, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+    test "basic inverse for subtraction equation 4 - x = 5" 
+      (Binop(Eq, Binop(Sub, Int 4, Int 5), Var "x")) 
+      (Inverse.inverse (Binop(Eq, Binop(Sub, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+  ]
+
+let eval_tests = [] 
 
 let suite =
   "test suite for OCamulator"  >::: List.flatten [
     parse_tests;
     modulo_tests;
-    var_present_tests
+    var_present_tests;
+    inverse_tests
   ]
 
 let _ = run_test_tt_main suite
