@@ -11,9 +11,10 @@ let id = letter+
 let comma_sep = white* ',' white*
 let semicolon_sep = white* ';' white*
 let entry = int | float
-let vector = '[' entry (comma_sep entry)* ']'
-let at_least_2d_vector = entry (comma_sep entry)+
-let matrix = '[' at_least_2d_vector (semicolon_sep at_least_2d_vector)+ ']'
+let row_vector = '[' entry (comma_sep entry)* ']'
+let col_vector = '[' entry (semicolon_sep entry)* ']'
+let at_least_2d_row_vector = entry (comma_sep entry)+
+let matrix = '[' at_least_2d_row_vector (semicolon_sep at_least_2d_row_vector)+ ']'
 
 rule read = 
   parse
@@ -34,7 +35,9 @@ rule read =
   | ">=" { GTE }
   | "<=" { LTE }
   | "pi" { CONST_PI }
-  | vector { VECTOR (Lexing.lexeme lexbuf)}
+  | row_vector { ROW_VECTOR (Lexing.lexeme lexbuf)}
+  | col_vector { COL_VECTOR (Lexing.lexeme lexbuf)}
   | matrix { MATRIX (Lexing.lexeme lexbuf)}
+  | ':' { END_KW }
   | id { ID (Lexing.lexeme lexbuf) }
   | eof { EOF; }

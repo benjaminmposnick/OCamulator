@@ -6,6 +6,7 @@ open Ast
 %token <float> FLOAT
 %token <string> ID
 %token CONST_PI
+%token END_KW
 %token PLUS
 %token TIMES  
 %token OVER  
@@ -18,7 +19,8 @@ open Ast
 %token LTE
 %token LPAREN
 %token RPAREN
-%token <string> VECTOR
+%token <string> ROW_VECTOR
+%token <string> COL_VECTOR
 %token <string> MATRIX
 %token MINUS  
 %token EOF
@@ -35,13 +37,13 @@ open Ast
 %left MOD  
 %left TOTHEPOWER  
 
-%start <Ast.expr> prog
+%start <Ast.parsed_input> prog
 
 %%
 
 prog:
-	| e = expr; EOF { e }
-	// | kw = ID; e = expr; EOF { print_string (kw ^ " "); e }
+	| e = expr; EOF { Expression e }
+	| kw = ID; END_KW; e = expr; EOF { Command (kw, e) }
 	;
 	
 expr:
@@ -67,16 +69,21 @@ expr:
 	| e1 = expr; GTE; e2 = expr { Binop (GTE, e1, e2) } 
 	| e1 = expr; LTE; e2 = expr { Binop (LTE, e1, e2) } 
 	| LPAREN; e=expr; RPAREN { e } 
-	| v=VECTOR {
+	| v=ROW_VECTOR {
 		let v' = String.sub v 1 (String.length v - 2) in
 		let num_list = String.split_on_char ',' v' in
-		Vector (List.map Float.of_string num_list)
+		NumArray (RowVector (List.map Float.of_string num_list))
+	}
+	| v=COL_VECTOR {
+		let v' = String.sub v 1 (String.length v - 2) in
+		let num_list = String.split_on_char ';' v' in
+		NumArray (ColumnVector (List.map Float.of_string num_list))
 	}
 	| m=MATRIX {
 		let m' = String.sub m 1 (String.length m - 2) in
 		let vec_list = String.split_on_char ';' m' in
 		let num_list = List.map (fun lst -> String.split_on_char ',' lst |> List.map Float.of_string) vec_list in
-		Matrix (num_list)
+		NumArray (Matrix (num_list))
 	}
 	;
 	
