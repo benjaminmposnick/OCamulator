@@ -195,30 +195,30 @@ let parse_tests = let open Ast in [
     parse_test "<= inequality of Float and Var" (Binop (LTE, Var "x", Float 1.)) "x <= 1.0";
 
     (* Vector tests *)
-    parse_test "Int RowVector in R1" (Array (RowVector [1.])) "[1]";
-    parse_test "Int RowVector in R2" (Array (RowVector [1.; 2.])) "[1, 2]";
-    parse_test "Int RowVector in R3" (Array (RowVector [1.; 2.; 3.])) "[1, 2, 3]";
-    parse_test "Float RowVector in R1" (Array (RowVector [1.])) "[1.0]";
-    parse_test "Float RowVector in R2" (Array (RowVector [1.; 2.])) "[1.0, 2.0]";
-    parse_test "Float RowVector in R3" (Array (RowVector [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
-    parse_test "Mixed type RowVector in R2" (Array (RowVector [0.5; 2.])) "[0.5, 2]";
+    parse_test "Int RowVector in R1" (NumArray (RowVector [1.])) "[1]";
+    parse_test "Int RowVector in R2" (NumArray (RowVector [1.; 2.])) "[1, 2]";
+    parse_test "Int RowVector in R3" (NumArray (RowVector [1.; 2.; 3.])) "[1, 2, 3]";
+    parse_test "Float RowVector in R1" (NumArray (RowVector [1.])) "[1.0]";
+    parse_test "Float RowVector in R2" (NumArray (RowVector [1.; 2.])) "[1.0, 2.0]";
+    parse_test "Float RowVector in R3" (NumArray (RowVector [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
+    parse_test "Mixed type RowVector in R2" (NumArray (RowVector [0.5; 2.])) "[0.5, 2]";
 
-    parse_test "Int ColumnVector in R2" (Array (ColumnVector [1.; 2.])) "[1; 2]";
-    parse_test "Int ColumnVector in R3" (Array (ColumnVector [1.; 2.; 3.])) "[1; 2; 3]";
-    parse_test "Float ColumnVector in R2" (Array (ColumnVector [1.; 2.])) "[1.0; 2.0]";
-    parse_test "Float ColumnVector in R3" (Array (ColumnVector [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
-    parse_test "Mixed type ColumnVector in R2" (Array (ColumnVector [0.5; 2.])) "[0.5; 2]";
+    parse_test "Int ColumnVector in R2" (NumArray (ColumnVector [1.; 2.])) "[1; 2]";
+    parse_test "Int ColumnVector in R3" (NumArray (ColumnVector [1.; 2.; 3.])) "[1; 2; 3]";
+    parse_test "Float ColumnVector in R2" (NumArray (ColumnVector [1.; 2.])) "[1.0; 2.0]";
+    parse_test "Float ColumnVector in R3" (NumArray (ColumnVector [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
+    parse_test "Mixed type ColumnVector in R2" (NumArray (ColumnVector [0.5; 2.])) "[0.5; 2]";
 
     (* Matrix tests *)
-    parse_test "Int Matrix in R(2x2)" (Array (Matrix [[1.;2.]; [3.;4.]])) "[1, 2; 3, 4]";
-    parse_test "Int Matrix in R(2x3)" (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1, 2, 3; 4, 5, 6]";
-    parse_test "Int Matrix in R(3x2)" (Array (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1, 2; 3, 4; 5, 6]";
-    parse_test "Int Matrix in R(2x3)" (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1, 2, 3; 4, 5, 6; 7, 8, 9]";
-    parse_test "Float Matrix in R(2x2)" (Array (Matrix [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
-    parse_test "Float Matrix in R(2x3)" (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
-    parse_test "Float Matrix in R(3x2)" (Array (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
-    parse_test "Float Matrix in R(2x3)" (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
-    parse_test "Mixed type Matrix in R(2x2)" (Array (Matrix [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
+    parse_test "Int Matrix in R(2x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]])) "[1, 2; 3, 4]";
+    parse_test "Int Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1, 2, 3; 4, 5, 6]";
+    parse_test "Int Matrix in R(3x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1, 2; 3, 4; 5, 6]";
+    parse_test "Int Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1, 2, 3; 4, 5, 6; 7, 8, 9]";
+    parse_test "Float Matrix in R(2x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
+    parse_test "Float Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
+    parse_test "Float Matrix in R(3x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
+    parse_test "Float Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
+    parse_test "Mixed type Matrix in R(2x2)" (NumArray (Matrix [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
   ]
 
 let modulo_tests = [

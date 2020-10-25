@@ -7,7 +7,6 @@ MAIN=main.byte
 OCAMLBUILD=ocamlbuild -use-ocamlfind -use-menhir
 
 default: build
-	utop
 
 build:
 	$(OCAMLBUILD) $(OBJECTS)
@@ -20,3 +19,6 @@ start:
 
 clean:
 	ocamlbuild -clean
+
+zip:
+	zip ocamulator.zip *.ml* *.md Makefile _tags .ocamlinit .merlin .gitignore
