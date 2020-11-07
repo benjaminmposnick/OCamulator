@@ -53,7 +53,12 @@ let eval parsed_input =
       match e with 
       | NumArray arr -> begin
           match cmd with
-          | "transpose" -> Linalg.transpose arr;
+          | "transpose" -> NumArray (Linalg.transpose arr)
+          | "rref" -> begin
+              match arr with
+              | Matrix mat -> NumArray (Linalg.rref mat)
+              | _ -> failwith "Cannot row reduce a vector"
+            end
           | _ -> failwith "Unimplemented" 
         end
       | _ ->

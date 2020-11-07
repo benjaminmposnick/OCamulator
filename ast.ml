@@ -44,7 +44,7 @@ let string_of_vector_contents sep vec =
   List.map string_of_float vec |> String.concat sep
 
 let string_of_matrix_contents mat =
-  List.map (string_of_vector_contents ", ") mat |> String.concat "; "
+  List.map (string_of_vector_contents ", ") mat |> String.concat ";\n"
 
 let rec string_of_expr = function
   | Var x -> "Var " ^ x
@@ -56,7 +56,7 @@ let rec string_of_expr = function
       match arr with
       | RowVector vec -> "RowVector [" ^ (string_of_vector_contents ", " vec) ^ "]"
       | ColumnVector vec -> "ColVector [" ^ (string_of_vector_contents "; " vec) ^ "]"
-      | Matrix mat -> "Matrix [" ^ (string_of_matrix_contents mat) ^ "]"
+      | Matrix mat -> "Matrix \n" ^ (string_of_matrix_contents mat)
     end
 
 let string_of_input = function

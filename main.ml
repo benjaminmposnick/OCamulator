@@ -28,7 +28,7 @@ let rec event_loop () =
           string_of_expr result |> ( ^ )  "==> " |> print_in_color green;
         with
         | Parser.Error -> print_in_color red "Invalid input"
-        | _ -> print_in_color red "An error occurred during evaluation" in
+        | e -> print_in_color red "An error occurred during evaluation"; raise e in
       event_loop () in
   exit 0
 
