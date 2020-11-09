@@ -1,4 +1,4 @@
-MODULES=main parser lexer 
+MODULES=main parser lexer
 OBJECTS=$(MODULES:=.cmo)
 MLS=$(MODULES:=.ml)
 MLIS=$(MODULES:=.mli)
