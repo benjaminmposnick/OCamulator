@@ -34,6 +34,22 @@ rule read =
   | "<" { LT }
   | ">=" { GTE }
   | "<=" { LTE }
+  | "Binom" { BINOM }
+  | "Binomial" { BINOM }
+  | "Bern" { BERN }
+  | "Bernoulli" { BERN }
+  | "Unif" { UNIF }
+  | "Uniform" { UNIF }
+  | "Pois" { POIS }
+  | "Poisson" { POIS }
+  | "Exp" { EXP }
+  | "Exponential"  { EXP }
+  | "Geo" { GEO }
+  | "Geometric" { GEO }
+  | "Norm" { NORM }
+  | "Normal" { NORM } 
+  | "pdf" { PDF }
+  | "cdf" { CDF }
   | "pi" { CONST_PI }
   | row_vector { ROW_VECTOR (Lexing.lexeme lexbuf)}
   | col_vector { COL_VECTOR (Lexing.lexeme lexbuf)}

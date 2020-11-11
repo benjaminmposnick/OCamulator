@@ -43,6 +43,22 @@ let rec eval_arith e =
       | GTE -> if var_present e then failwith "Unimplemented"
         else (eval_arith e1) >= (eval_arith e2) |> Bool.to_float
     end
+  | Vector _ -> failwith "Unimplemented"
+  | Matrix _ -> failwith "Unimplemented"
+  | Binomial (PDF, n, p, k) -> Prob.binomial_pmf n p k
+  | Binomial (CDF, n, p, k) -> Prob.binomial_cdf n p k
+  | Bernoulli (PDF, p, k) -> Prob.bernoulli_pmf p k
+  | Bernoulli (CDF, p, k) -> Prob.bernoulli_cdf p k
+  | Uniform (PDF, a, b, x) -> Prob.uniform_pmf a b x
+  | Uniform (CDF, a, b, x) -> Prob.uniform_cdf a b x
+  | Poisson (PDF, l, x) -> Prob.poisson_pmf l x
+  | Poisson (CDF, l, x) -> Prob.poisson_cdf l x
+  | Geometric (PDF, p, k) -> Prob.geometric_pmf p k
+  | Geometric (CDF, p, k) -> Prob.geometric_cdf p k
+  | Exponential (PDF, l, x) -> Prob.exponential_pmf l x
+  | Exponential (CDF, l, x) -> Prob.exponential_cdf l x
+  | Normal (PDF, m, s, x) -> Prob.normal_pmf m s x
+  | Normal (CDF, m, s, x) -> Prob.normal_cdf m s x
   | _ -> failwith "No operation specified for this input"
 
 
