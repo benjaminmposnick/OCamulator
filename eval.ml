@@ -1,9 +1,9 @@
 open Ast
 
-exception InvalidInput
+let parse str =
+  let lexbuf = Lexing.from_string str in
+  Parser.prog Lexer.read lexbuf
 
-(** [modulo p q] is p modulo q.
-    Requires: [p] and [q] are floats representing integers. *)
 let modulo p q = 
   assert (Float.is_integer p && Float.is_integer q);
   let p' = int_of_float p in
@@ -15,29 +15,33 @@ let rec var_present = function
   | Var x -> true
   | _ -> false
 
-let rec eval ast = 
-  match ast with
+let rec eval_arith e =
+  match e with
   | Var x -> failwith "Unimplemented"
   | Int i -> float_of_int i
   | Float f -> f
   | Binop (op, e1, e2) -> begin
       match op with
-      | Add -> (eval e1) +. (eval e2)
-      | Sub -> (eval e1) -. (eval e2)
-      | Mul -> (eval e1) *. (eval e2)
-      | Div -> (eval e1) /. (eval e2)
+      | Add -> (eval_arith e1) +. (eval_arith e2)
+      | Sub -> (eval_arith e1) -. (eval_arith e2)
+      | Mul -> (eval_arith e1) *. (eval_arith e2)
+      | Div -> (eval_arith e1) /. (eval_arith e2)
       | Mod -> 
-        let p = eval e1 in
-        let q = eval e2 in
+        let p = eval_arith e1 in
+        let q = eval_arith e2 in
         if Float.is_integer p && Float.is_integer q then modulo p q
-        else raise InvalidInput
-      | Pow -> Float.pow (eval e1) (eval e2)
-      | Eq -> if var_present ast = true then failwith "Unimplemented"
-        else failwith "Unimplemented"
-      | LT -> failwith "Unimplemented"
-      | GT -> failwith "Unimplemented"
-      | LTE -> failwith "Unimplemented"
-      | GTE -> failwith "Unimplemented"
+        else failwith "Invalid input"
+      | Pow -> Float.pow (eval_arith e1) (eval_arith e2)
+      | Eq -> if var_present e then failwith "Unimplemented"
+        else (eval_arith e1) = (eval_arith e2) |> Bool.to_float
+      | LT -> if var_present e then failwith "Unimplemented"
+        else (eval_arith e1) < (eval_arith e2) |> Bool.to_float
+      | GT -> if var_present e then failwith "Unimplemented"
+        else (eval_arith e1) > (eval_arith e2) |> Bool.to_float
+      | LTE -> if var_present e then failwith "Unimplemented"
+        else (eval_arith e1) <= (eval_arith e2) |> Bool.to_float
+      | GTE -> if var_present e then failwith "Unimplemented"
+        else (eval_arith e1) >= (eval_arith e2) |> Bool.to_float
     end
   | Vector _ -> failwith "Unimplemented"
   | Matrix _ -> failwith "Unimplemented"
@@ -55,3 +59,27 @@ let rec eval ast =
   | Exponential (CDF, l, x) -> Prob.exponential_cdf l x
   | Normal (PDF, m, s, x) -> Prob.normal_pmf m s x
   | Normal (CDF, m, s, x) -> Prob.normal_cdf m s x
+  | _ -> failwith "No operation specified for this input"
+
+
+let eval parsed_input = 
+  match parsed_input with
+  | Command (c, e) -> begin
+      let cmd = String.lowercase_ascii c in
+      match e with 
+      | NumArray arr -> begin
+          match cmd with
+          | "transpose" -> NumArray (Linalg.transpose arr)
+          | "rref" -> begin
+              match arr with
+              | Matrix mat -> NumArray (Linalg.rref mat)
+              | _ -> failwith "Cannot row reduce a vector"
+            end
+          | _ -> failwith "Unimplemented" 
+        end
+      | _ ->
+        if cmd = "evaluate" then Float (eval_arith e)
+        else failwith "No operation specified for this input"
+    end
+  | Expression e -> Float (eval_arith e)
+

@@ -1,3 +1,4 @@
+
 let reduce_tr inc test op base f x =
   let rec apply_tr acc x =
     if test x then acc
@@ -32,10 +33,12 @@ let uniform_cdf (a : float) (b : float) (x : float) =
   else if x > b then 1.
   else (x -. a) /. (b -. a)
 
+
 (** [bernoulli_pmf k p] is the bernoulli([p]) probability mass of k
     Requires: [k] is a valid bernoulli rv, 0 or 1
     [p] is a valid bernolli p, [0,1]
 *)
+
 let bernoulli_pmf  (p : float) (k : int)=
   if k = 1 then p else 1. -. p
 
@@ -45,12 +48,13 @@ let bernoulli_pmf  (p : float) (k : int)=
 let bernoulli_cdf  (p : float) (k : int)=
   if k < 0 then 0.
   else if k < 1 then 1. -. p
-  else 1.
+
 
 (** [geometric_pmf k p] is the geometric([p]) probability mass of k
     Requires: [k] is a valid geometric rv, rational number
     [p] is a valid geometric p, [0.1]
 *)
+
 let geometric_pmf (p : float) (k : int) =
   p *. (1. -. p) ** (float_of_int (k - 1))
 
@@ -58,6 +62,7 @@ let geometric_pmf (p : float) (k : int) =
     Requires: [k] is a valid geometric rv, rational number
     [p] is a valid geometric p, [0,1]
 *)
+
 let geometric_cdf  (p : float) (k : int)=
   1. -. (1. -. p) ** (float_of_int k)
 
@@ -65,6 +70,7 @@ let geometric_cdf  (p : float) (k : int)=
     Requires: [x] is a valid exponential rv, > 0
     [p] is a valid exponential l, > 0
 *)
+
 let exponential_pmf  (l : float) (x : float) =
   l *. exp (x *. l)
 
@@ -116,4 +122,3 @@ let normal_pmf (mu : float) (sigma : float) (x : float) =
 *)
 let normal_cdf (mu : float) (sigma : float) (x : float) =
   failwith "Unimplemented"
-
