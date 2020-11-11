@@ -1,1 +1,3 @@
-true: package(ounit2),package(ANSITerminal),package(Zarith),use_menhir,explain
+<{linalg,prob,inverse,eval,ast}.ml>: coverage
+<test_sorts.{byte,native}>: coverage
+true: package(ounit2),package(ANSITerminal),package(Zarith),use_menhir,explain,package(bisect_ppx)

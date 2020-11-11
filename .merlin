@@ -4,3 +4,4 @@ PKG ANSITerminal
 PKG Parser
 PKG Lexing
 PKG Zarith
+PKG bisect_ppx-ocamlbuild

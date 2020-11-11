@@ -1,5 +1,6 @@
 #require "ounit2";;
 #require "ANSITerminal";;
+#require "bisect_ppx.runtime";;
 #directory "_build";;
 #load "lexer.cmo";;
 #load "parser.cmo";;

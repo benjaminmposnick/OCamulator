@@ -43,8 +43,6 @@ let rec eval_arith e =
       | GTE -> if var_present e then failwith "Unimplemented"
         else (eval_arith e1) >= (eval_arith e2) |> Bool.to_float
     end
-  | Vector _ -> failwith "Unimplemented"
-  | Matrix _ -> failwith "Unimplemented"
   | Binomial (PDF, n, p, k) -> Prob.binomial_pmf n p k
   | Binomial (CDF, n, p, k) -> Prob.binomial_cdf n p k
   | Bernoulli (PDF, p, k) -> Prob.bernoulli_pmf p k
