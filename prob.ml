@@ -19,6 +19,19 @@ let factorial : int -> int = fun num ->
 let choose n k = 
   float_of_int(factorial(n)) /. float_of_int((factorial(k) * factorial(n - k)))
 
+(** [uniform_pmf a b x] is the probability mass of the uniform
+    distribution for interval [a] to [b] at [x]
+    Requires: [b] >= [a]*)
+let uniform_pmf (a : float) (b : float) (x : float)=
+  if x >= a && x <= b then 1. /. (b -. a) else 0.
+
+(** [uniform_cdf a m] is the probability mass of the uniform
+    distribution from interval [a] to [b]  *)
+let uniform_cdf (a : float) (b : float) (x : float) =
+  if x < a then 0. 
+  else if x > b then 1.
+  else (x -. a) /. (b -. a)
+
 (** [bernoulli_pmf k p] is the bernoulli([p]) probability mass of k
     Requires: [k] is a valid bernoulli rv, 0 or 1
     [p] is a valid bernolli p, [0,1]
@@ -97,5 +110,9 @@ let poisson_cdf (k : int) (l : float) =
 *)
 let normal_pmf (x : float) (mu : float) (sigma : float) =
   exp (-0.5 *. ((x -. mu) /. sigma) ** (2.))
+
+(**TODO
+   Normal cdf
+*)
 
 
