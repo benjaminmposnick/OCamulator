@@ -24,6 +24,16 @@ open Ast
 %token MINUS  
 %token EOF
 
+%token BINOM
+%token BERN
+%token UNIF
+%token POIS
+%token NORM
+%token GEO
+%token EXP
+%token PDF
+%token CDF
+
 %nonassoc EQUALS
 %nonassoc GT
 %nonassoc LT
@@ -74,6 +84,19 @@ expr:
 		let num_list = List.map (fun lst -> String.split_on_char ',' lst |> List.map Float.of_string) vec_list in
 		Matrix (num_list)
 	}
-
+	| BINOM; PDF; n = INT; p = FLOAT; k = INT { Binomial (PDF, n, p, k) } 
+	| BINOM; CDF; n = INT; p = FLOAT; k = INT { Binomial (CDF, n, p, k) } 
+	| BERN; PDF; p = FLOAT; k = INT { Bernoulli (PDF, p, k) } 
+	| BERN; CDF; p = FLOAT; k = INT { Bernoulli (CDF, p, k) } 
+	| UNIF; PDF; a = FLOAT; b = FLOAT; x = FLOAT { Uniform (PDF, a, b, x) }
+	| UNIF; CDF; a = FLOAT; b = FLOAT; x = FLOAT { Uniform (PDF, a, b, x) }
+	| POIS; PDF; l = FLOAT; k = INT { Poisson (PDF, l, k) }
+	| POIS; CDF; l = FLOAT; k = INT { Poisson (CDF, l, k) }
+	| GEO; PDF; p = FLOAT k = INT { Geometric (PDF, p, k) }
+	| GEO; CDF; p = FLOAT;  k = INT { Geometric (CDF, p, k) }
+	| EXP; PDF; l = FLOAT; x = FLOAT { Exponential (PDF, l, x) }
+	| EXP; CDF; l = FLOAT; x = FLOAT { Exponential (CDF, l, x) }
+	| NORM; PDF; m = FLOAT; s = FLOAT; x = FLOAT { Normal (PDF, m, s, x) }
+	| NORM; CDF; m = FLOAT; s = FLOAT; x = FLOAT { Normal (CDF, m, s, x) }
 	;
 	

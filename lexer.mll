@@ -33,5 +33,22 @@ rule read =
   | "<" { LT }
   | ">=" { GTE }
   | "<=" { LTE }
+  | "Binom" { BINOM }
+  | "Binomial" { BINOM }
+  | "Bern" { BERN }
+  | "Bernoulli" { BERN }
+  | "Unif" { UNIF }
+  | "Uniform" { UNIF }
+  | "Pois" { POIS }
+  | "Poisson" { POIS }
+  | "Exp" { EXP }
+  | "Exponential"  { EXP }
+  | "Geo" { GEO }
+  | "Geometric" { GEO }
+  | "Norm" { NORM }
+  | "Normal" { NORM } 
+  | "pdf" { PDF }
+  | "cdf" { CDF }
   | id { ID (Lexing.lexeme lexbuf) }
   | eof { EOF }
+  
