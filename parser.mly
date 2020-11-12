@@ -17,12 +17,14 @@ open Ast
 %token LT
 %token GTE
 %token LTE
+%token ASSIGN
 %token LPAREN
 %token RPAREN
 %token <string> ROW_VECTOR
 %token <string> COL_VECTOR
 %token <string> MATRIX
 %token MINUS  
+%token ANS
 %token EOF
 
 %token BINOM
@@ -78,6 +80,8 @@ expr:
 	| e1 = expr; LT; e2 = expr { Binop (LT, e1, e2) } 
 	| e1 = expr; GTE; e2 = expr { Binop (GTE, e1, e2) } 
 	| e1 = expr; LTE; e2 = expr { Binop (LTE, e1, e2) } 
+	| e1 = expr; ASSIGN; e2 = expr { Binop (Assign, e1, e2) } 
+	| e1 = expr; ASSIGN; ANS { Binop (Assign, e1, Ans) } 
 	| LPAREN; e=expr; RPAREN { e } 
 	| v=ROW_VECTOR {
 		let v' = String.sub v 1 (String.length v - 2) in
