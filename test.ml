@@ -1,5 +1,6 @@
 open OUnit2
 open Ast
+open Eval
 
 (** [test name expected_output fn_output print_fn] is an OUnit test case named
     [name] that asserts equality between [expected_output] and [fn_output].
@@ -219,13 +220,6 @@ let parse_tests = let open Ast in [
     parse_test "Float Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
     parse_test "Mixed type Matrix in R(2x2)" (NumArray (Matrix [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
   ]
-
-let modulo_tests = [
-  test "modulo no remainder" (3 mod 3 |> float_of_int) (Eval.modulo 3. 3.) string_of_float;
-  test "modulo with p > q" (4 mod 3 |> float_of_int) (Eval.modulo 4. 3.) string_of_float;
-  test "modulo with p < q" (3 mod 4 |> float_of_int) (Eval.modulo 3. 4.) string_of_float;
-  test "modulo with -p" (~-3 mod 4 |> float_of_int) (Eval.modulo ~-.3. 4.) string_of_float;
-]
 
 let matrix_tests = [
   test "row reduce 3x3 matrix with two pivot columns" 
@@ -472,19 +466,130 @@ let prob_tests = let open Prob in [
 
   ]
 
-let eval_tests = [] 
+let eval_tests = [
+  test "Var x is float" 0. (eval_numeric (Var "x") [("x", Float 0.)])
+    string_of_float;
+  test "Zero int evaluates to itself as a float" 0.
+    (eval_numeric (Int 0) []) string_of_float;
+  test "Postive int evaluates to itself as a float" 1.
+    (eval_numeric (Int 1) []) string_of_float;
+  test "Negative int evaluates to itself as a float" ~-.1.
+    (eval_numeric (Int ~-1) []) string_of_float;
+
+  test "Zero float evaluates to itself as a float" 0.
+    (eval_numeric (Float 0.) []) string_of_float;
+  test "Postive float evaluates to itself as a float" 1.
+    (eval_numeric (Float 1.) []) string_of_float;
+  test "Negative float evaluates to itself as a float" ~-.1.
+    (eval_numeric (Float ~-.1.) []) string_of_float;
+
+  test "Add two ints" 3.
+    (eval_numeric (Binop (Add, Int 1, Int 2)) []) string_of_float;
+  test "Add two floats" 3.
+    (eval_numeric (Binop (Add, Float 1., Float 2.)) []) string_of_float;
+  test "Add one int and one float" 3.
+    (eval_numeric (Binop (Add, Float 1., Int 2)) []) string_of_float;
+
+  test "Subtract two ints" 0.
+    (eval_numeric (Binop (Sub, Int 1, Int 1)) []) string_of_float;
+  test "Subtract two floats" 0.
+    (eval_numeric (Binop (Sub, Float 1., Float 1.)) []) string_of_float;
+  test "Subtract one int and one float" 0.
+    (eval_numeric (Binop (Sub, Float 1., Int 1)) []) string_of_float;
+
+  test "Multiply two ints" 2.
+    (eval_numeric (Binop (Mul, Int 1, Int 2)) []) string_of_float;
+  test "Multiply two floats" 2.
+    (eval_numeric (Binop (Mul, Float 1., Float 2.)) []) string_of_float;
+  test "Multiply one int and one float" 2.
+    (eval_numeric (Binop (Mul, Float 1., Int 2)) []) string_of_float;
+
+  test "Divide two ints" 0.5
+    (eval_numeric (Binop (Div, Int 1, Int 2)) []) string_of_float;
+  test "Divide two floats" 0.5
+    (eval_numeric (Binop (Div, Float 1., Float 2.)) []) string_of_float;
+  test "Divide one int and one float" 0.5
+    (eval_numeric (Binop (Div, Float 1., Int 2)) []) string_of_float;
+
+  test "Power two ints" 8.
+    (eval_numeric (Binop (Pow, Int 2, Int 3)) []) string_of_float;
+  test "Power two floats" 8.
+    (eval_numeric (Binop (Pow, Float 2., Float 3.)) []) string_of_float;
+  test "Power int power and float base" 8.
+    (eval_numeric (Binop (Pow, Float 2., Int 3)) []) string_of_float;
+  test "Power int base and float power" 8.
+    (eval_numeric (Binop (Pow, Int 2, Float 3.)) []) string_of_float;
+
+  test "modulo no remainder" (3 mod 3 |> float_of_int)
+    (eval_numeric (Binop (Mod, Float 3., Float 3.)) []) string_of_float;
+  test "modulo with p > q" (4 mod 3 |> float_of_int)
+    (eval_numeric (Binop (Mod, Float 4., Float 3.)) []) string_of_float;
+  test "modulo with p < q" (3 mod 4 |> float_of_int)
+    (eval_numeric (Binop (Mod, Float 3., Float 4.)) []) string_of_float;
+  test "modulo with -p" (~-3 mod 4 |> float_of_int)
+    (eval_numeric (Binop (Mod, Float ~-.3., Float 4.)) []) string_of_float;
+  test "modulo with -p no remainder" 0.
+    (eval_numeric (Binop (Mod, Float ~-.3., Float 3.)) []) string_of_float;
+
+  test "Pythagorean theorem c^2" (Float 25.)
+    (parse "3^2 + 4^2" |> fun inp -> eval_input inp [] (Float 0.) |> fst)
+    string_of_expr;
+  test "Pythagorean theorem c" (Float 5.)
+    (parse "(3^2 + 4^2)^(1/2)"
+     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
+  test "Quadratic formula" (Float ~-.0.25)
+    (parse "(-2 + (3^2 - 4 * 2 * 1)^(1/2)) / (2 * 2)"
+     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
+  test "PEMDAS test" (Float 4.)
+    (parse "3 + 3 * 2 / 3 - 1"
+     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
+
+  test "Equal two ints" (Bool.to_float true)
+    (eval_numeric (Binop (Eq, Int 2, Int 2)) []) string_of_float;
+  test "Equal two floats" (Bool.to_float true)
+    (eval_numeric (Binop (Eq, Float 2., Float 2.)) []) string_of_float;
+  test "Equal one int and one float" (Bool.to_float true)
+    (eval_numeric (Binop (Eq, Float 2., Int 2)) []) string_of_float;
+
+  test "Greater than two ints" (Bool.to_float true)
+    (eval_numeric (Binop (GT, Int 3, Int 2)) []) string_of_float;
+  test "Greater than two floats" (Bool.to_float true)
+    (eval_numeric (Binop (GT, Float 3., Float 2.)) []) string_of_float;
+  test "Greater than one int and one float" (Bool.to_float true)
+    (eval_numeric (Binop (GT, Float 3., Int 2)) []) string_of_float;
+
+  test "Less than two ints" (Bool.to_float false)
+    (eval_numeric (Binop (LT, Int 3, Int 2)) []) string_of_float;
+  test "Less than two floats" (Bool.to_float false)
+    (eval_numeric (Binop (LT, Float 3., Float 2.)) []) string_of_float;
+  test "Less than one int and one float" (Bool.to_float false)
+    (eval_numeric (Binop (LT, Float 3., Int 2)) []) string_of_float;
+
+  test "Greater than or equal to two ints" (Bool.to_float true)
+    (eval_numeric (Binop (GTE, Int 3, Int 2)) []) string_of_float;
+  test "Greater than or equal to two floats" (Bool.to_float true)
+    (eval_numeric (Binop (GTE, Float 3., Float 2.)) []) string_of_float;
+  test "Greater than or equal to one int and one float" (Bool.to_float true)
+    (eval_numeric (Binop (GTE, Float 3., Int 2)) []) string_of_float;
+
+  test "Less than or equal to two ints" (Bool.to_float false)
+    (eval_numeric (Binop (LTE, Int 3, Int 2)) []) string_of_float;
+  test "Less than or equal to two floats" (Bool.to_float false)
+    (eval_numeric (Binop (LTE, Float 3., Float 2.)) []) string_of_float;
+  test "Less than or equal to one int and one float" (Bool.to_float false)
+    (eval_numeric (Binop (LTE, Float 3., Int 2)) []) string_of_float;
+
+] 
 
 let suite =
   "test suite for OCamulator"  >::: List.flatten [
     parse_tests;
-    modulo_tests;
     matrix_tests;
     lin_alg_tests;
     var_present_tests;
     inverse_tests;
     prob_tests;
+    eval_tests
   ]
-
-
 
 let _ = run_test_tt_main suite

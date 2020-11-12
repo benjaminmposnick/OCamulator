@@ -53,7 +53,7 @@ let rec eval_numeric e sigma =
         | GTE ->
           if var_present e then failwith "Unimplemented"
           else Bool.to_float (e1' >= e2')
-        | Assign -> failwith "Impossible"
+        | Assign -> failwith "This case is handled elsewhere"
     end
   | Binomial (PDF, n, p, k) -> binomial_pmf n p k
   | Binomial (CDF, n, p, k) -> binomial_cdf n p k
