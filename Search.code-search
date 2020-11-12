@@ -1,0 +1,8 @@
+# Query: Zari
+# ContextLines: 1
+
+1 result - 1 file
+
+_tags:
+  2  <test_sorts.{byte,native}>: coverage
+  3: true: package(ounit2),package(ANSITerminal),use_menhir,explain,package(bisect_ppx)

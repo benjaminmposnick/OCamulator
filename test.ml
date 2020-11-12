@@ -424,6 +424,55 @@ let inverse_tests = let open Inverse in [
       (Inverse.inverse (Binop(Eq, Binop(Sub, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
   ]
 
+let prob_tests = let open Prob in [
+    test "Factorial Base 0" 1 (Prob.factorial 0) string_of_int;
+    test "Factorial Base 1" 1 (Prob.factorial 1) string_of_int;
+    test "Factorial Rec 5" 120 (Prob.factorial 5) string_of_int;
+
+    test "Choose 0 is 1" 1. (Prob.choose 10 0) string_of_float; 
+    test "Choose n is 1" 1. (Prob.choose 10 10) string_of_float; 
+    test "Choose 1 is n" 10. (Prob.choose 10 1) string_of_float; 
+    test "10 Choose 5" 252. (Prob.choose 10 5) string_of_float; 
+
+    test "Unif p in range" 1. (Prob.uniform_pmf 0. 1. 0.5) string_of_float;
+    test "Unif p out of range ge" 0. (Prob.uniform_pmf 0. 1. 2.) string_of_float;
+    test "Unif p out of range le" 0. (Prob.uniform_pmf 0. 1. (-1.)) string_of_float;
+    test "Unif p on range ip" 1. (Prob.uniform_pmf 0. 1. 1.) string_of_float;
+    test "Unif p on range low" 1. (Prob.uniform_pmf 0. 1. 0.) string_of_float;
+    test "Unif c 0" 0. (Prob.uniform_cdf 0. 1. (-1.)) string_of_float;
+    test "Unif c 1" 1. (Prob.uniform_cdf 0. 1. 2.) string_of_float;
+    test "Unif c middle" 0.5 (Prob.uniform_cdf 0. 1. 0.5) string_of_float;
+
+    test "Bern p 1" 0.8 (Prob.bernoulli_pmf 0.8 1) string_of_float;
+    test "Bern p 0" (1. -. 0.8) (Prob.bernoulli_pmf 0.8 0) string_of_float;
+    test "Bern c 0" 0. (Prob.bernoulli_cdf 0.8 (-1)) string_of_float;
+    test "Bern c 1" 1. (Prob.bernoulli_cdf 0.8 (1)) string_of_float;
+
+    test "Geo p 1" 0.5 (Prob.geometric_pmf 0.5 1) string_of_float;
+    test "Geo p 3" 0.125 (Prob.geometric_pmf 0.5 3) string_of_float;
+    test "Geo c 1" 0.8 (Prob.geometric_cdf 0.8 1) string_of_float;
+    test "Geo c 1" 0.992 (Prob.geometric_cdf 0.8 3) string_of_float;
+
+    test "Exp p 0" 0.5 (Prob.exponential_pmf 0.5 0.) string_of_float;
+    test "Exp p 1" (exp (-1.)) (Prob.exponential_pmf 1. 1.) string_of_float;
+    test "Exp c 0" 0. (Prob.exponential_cdf 1. 0.) string_of_float;
+    test "Exp c 1" (1. -. exp (-1.)) (Prob.exponential_cdf 1. 1.) string_of_float;
+
+    test "Pois p 0" (exp (-1.)) (Prob.poisson_pmf 1. 0) string_of_float;
+    test "Pois p 2" (exp (-1.) /. 2.) (Prob.poisson_pmf 1. 2) string_of_float;
+
+    test "Pois c 0" (exp (-1.)) (Prob.poisson_cdf 1. 0) string_of_float;
+    test "Pois c 2" (5. *. exp (-1.) /. 2.) (Prob.poisson_cdf 1. 2) string_of_float;
+
+    test "Binom p 0" (0.5 ** 10.) (Prob.binomial_pmf 10 0.5 0) string_of_float;
+    test "Binom p n" (0.5 ** 10.) (Prob.binomial_pmf 10 0.5 10) string_of_float;
+
+    test "Binom c 0" (0.5 ** 10.) (Prob.binomial_cdf 10 0.5 0) string_of_float;
+    test "Binom c n" (1.) (Prob.binomial_cdf 10 0.5 10) string_of_float;
+
+
+  ]
+
 let eval_tests = [] 
 
 let suite =
@@ -434,6 +483,7 @@ let suite =
     lin_alg_tests;
     var_present_tests;
     inverse_tests;
+    prob_tests;
   ]
 
 
