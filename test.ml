@@ -422,6 +422,7 @@ let inverse_tests = let open Inverse in [
     test "basic inverse for subtraction equation 4 - x = 5" 
       (Binop(Eq, Binop(Sub, Int 4, Int 5), Var "x")) 
       (Inverse.inverse (Binop(Eq, Binop(Sub, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+    
   ]
 
 let eval_tests = [] 
