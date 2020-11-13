@@ -1,7 +1,5 @@
 open Ast
 
-(** [transpose arr] is the tranpose of [arr].
-    Requires: [arr] is a valid Array *)
 let transpose = function
   | RowVector vec -> ColumnVector vec
   | ColumnVector vec -> RowVector vec
@@ -18,18 +16,14 @@ let transpose = function
           transpose_matrix (next_row::acc) submatrix in
     transpose_matrix [] mat |> (fun m -> Matrix m)
 
-(** [is_symmetric matrix] is true iff [matrix] is symmetric, i.e. A = A^T
-    Requires: [matrix] is square*)    
-let is_symmetric matrix =
+let is_symmetric m =
   let open List in
-  match matrix with
-  | Matrix m ->
-    let n_rows = length m in
-    let n_cols = length (hd m) in
-    if n_cols <> n_rows then failwith "Matrix must be square"
-    else
-      matrix = (transpose matrix)
-  | _ -> failwith "Input must be a matrix"
+  let n_rows = length m in
+  let n_cols = length (hd m) in
+  if n_cols <> n_rows then failwith "Matrix must be square"
+  else
+    let matrix = Matrix m in
+    matrix = (transpose matrix)
 
 let component_wise_application v1 v2 op =
   List.map2 op v1 v2
@@ -240,11 +234,9 @@ let purify tolerance matrix =
          |> (fun x -> if x = ~-.0. then 0. else x) in
   map (map round) matrix
 
-(** [rref matrix] is the row-reduced echelon form of [matrix]. *)
 let rref matrix =
   let tolerance = determine_tolerance matrix in
   match row_echelon_form matrix tolerance with
   | (echelon_form_matrix, pivot_col_idxs) ->
     reduced_row_echelon_form echelon_form_matrix pivot_col_idxs
     |> purify tolerance
-    |> (fun m -> Matrix m)

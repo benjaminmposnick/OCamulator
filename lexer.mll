@@ -34,6 +34,7 @@ rule read =
   | "<" { LT }
   | ">=" { GTE }
   | "<=" { LTE }
+  | ":=" { ASSIGN }
   | "Binom" { BINOM }
   | "Binomial" { BINOM }
   | "Bern" { BERN }
@@ -51,6 +52,7 @@ rule read =
   | "pdf" { PDF }
   | "cdf" { CDF }
   | "pi" { CONST_PI }
+  | "ans" { ANS }
   | row_vector { ROW_VECTOR (Lexing.lexeme lexbuf)}
   | col_vector { COL_VECTOR (Lexing.lexeme lexbuf)}
   | matrix { MATRIX (Lexing.lexeme lexbuf)}

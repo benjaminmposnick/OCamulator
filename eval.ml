@@ -1,4 +1,5 @@
 open Ast
+open Prob
 
 let parse str =
   let lexbuf = Lexing.from_string str in
@@ -15,69 +16,100 @@ let rec var_present = function
   | Var x -> true
   | _ -> false
 
-let rec eval_arith e =
+let rec eval_numeric e sigma =
   match e with
-  | Var x -> failwith "Unimplemented"
+  | Var x -> begin
+      match List.assoc x sigma with
+      | Float f -> f
+      | _ -> failwith "Cannot use non-float value in arithmetic operation"
+    end
   | Int i -> float_of_int i
   | Float f -> f
   | Binop (op, e1, e2) -> begin
-      match op with
-      | Add -> (eval_arith e1) +. (eval_arith e2)
-      | Sub -> (eval_arith e1) -. (eval_arith e2)
-      | Mul -> (eval_arith e1) *. (eval_arith e2)
-      | Div -> (eval_arith e1) /. (eval_arith e2)
-      | Mod -> 
-        let p = eval_arith e1 in
-        let q = eval_arith e2 in
-        if Float.is_integer p && Float.is_integer q then modulo p q
-        else failwith "Invalid input"
-      | Pow -> Float.pow (eval_arith e1) (eval_arith e2)
-      | Eq -> if var_present e then failwith "Unimplemented"
-        else (eval_arith e1) = (eval_arith e2) |> Bool.to_float
-      | LT -> if var_present e then failwith "Unimplemented"
-        else (eval_arith e1) < (eval_arith e2) |> Bool.to_float
-      | GT -> if var_present e then failwith "Unimplemented"
-        else (eval_arith e1) > (eval_arith e2) |> Bool.to_float
-      | LTE -> if var_present e then failwith "Unimplemented"
-        else (eval_arith e1) <= (eval_arith e2) |> Bool.to_float
-      | GTE -> if var_present e then failwith "Unimplemented"
-        else (eval_arith e1) >= (eval_arith e2) |> Bool.to_float
+      match eval_numeric e1 sigma, eval_numeric e2 sigma with
+      | e1', e2' ->
+        match op with
+        | Add -> e1' +. e2'
+        | Sub -> e1' -. e2'
+        | Mul -> e1' *. e2'
+        | Div -> e1' /. e2'
+        | Mod -> 
+          if Float.(is_integer e1' && is_integer e2') then
+            modulo e1' e2'
+          else failwith "Invalid input"
+        | Pow -> Float.pow e1' e2'
+        | Eq ->
+          if var_present e then failwith "Unimplemented"
+          else Bool.to_float (e1' = e2')
+        | LT ->
+          if var_present e then failwith "Unimplemented"
+          else Bool.to_float (e1' < e2')
+        | GT ->
+          if var_present e then failwith "Unimplemented"
+          else Bool.to_float (e1' > e2')
+        | LTE ->
+          if var_present e then failwith "Unimplemented"
+          else Bool.to_float (e1' <= e2')
+        | GTE ->
+          if var_present e then failwith "Unimplemented"
+          else Bool.to_float (e1' >= e2')
+        | Assign -> failwith "This case is handled elsewhere"
     end
-  | Binomial (PDF, n, p, k) -> Prob.binomial_pmf n p k
-  | Binomial (CDF, n, p, k) -> Prob.binomial_cdf n p k
-  | Bernoulli (PDF, p, k) -> Prob.bernoulli_pmf p k
-  | Bernoulli (CDF, p, k) -> Prob.bernoulli_cdf p k
-  | Uniform (PDF, a, b, x) -> Prob.uniform_pmf a b x
-  | Uniform (CDF, a, b, x) -> Prob.uniform_cdf a b x
-  | Poisson (PDF, l, x) -> Prob.poisson_pmf l x
-  | Poisson (CDF, l, x) -> Prob.poisson_cdf l x
-  | Geometric (PDF, p, k) -> Prob.geometric_pmf p k
-  | Geometric (CDF, p, k) -> Prob.geometric_cdf p k
-  | Exponential (PDF, l, x) -> Prob.exponential_pmf l x
-  | Exponential (CDF, l, x) -> Prob.exponential_cdf l x
-  | Normal (PDF, m, s, x) -> Prob.normal_pmf m s x
-  | Normal (CDF, m, s, x) -> Prob.normal_cdf m s x
+  | Binomial (PDF, n, p, k) -> binomial_pmf n p k
+  | Binomial (CDF, n, p, k) -> binomial_cdf n p k
+  | Bernoulli (PDF, p, k) -> bernoulli_pmf p k
+  | Bernoulli (CDF, p, k) -> bernoulli_cdf p k
+  | Uniform (PDF, a, b, x) -> uniform_pmf a b x
+  | Uniform (CDF, a, b, x) -> uniform_cdf a b x
+  | Poisson (PDF, l, x) -> poisson_pmf l x
+  | Poisson (CDF, l, x) -> poisson_cdf l x
+  | Geometric (PDF, p, k) -> geometric_pmf p k
+  | Geometric (CDF, p, k) -> geometric_cdf p k
+  | Exponential (PDF, l, x) -> exponential_pmf l x
+  | Exponential (CDF, l, x) -> exponential_cdf l x
+  | Normal (PDF, m, s, x) -> normal_pmf m s x
+  | Normal (CDF, m, s, x) -> normal_cdf m s x
   | _ -> failwith "No operation specified for this input"
 
+let rec eval_array arr op sigma =
+  let open Linalg in 
+  match op with
+  | "transpose" -> transpose arr
+  | "rref" -> begin
+      match arr with
+      | Matrix mat -> Matrix (rref mat)
+      | _ -> failwith "Cannot row reduce a vector"
+    end
+  | _ -> failwith "Operation is not available" 
 
-let eval parsed_input = 
+let rec eval_input parsed_input sigma ans = 
   match parsed_input with
   | Command (c, e) -> begin
       let cmd = String.lowercase_ascii c in
       match e with 
-      | NumArray arr -> begin
-          match cmd with
-          | "transpose" -> NumArray (Linalg.transpose arr)
-          | "rref" -> begin
-              match arr with
-              | Matrix mat -> NumArray (Linalg.rref mat)
-              | _ -> failwith "Cannot row reduce a vector"
-            end
-          | _ -> failwith "Unimplemented" 
-        end
+      | NumArray arr -> (NumArray (eval_array arr cmd sigma), sigma)
+      | Var x -> eval_input (Command (c, List.assoc x sigma)) sigma ans
       | _ ->
-        if cmd = "evaluate" then Float (eval_arith e)
+        if cmd = "evaluate" then (Float (eval_numeric e sigma), sigma)
         else failwith "No operation specified for this input"
     end
-  | Expression e -> Float (eval_arith e)
+  | Expression e ->
+    match e with
+    | Binop (Assign, e1, Ans) ->
+      eval_input (Expression (Binop (Assign, e1, ans))) sigma ans
+    | Binop (Assign, e1, e2) -> begin
+        let x =
+          match e1 with
+          | Var x -> x
+          | _ -> failwith "Cannot assign to an expression" in
+        let e2' =
+          match e2 with
+          | NumArray arr ->  NumArray arr
+          | _ -> Float (eval_numeric e2 sigma) in
+        List.remove_assoc x sigma 
+        |> (fun store -> (x, e2') :: store)
+        |> (fun sigma' -> (e2', sigma'))
+      end
+    | Var x -> (List.assoc x sigma, sigma)
+    | _ -> (Float (eval_numeric e sigma), sigma)
 

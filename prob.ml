@@ -41,9 +41,9 @@ let bernoulli_pmf  (p : float) (k : int)=
 
 (** [bernoulli_cdf k p] is the bernoulli([p]) cumulative density of k
     Requires: [p] is a valid bernolli p, [0.1] *)
+(**else if k < 1 then 1. -. p *)
 let bernoulli_cdf  (p : float) (k : int)=
   if k < 0 then 0.
-  else if k < 1 then 1. -. p
   else 1.
 
 (** [geometric_pmf k p] is the geometric([p]) probability mass of k
@@ -62,7 +62,7 @@ let geometric_cdf  (p : float) (k : int)=
     Requires: [x] is a valid exponential rv, > 0
     [p] is a valid exponential l, > 0 *)
 let exponential_pmf  (l : float) (x : float) =
-  l *. exp (x *. l)
+  l *. exp (x *. -1. *. l)
 
 (** [exponential_cdf x l] is the exponential([l]) cumulative density of x
     Requires: [x] is a valid exponential rv, > 0
@@ -99,7 +99,9 @@ let poisson_cdf  (l : float) (k : int)=
 (** [normal_pmf mu sigma x] is the normal([mu],[sigma]) probability mass of [x]
     Requires: [sigma] is a valid std, >= 0 *)
 let normal_pmf (mu : float) (sigma : float) (x : float) =
-  exp (-0.5 *. ((x -. mu) /. sigma) ** (2.))
+  failwith "Unimplemented"
+(**exp (-0.5 *. ((x -. mu) /. sigma) ** (2.)) /. *)
+
 
 (**TODO
    Normal cdf

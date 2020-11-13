@@ -10,6 +10,7 @@ type op =
   | GT
   | LTE
   | GTE
+  | Assign
 
 type array = 
   | RowVector of float list
@@ -19,10 +20,6 @@ type array =
 type prob_func =
   | PDF
   | CDF
-
-let string_of_prob_func = function
-  | PDF -> "Probability Density"
-  | CDF -> "Cumulative Density"
 
 type expr = 
   | Var of string
@@ -37,11 +34,19 @@ type expr =
   | Geometric of prob_func * float * int
   | Exponential of prob_func * float * float
   | Normal of prob_func * float * float * float
+  | Ans
 
 type parsed_input =
   | Command of string * expr
   | Expression of expr
 
+(** [string_of_prob_func prob_func] is the string respresentation of
+    [prob_func]. *)
+let string_of_prob_func = function
+  | PDF -> "Probability Density"
+  | CDF -> "Cumulative Density"
+
+(** [string_of_binop binop] is the string respresentation of [binop]. *)
 let string_of_binop = function
   | Add -> "Add"
   | Sub -> "Sub"
@@ -54,14 +59,18 @@ let string_of_binop = function
   | GT -> "GT"
   | LTE -> "LTE"
   | GTE -> "GTE"
+  | Assign -> "Assign"
 
+(** [string_of_vector_contents sep vec] is the string respresentation of the
+    contents of [vec], where each entry is separated by [sep]. *)
 let string_of_vector_contents sep vec =
-  (* (Printf.sprintf "%.16f") *)
   List.map string_of_float vec |> String.concat sep
 
+(** [string_of_matrix mat] is the string respresentation of [mat]. *)
 let string_of_matrix mat =
   List.map (string_of_vector_contents ", ") mat |> String.concat ";\n"
 
+(** [string_of_expr expr] is the string respresentation of [expr]. *)
 let rec string_of_expr = function
   | Var x -> "Var " ^ x
   | Int i -> "Int " ^ string_of_int i
@@ -82,7 +91,9 @@ let rec string_of_expr = function
       | ColumnVector vec -> "ColVector [" ^ (string_of_vector_contents "; " vec) ^ "]"
       | Matrix mat -> "Matrix \n" ^ (string_of_matrix mat)
     end
+  | Ans -> "Ans"
 
+(** [string_of_input inp] is the string respresentation of [inp]. *)
 let string_of_input = function
   | Command (cmd, e) -> cmd ^ ": " ^ string_of_expr e
   | Expression e -> string_of_expr e

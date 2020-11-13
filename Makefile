@@ -16,7 +16,7 @@ test: clean
 	bisect-ppx-report html --ignore-missing-files
 
 start:
-	$(OCAMLBUILD) $(MAIN) && ./$(MAIN)
+	$(OCAMLBUILD) $(MAIN) && ledit ./$(MAIN)
 
 clean:
 	ocamlbuild -clean

@@ -7,7 +7,8 @@
 - To run the test suite, run `make test`.
 
 - Most importantly, to use the command line application that runs our calculator,
-run `make start`. 
+first install `ledit` using `brew install ledit` or `apt-get install ledit` and
+then run `make start`. 
 
 Try entering basic mathematical expressions (e.g. addition, subtraction,
 multiplication, division, exponentiation). No promises that this is bug free
