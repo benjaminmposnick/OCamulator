@@ -415,7 +415,19 @@ let inverse_tests = let open Inverse in [
     test "basic inverse for subtraction equation 4 - x = 5" 
       (Binop(Eq, Binop(Sub, Int 4, Int 5), Var "x")) 
       (Inverse.inverse (Binop(Eq, Binop(Sub, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
-    
+    test "basic inverse for multiplication equation x * 4 = 5" 
+      (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 
+      (Inverse.inverse (Binop(Eq, Binop(Mul, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+    test "basic inverse for multiplication equation 4 * x = 5" 
+      (Binop(Eq, Binop(Div, Int 5, Int 4), Var "x")) 
+      (Inverse.inverse (Binop(Eq, Binop(Mul, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+    test "basic inverse for division equation x / 4 = 5" 
+      (Binop(Eq, Var "x", Binop(Mul, Int 5, Int 4))) 
+      (Inverse.inverse (Binop(Eq, Binop(Div, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+    test "basic inverse for division equation 4 / x = 5" 
+      (Binop(Eq, Binop(Div, Int 4, Int 5), Var "x")) 
+      (Inverse.inverse (Binop(Eq, Binop(Div, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+
   ]
 
 let prob_tests = let open Prob in [
