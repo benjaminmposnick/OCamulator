@@ -1,1 +1,1 @@
-let hours_worked = 20
+let hours_worked = 40 (* The sum of all authors' contributions this sprint *)

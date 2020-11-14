@@ -18,6 +18,9 @@ test: clean
 start:
 	$(OCAMLBUILD) $(MAIN) && ledit ./$(MAIN)
 
+start_no_keys:
+	$(OCAMLBUILD) $(MAIN) && ./$(MAIN)
+
 clean:
 	ocamlbuild -clean
 	rm -rf _coverage bisect*.coverage

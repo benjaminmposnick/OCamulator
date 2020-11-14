@@ -104,7 +104,7 @@ expr:
 	| BERN; PDF; p = FLOAT; k = INT { Bernoulli (PDF, p, k) } 
 	| BERN; CDF; p = FLOAT; k = INT { Bernoulli (CDF, p, k) } 
 	| UNIF; PDF; a = FLOAT; b = FLOAT; x = FLOAT { Uniform (PDF, a, b, x) }
-	| UNIF; CDF; a = FLOAT; b = FLOAT; x = FLOAT { Uniform (PDF, a, b, x) }
+	| UNIF; CDF; a = FLOAT; b = FLOAT; x = FLOAT { Uniform (CDF, a, b, x) }
 	| POIS; PDF; l = FLOAT; k = INT { Poisson (PDF, l, k) }
 	| POIS; CDF; l = FLOAT; k = INT { Poisson (CDF, l, k) }
 	| GEO; PDF; p = FLOAT k = INT { Geometric (PDF, p, k) }
