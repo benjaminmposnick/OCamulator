@@ -20,6 +20,7 @@ type array =
 type prob_func =
   | PDF
   | CDF
+  | SAM
 
 type expr = 
   | Var of string
@@ -45,6 +46,7 @@ type parsed_input =
 let string_of_prob_func = function
   | PDF -> "Probability Density"
   | CDF -> "Cumulative Density"
+  | SAM -> "Sample"
 
 (** [string_of_binop binop] is the string respresentation of [binop]. *)
 let string_of_binop = function
@@ -84,7 +86,7 @@ let rec string_of_expr = function
   | Poisson (func, l, k) -> "Poisson Distrubution " ^ string_of_prob_func func 
   | Geometric (func, p, k) -> "Geometric Distrubution " ^ string_of_prob_func func 
   | Exponential (func, l, x) -> "Expontential Distrubution " ^ string_of_prob_func func 
-  | Normal (func, m, s, x) -> "Normal Distrubution " ^ string_of_prob_func func 
+  | Normal (func, m, s, x) -> "Normal Distrubution " ^ string_of_prob_func func
   | NumArray arr -> begin
       match arr with
       | RowVector vec -> "RowVector [" ^ (string_of_vector_contents ", " vec) ^ "]"

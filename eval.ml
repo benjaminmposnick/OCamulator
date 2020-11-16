@@ -1,5 +1,6 @@
 open Ast
 open Prob
+open Stat
 
 let parse str =
   let lexbuf = Lexing.from_string str in
@@ -59,14 +60,18 @@ let rec eval_numeric e sigma =
   | Binomial (CDF, n, p, k) -> binomial_cdf n p k
   | Bernoulli (PDF, p, k) -> bernoulli_pmf p k
   | Bernoulli (CDF, p, k) -> bernoulli_cdf p k
+  | Bernoulli (SAM, p, k) -> bernoulli_sam p 
   | Uniform (PDF, a, b, x) -> uniform_pmf a b x
   | Uniform (CDF, a, b, x) -> uniform_cdf a b x
+  | Uniform (SAM, a, b, x) -> uniform_sam a b
   | Poisson (PDF, l, x) -> poisson_pmf l x
   | Poisson (CDF, l, x) -> poisson_cdf l x
   | Geometric (PDF, p, k) -> geometric_pmf p k
   | Geometric (CDF, p, k) -> geometric_cdf p k
+  | Geometric (SAM, p, k) -> geometric_sam p
   | Exponential (PDF, l, x) -> exponential_pmf l x
   | Exponential (CDF, l, x) -> exponential_cdf l x
+  | Exponential (SAM, l, x) -> exponential_sam l
   | Normal (PDF, m, s, x) -> normal_pmf m s x
   | Normal (CDF, m, s, x) -> normal_cdf m s x
   | _ -> failwith "No operation specified for this input"

@@ -51,6 +51,7 @@ rule read =
   | "Normal" { NORM } 
   | "pdf" { PDF }
   | "cdf" { CDF }
+  | "sam" { SAM }
   | "pi" { CONST_PI }
   | "ans" { ANS }
   | row_vector { ROW_VECTOR (Lexing.lexeme lexbuf)}

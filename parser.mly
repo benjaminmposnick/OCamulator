@@ -36,6 +36,7 @@ open Ast
 %token EXP
 %token PDF
 %token CDF
+%token SAM
 
 %nonassoc EQUALS
 %nonassoc GT
@@ -103,14 +104,18 @@ expr:
 	| BINOM; CDF; n = INT; p = FLOAT; k = INT { Binomial (CDF, n, p, k) } 
 	| BERN; PDF; p = FLOAT; k = INT { Bernoulli (PDF, p, k) } 
 	| BERN; CDF; p = FLOAT; k = INT { Bernoulli (CDF, p, k) } 
+	| BERN; SAM; p = FLOAT; { Bernoulli (SAM, p, -1) } 
 	| UNIF; PDF; a = FLOAT; b = FLOAT; x = FLOAT { Uniform (PDF, a, b, x) }
 	| UNIF; CDF; a = FLOAT; b = FLOAT; x = FLOAT { Uniform (CDF, a, b, x) }
+	| UNIF; SAM; a = FLOAT; b = FLOAT { Uniform (SAM, a, b, -1.) }
 	| POIS; PDF; l = FLOAT; k = INT { Poisson (PDF, l, k) }
 	| POIS; CDF; l = FLOAT; k = INT { Poisson (CDF, l, k) }
 	| GEO; PDF; p = FLOAT k = INT { Geometric (PDF, p, k) }
 	| GEO; CDF; p = FLOAT;  k = INT { Geometric (CDF, p, k) }
+	| GEO; SAM; p = FLOAT; { Geometric (SAM, p, -1) }
 	| EXP; PDF; l = FLOAT; x = FLOAT { Exponential (PDF, l, x) }
 	| EXP; CDF; l = FLOAT; x = FLOAT { Exponential (CDF, l, x) }
+	| EXP; SAM; l = FLOAT; { Exponential (SAM, l, -1.) }
 	| NORM; PDF; m = FLOAT; s = FLOAT; x = FLOAT { Normal (PDF, m, s, x) }
 	| NORM; CDF; m = FLOAT; s = FLOAT; x = FLOAT { Normal (CDF, m, s, x) }
 ;
