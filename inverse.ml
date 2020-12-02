@@ -1,10 +1,12 @@
 open Ast
 
+exception NotABinop
+
 (** [match_ast ast] is the tuple of contents of the Ast expression if it is a
     Binop expression. Otherwise, [match_ast ast] is the input ast *)
 let match_ast ast = match ast with
   | Binop (op, e1, e2) -> (op, e1, e2)
-  | _ -> failwith "Unimplimented"
+  | _ -> raise NotABinop
 
 (** [inverse_add outer_ast left_ast var] isolates [var] in [outer_ast] when it
     is nested in an addition operation contained in [left_ast]
@@ -18,6 +20,8 @@ let inverse_add outer_ast left_ast var =
     Binop(Eq, left_e1, Binop(Sub, e2, left_e2))
   else if left_e2 = Var var then
     Binop(Eq, left_e2, Binop(Sub, e2, left_e1))
+  (* else if e1 = Var var or e2 = Var var then *)
+    (* Binop(Eq, outer_ast, ) *)
   else failwith "No add operator given"
 
 (** [inverse_sub outer_ast left_ast var] isolates [var] in [outer_ast] when it
@@ -64,13 +68,13 @@ let inverse_mul outer_ast left_ast var =
 
 (** TODO: specification *)
 let inverse ast var = 
-  let (op, e1, e2) = match_ast ast in
-  let (left_op, left_e1, left_e2) = match_ast e1 in
-  match left_op with
-  | Add -> inverse_add ast e1 var  
-  | Sub -> inverse_sub ast e1 var
-  | Div -> inverse_div ast e1 var
-  | Mul -> inverse_mul ast e1 var
+  let (rel_op, e1, e2) = match_ast ast in
+  let (bop, _, _), e = 
+    try match_ast e1, e1 with
+    | NotABinop -> match_ast e2, e2 in
+  match bop with
+  | Add -> inverse_add ast e var  (* pass [rel_op] in *)
+  | Sub -> inverse_sub ast e var  (* pass [rel_op] in *)
+  | Div -> inverse_div ast e var  (* pass [rel_op] in, negate if div by negative *)
+  | Mul -> inverse_mul ast e var  (* pass [rel_op] in, negate if div by negative *)
   | _ -> failwith "Unimplimented equation type"
-
-

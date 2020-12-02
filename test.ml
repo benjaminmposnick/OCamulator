@@ -427,8 +427,13 @@ let inverse_tests = let open Inverse in [
     test "basic inverse for division equation 4 / x = 5" 
       (Binop(Eq, Binop(Div, Int 4, Int 5), Var "x")) 
       (Inverse.inverse (Binop(Eq, Binop(Div, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
-
-  ]
+    test "basic inverse for division equation y / x = 5" 
+      (Binop(Eq, Binop(Div, Var "y", Int 5), Var "x")) 
+      (Inverse.inverse (Binop(Eq, Binop(Div, Var "y", Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+    test "solve equation y / x = (5 + z)" 
+      (Binop(Eq, Binop(Div, Var "y", Binop (Add, Int 5, Var "z")), Var "x")) 
+      (Inverse.inverse (Binop(Eq, Binop(Div, Var "y", Var "x"), Binop (Add, Int 5, Var "z"))) ("x")) Ast.string_of_expr;
+]
 
 let prob_tests = let open Prob in [
     test "Factorial Base 0" 1 (Prob.factorial 0) string_of_int;
