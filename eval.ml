@@ -82,13 +82,14 @@ let rec eval_array arr op sigma =
     end
   | _ -> failwith "Operation is not available" 
 
-let rec eval_input parsed_input sigma ans = 
+let rec eval_input parsed_input sigma = 
+  let ans = Float 0. in
   match parsed_input with
   | Command (c, e) -> begin
       let cmd = String.lowercase_ascii c in
       match e with 
       | NumArray arr -> (NumArray (eval_array arr cmd sigma), sigma)
-      | Var x -> eval_input (Command (c, List.assoc x sigma)) sigma ans
+      | Var x -> eval_input (Command (c, List.assoc x sigma)) sigma
       | _ ->
         if cmd = "evaluate" then (Float (eval_numeric e sigma), sigma)
         else failwith "No operation specified for this input"
@@ -96,7 +97,7 @@ let rec eval_input parsed_input sigma ans =
   | Expression e ->
     match e with
     | Binop (Assign, e1, Ans) ->
-      eval_input (Expression (Binop (Assign, e1, ans))) sigma ans
+      eval_input (Expression (Binop (Assign, e1, ans))) sigma
     | Binop (Assign, e1, e2) -> begin
         let x =
           match e1 with

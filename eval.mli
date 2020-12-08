@@ -21,4 +21,4 @@ val eval_array : Ast.array -> string -> (string * Ast.expr) list -> Ast.array
 
 (** [eval parsed_input sigma] is the result of evaluating [parsed_input] in the
 store represented by [sigma]. *)
-val eval_input : Ast.parsed_input -> (string * Ast.expr) list -> Ast.expr -> (Ast.expr * (string * Ast.expr) list)
+val eval_input : Ast.parsed_input -> (string * Ast.expr) list -> (Ast.expr * (string * Ast.expr) list)
