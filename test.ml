@@ -1,247 +1,344 @@
 open OUnit2
 open Ast
-open Eval
 
 (** [test name expected_output fn_output print_fn] is an OUnit test case named
     [name] that asserts equality between [expected_output] and [fn_output].
-    [print_fn] is used to print the inputs when the assertion is false. *)
+    [print_fn] is used to print the inputs if the assertion is false. *)
 let test name expected_output fn_output print_fn =
   name >:: (fun _ -> assert_equal expected_output fn_output ~printer:print_fn)
 
+(** [parse str] is the abstract syntax tree that results from lexing and
+    parsing [str]. *)
+let parse str =
+  let lexbuf = Lexing.from_string str in
+  Parser.prog Lexer.read lexbuf
+
 (** [parse_test name expected_output input] is an OUnit test case named
     [name] that asserts equality between [expected_output] and the expression 
-    derived from the result of [Eval.parse input].  *)
+    resulting from [parse input].  *)
 let parse_test name expected_output input =
-  let parsed_input = Eval.parse input in
-  let create_parse_test expr =
-    test name expected_output expr Ast.string_of_expr in
-  match parsed_input with
-  | Command (_, e) -> create_parse_test e
-  | Expression e -> create_parse_test e
+  let parsed_input = parse input in
+  test name expected_output parsed_input Ast.string_of_expr 
 
-let parse_tests = let open Ast in [
-    (* Var tests *)
-    parse_test "variable 1 charcter name" (Var "x") "x";
-    parse_test "variable 2 charcter name" (Var "xi") "xi";
-    parse_test "variable multi-charcter name" (Var "delta") "delta";
+let parse_tests = [
+  (* Var tests *)
+  parse_test "variable 1 charcter name" (Var "x") "x";
+  parse_test "variable 2 charcter name" (Var "xi") "xi";
+  parse_test "variable multi-charcter name" (Var "delta") "delta";
 
-    (* Int tests *)
-    parse_test "one digit int" (Int 1) "1";
-    parse_test "two digit int" (Int 10) "10";
-    parse_test "three digit int" (Int 100) "100";
-    parse_test "one digit negative int" (Int ~-1) "-1";
-    parse_test "two digit negative int" (Int ~-10) "-10";
-    parse_test "three digit negative int" (Int ~-100) "-100";
+  (* Int tests *)
+  parse_test "one digit int" (Int 1) "1";
+  parse_test "two digit int" (Int 10) "10";
+  parse_test "three digit int" (Int 100) "100";
+  parse_test "one digit negative int" (Int ~-1) "-1";
+  parse_test "two digit negative int" (Int ~-10) "-10";
+  parse_test "three digit negative int" (Int ~-100) "-100";
 
-    (* Float tests *)
-    parse_test "1 with one decimal place" (Float 1.0) "1.0";
-    parse_test "1 with two decimal places" (Float 1.0) "1.00";
-    parse_test "10 with one decimal place" (Float 10.0) "10.0";
-    parse_test "10 with two decimal places" (Float 10.0) "10.00";
-    parse_test "100 with one decimal place" (Float 100.0) "100.0";
-    parse_test "100 with two decimal places" (Float 100.0) "100.00";
-    parse_test "float 0.1 with leading zero" (Float 0.1) "0.1";
-    parse_test "float 0.1 without leading zero" (Float 0.1) ".1";
-    parse_test "float 0.1 with trailing zero" (Float 0.1) "0.10";
-    parse_test "float 0.01 with leading zero" (Float 0.01) "0.01";
-    parse_test "float 0.01 without leading zero" (Float 0.01) ".01";
-    parse_test "float 0.01 with trailing zero" (Float 0.01) "0.010";
+  (* Float tests *)
+  parse_test "1 with one decimal place" (Float 1.0) "1.0";
+  parse_test "1 with two decimal places" (Float 1.0) "1.00";
+  parse_test "10 with one decimal place" (Float 10.0) "10.0";
+  parse_test "10 with two decimal places" (Float 10.0) "10.00";
+  parse_test "100 with one decimal place" (Float 100.0) "100.0";
+  parse_test "100 with two decimal places" (Float 100.0) "100.00";
+  parse_test "float 0.1 with leading zero" (Float 0.1) "0.1";
+  parse_test "float 0.1 without leading zero" (Float 0.1) ".1";
+  parse_test "float 0.1 with trailing zero" (Float 0.1) "0.10";
+  parse_test "float 0.01 with leading zero" (Float 0.01) "0.01";
+  parse_test "float 0.01 without leading zero" (Float 0.01) ".01";
+  parse_test "float 0.01 with trailing zero" (Float 0.01) "0.010";
 
-    parse_test "-1 with one decimal place" (Float ~-.1.0) "-1.0";
-    parse_test "-1 with two decimal places" (Float ~-.1.0) "-1.00";
-    parse_test "-10 with one decimal place" (Float ~-.10.0) "-10.0";
-    parse_test "-10 with two decimal places" (Float ~-.10.0) "-10.00";
-    parse_test "-100 with one decimal place" (Float ~-.100.0) "-100.0";
-    parse_test "-100 with two decimal places" (Float ~-.100.0) "-100.00";
-    parse_test "float -0.1 with leading zero" (Float ~-.0.1) "-0.1";
-    parse_test "float -0.1 without leading zero" (Float ~-.0.1) "-.1";
-    parse_test "float -0.1 with trailing zero" (Float ~-.0.1) "-0.10";
-    parse_test "float -0.01 with leading zero" (Float ~-.0.01) "-0.01";
-    parse_test "float -0.01 without leading zero" (Float ~-.0.01) "-.01";
-    parse_test "float -0.01 with trailing zero" (Float ~-.0.01) "-0.010";
+  parse_test "-1 with one decimal place" (Float ~-.1.0) "-1.0";
+  parse_test "-1 with two decimal places" (Float ~-.1.0) "-1.00";
+  parse_test "-10 with one decimal place" (Float ~-.10.0) "-10.0";
+  parse_test "-10 with two decimal places" (Float ~-.10.0) "-10.00";
+  parse_test "-100 with one decimal place" (Float ~-.100.0) "-100.0";
+  parse_test "-100 with two decimal places" (Float ~-.100.0) "-100.00";
+  parse_test "float -0.1 with leading zero" (Float ~-.0.1) "-0.1";
+  parse_test "float -0.1 without leading zero" (Float ~-.0.1) "-.1";
+  parse_test "float -0.1 with trailing zero" (Float ~-.0.1) "-0.10";
+  parse_test "float -0.01 with leading zero" (Float ~-.0.01) "-0.01";
+  parse_test "float -0.01 without leading zero" (Float ~-.0.01) "-.01";
+  parse_test "float -0.01 with trailing zero" (Float ~-.0.01) "-0.010";
 
-    (* Space tests *)
-    parse_test "Space left of operator" (Binop (Add, Int 1, Int 2)) "1 +2";
-    parse_test "Space right of operator " (Binop (Add, Int 1, Int 2)) "1+ 2";
-    parse_test "Space both sides of operator " (Binop (Add, Int 1, Int 2)) "1 + 2";
+  (* Space tests *)
+  parse_test "Space left of operator" (Binop (Add, Int 1, Int 2)) "1 +2";
+  parse_test "Space right of operator " (Binop (Add, Int 1, Int 2)) "1+ 2";
+  parse_test "Space both sides of operator "
+    (Binop (Add, Int 1, Int 2)) "1 + 2";
 
-    (* Add tests *)
-    parse_test "Add two Ints" (Binop (Add, Int 1, Int 2)) "1 + 2";
-    parse_test "Add two Floats" (Binop (Add, Float 1., Float 2.)) "1.0 + 2.0";
-    parse_test "Add two Vars" (Binop (Add, Var "x", Var "y")) "x + y";
-    parse_test "Add one Int and one Float" (Binop (Add, Int 1, Float 2.)) "1 + 2.0";
-    parse_test "Add one Int and one Var" (Binop (Add, Int 1, Var "x")) "1 + x";
-    parse_test "Add one Float and one Var" (Binop (Add, Float 1.0, Var "x")) "1.0 + x";
+  (* Add tests *)
+  parse_test "Add two Ints" (Binop (Add, Int 1, Int 2)) "1 + 2";
+  parse_test "Add two Floats" (Binop (Add, Float 1., Float 2.)) "1.0 + 2.0";
+  parse_test "Add two Vars" (Binop (Add, Var "x", Var "y")) "x + y";
+  parse_test "Add one Int and one Float"
+    (Binop (Add, Int 1, Float 2.)) "1 + 2.0";
+  parse_test "Add one Int and one Var" (Binop (Add, Int 1, Var "x")) "1 + x";
+  parse_test "Add one Float and one Var"
+    (Binop (Add, Float 1.0, Var "x")) "1.0 + x";
 
-    parse_test "Add an Int and Binop" (Binop (Add, Binop (Add, Int 1, Int 2), Int 3)) "1 + 2 + 3";
-    parse_test "Add an Int and Binop, forced right assoc" (Binop (Add, Int 1, Binop (Add, Int 2, Int 3))) "1 + (2 + 3)";
-    parse_test "Add an Float and Binop" (Binop (Add, Float 1.0, Binop (Add, Int 2, Int 3))) "1.0 + (2 + 3)";
-    parse_test "Add an Var and Binop" (Binop (Add, Var "x", Binop (Add, Int 2, Int 3))) "x + (2 + 3)";
-    parse_test "Add two Binops" (Binop (Add, Binop (Add, Int 2, Int 3), Binop (Add, Int 2, Int 3))) "(2 + 3) + (2 + 3)";
-    parse_test "Add three Binops" (Binop (Add, Binop (Add, Binop (Add, Int 2, Int 3), Int 2), Int 3)) "2 + 3 + 2 + 3";
+  parse_test "Add an Int and Binop"
+    (Binop (Add, Binop (Add, Int 1, Int 2), Int 3)) "1 + 2 + 3";
+  parse_test "Add an Int and Binop, forced right assoc"
+    (Binop (Add, Int 1, Binop (Add, Int 2, Int 3))) "1 + (2 + 3)";
+  parse_test "Add an Float and Binop"
+    (Binop (Add, Float 1.0, Binop (Add, Int 2, Int 3))) "1.0 + (2 + 3)";
+  parse_test "Add an Var and Binop"
+    (Binop (Add, Var "x", Binop (Add, Int 2, Int 3))) "x + (2 + 3)";
+  parse_test "Add two Binops"
+    (Binop (Add, Binop (Add, Int 2, Int 3), Binop (Add, Int 2, Int 3)))
+    "(2 + 3) + (2 + 3)";
+  parse_test "Add three Binops"
+    (Binop (Add, Binop (Add, Binop (Add, Int 2, Int 3), Int 2), Int 3))
+    "2 + 3 + 2 + 3";
 
-    parse_test "Add - and + Ints" (Binop (Add, Int ~-1, Int 2)) "-1 + 2";
-    parse_test "Add + and - Ints" (Binop (Add, Int 1, Int ~-2)) "1 + -2";
-    parse_test "Add + and - Ints with parens" (Binop (Add, Int 1, Int ~-2)) "1 + (-2)";
-    parse_test "Add two - Ints" (Binop (Add, Int ~-1, Int ~-2)) "-1 + -2";
-    parse_test "Add + and - Ints with parens" (Binop (Add, Int ~-1, Int ~-2)) "(-1) + (-2)";
+  parse_test "Add - and + Ints" (Binop (Add, Int ~-1, Int 2)) "-1 + 2";
+  parse_test "Add + and - Ints" (Binop (Add, Int 1, Int ~-2)) "1 + -2";
+  parse_test "Add + and - Ints with parens"
+    (Binop (Add, Int 1, Int ~-2)) "1 + (-2)";
+  parse_test "Add two - Ints" (Binop (Add, Int ~-1, Int ~-2)) "-1 + -2";
+  parse_test "Add + and - Ints with parens"
+    (Binop (Add, Int ~-1, Int ~-2)) "(-1) + (-2)";
 
-    parse_test "Add - and + Floats" (Binop (Add, Float ~-.1., Float 2.)) "-1.0 + 2.0";
-    parse_test "Add + and - Floats" (Binop (Add, Float 1., Float ~-.2.)) "1.0 + -2.0";
-    parse_test "Add + and - Floats with parens" (Binop (Add, Float 1., Float ~-.2.)) "1.0 + (-2.0)";
-    parse_test "Add two - Floats" (Binop (Add, Float ~-.1., Float ~-.2.)) "-1.0 + -2.0";
-    parse_test "Add + and - Floats with parens" (Binop (Add, Float ~-.1., Float ~-.2.)) "(-1.0) + (-2.0)";
+  parse_test "Add - and + Floats"
+    (Binop (Add, Float ~-.1., Float 2.)) "-1.0 + 2.0";
+  parse_test "Add + and - Floats"
+    (Binop (Add, Float 1., Float ~-.2.)) "1.0 + -2.0";
+  parse_test "Add + and - Floats with parens"
+    (Binop (Add, Float 1., Float ~-.2.)) "1.0 + (-2.0)";
+  parse_test "Add two - Floats"
+    (Binop (Add, Float ~-.1., Float ~-.2.)) "-1.0 + -2.0";
+  parse_test "Add + and - Floats with parens"
+    (Binop (Add, Float ~-.1., Float ~-.2.)) "(-1.0) + (-2.0)";
 
-    (* Sub tests *)
-    parse_test "Subtract two Ints" (Binop (Sub, Int 1, Int 2)) "1 - 2";
-    parse_test "Subtract two Floats" (Binop (Sub, Float 1., Float 2.)) "1.0 - 2.0";
-    parse_test "Subtract two Vars" (Binop (Sub, Var "x", Var "y")) "x - y";
-    parse_test "Subtract two Binops" (Binop (Sub, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "(x + y) - (a + b)";
-    parse_test "Subtract one Int and one Float" (Binop (Sub, Int 1, Float 2.)) "1 - 2.0";
-    parse_test "Subtract one Int and one Var" (Binop (Sub, Int 1, Var "x")) "1 - x";
-    parse_test "Subtract one Float and one Var" (Binop (Sub, Float 1.0, Var "x")) "1.0 - x";
+  (* Sub tests *)
+  parse_test "Subtract two Ints"
+    (Binop (Sub, Int 1, Int 2)) "1 - 2";
+  parse_test "Subtract two Floats"
+    (Binop (Sub, Float 1., Float 2.)) "1.0 - 2.0";
+  parse_test "Subtract two Vars"
+    (Binop (Sub, Var "x", Var "y")) "x - y";
+  parse_test "Subtract two Binops"
+    (Binop (Sub, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "(x + y) - (a + b)";
+  parse_test "Subtract one Int and one Float"
+    (Binop (Sub, Int 1, Float 2.)) "1 - 2.0";
+  parse_test "Subtract one Int and one Var"
+    (Binop (Sub, Int 1, Var "x")) "1 - x";
+  parse_test "Subtract one Float and one Var"
+    (Binop (Sub, Float 1.0, Var "x")) "1.0 - x";
 
-    parse_test "Subtract - and + Ints" (Binop (Sub, Int ~-1, Int 2)) "-1 - 2";
-    parse_test "Subtract + and - Ints" (Binop (Sub, Int 1, Int ~-2)) "1 - -2";
-    parse_test "Subtract + and - Ints with parens" (Binop (Sub, Int 1, Int ~-2)) "1 - (-2)";
-    parse_test "Subtract two - Ints" (Binop (Sub, Int ~-1, Int ~-2)) "-1 - -2";
-    parse_test "Subtract + and - Ints with parens" (Binop (Sub, Int ~-1, Int ~-2)) "(-1) - (-2)";
+  parse_test "Subtract - and + Ints" (Binop (Sub, Int ~-1, Int 2)) "-1 - 2";
+  parse_test "Subtract + and - Ints" (Binop (Sub, Int 1, Int ~-2)) "1 - -2";
+  parse_test "Subtract + and - Ints with parens"
+    (Binop (Sub, Int 1, Int ~-2)) "1 - (-2)";
+  parse_test "Subtract two - Ints" (Binop (Sub, Int ~-1, Int ~-2)) "-1 - -2";
+  parse_test "Subtract + and - Ints with parens"
+    (Binop (Sub, Int ~-1, Int ~-2)) "(-1) - (-2)";
 
-    parse_test "Subtract - and + Floats" (Binop (Sub, Float ~-.1., Float 2.)) "-1.0 - 2.0";
-    parse_test "Subtract + and - Floats" (Binop (Sub, Float 1., Float ~-.2.)) "1.0 - -2.0";
-    parse_test "Subtract + and - Floats with parens" (Binop (Sub, Float 1., Float ~-.2.)) "1.0 - (-2.0)";
-    parse_test "Subtract two - Floats" (Binop (Sub, Float ~-.1., Float ~-.2.)) "-1.0 - -2.0";
-    parse_test "Subtract + and - Floats with parens" (Binop (Sub, Float ~-.1., Float ~-.2.)) "(-1.0) - (-2.0)";
+  parse_test "Subtract - and + Floats"
+    (Binop (Sub, Float ~-.1., Float 2.)) "-1.0 - 2.0";
+  parse_test "Subtract + and - Floats"
+    (Binop (Sub, Float 1., Float ~-.2.)) "1.0 - -2.0";
+  parse_test "Subtract + and - Floats with parens"
+    (Binop (Sub, Float 1., Float ~-.2.)) "1.0 - (-2.0)";
+  parse_test "Subtract two - Floats"
+    (Binop (Sub, Float ~-.1., Float ~-.2.)) "-1.0 - -2.0";
+  parse_test "Subtract + and - Floats with parens"
+    (Binop (Sub, Float ~-.1., Float ~-.2.)) "(-1.0) - (-2.0)";
 
-    (* Mul tests *)
-    parse_test "Multiply two Ints" (Binop (Mul, Int 1, Int 2)) "1 * 2";
-    parse_test "Multiply two Floats" (Binop (Mul, Float 1., Float 2.)) "1.0 * 2.0";
-    parse_test "Multiply two Vars" (Binop (Mul, Var "x", Var "y")) "x * y";
-    parse_test "Multiply two Binops" (Binop (Mul, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "(x + y) * (a + b)";
-    parse_test "Multiply one Int and one Float" (Binop (Mul, Int 1, Float 2.)) "1 * 2.0";
-    parse_test "Multiply one Int and one Var" (Binop (Mul, Int 1, Var "x")) "1 * x";
-    parse_test "Multiply one Float and one Var" (Binop (Mul, Float 1.0, Var "x")) "1.0 * x";
-    parse_test "Multiply one Int and one Var shortcut" (Binop (Mul, Int 2, Var "x")) "2x";
-    parse_test "Multiply one Float and one Var shortcut" (Binop (Mul, Float 2.0, Var "x")) "2.0x";
-    parse_test "Multiply one - Int and one Var shortcut" (Binop (Mul, Int ~-2, Var "x")) "-2x";
-    parse_test "Multiply one - Float and one Var shortcut" (Binop (Mul, Float ~-.2.0, Var "x")) "-2.0x";
+  (* Mul tests *)
+  parse_test "Multiply two Ints" (Binop (Mul, Int 1, Int 2)) "1 * 2";
+  parse_test "Multiply two Floats" (Binop (Mul, Float 1., Float 2.)) "1.0 * 2.0";
+  parse_test "Multiply two Vars" (Binop (Mul, Var "x", Var "y")) "x * y";
+  parse_test "Multiply two Binops"
+    (Binop (Mul, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "(x + y) * (a + b)";
+  parse_test "Multiply one Int and one Float"
+    (Binop (Mul, Int 1, Float 2.)) "1 * 2.0";
+  parse_test "Multiply one Int and one Var"
+    (Binop (Mul, Int 1, Var "x")) "1 * x";
+  parse_test "Multiply one Float and one Var"
+    (Binop (Mul, Float 1.0, Var "x")) "1.0 * x";
+  parse_test "Multiply one Int and one Var shortcut"
+    (Binop (Mul, Int 2, Var "x")) "2x";
+  parse_test "Multiply one Float and one Var shortcut"
+    (Binop (Mul, Float 2.0, Var "x")) "2.0x";
+  parse_test "Multiply one - Int and one Var shortcut"
+    (Binop (Mul, Int ~-2, Var "x")) "-2x";
+  parse_test "Multiply one - Float and one Var shortcut"
+    (Binop (Mul, Float ~-.2.0, Var "x")) "-2.0x";
 
-    (* Div tests *)
-    parse_test "Divide two Ints" (Binop (Div, Int 1, Int 2)) "1 / 2";
-    parse_test "Divide two Floats" (Binop (Div, Float 1., Float 2.)) "1.0 / 2.0";
-    parse_test "Divide two Vars" (Binop (Div, Var "x", Var "y")) "x / y";
-    parse_test "Divide two Binops" (Binop (Div, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "(x + y) / (a + b)";
-    parse_test "Divide one Int and one Float" (Binop (Div, Int 1, Float 2.)) "1 / 2.0";
-    parse_test "Divide one Int and one Var" (Binop (Div, Int 1, Var "x")) "1 / x";
-    parse_test "Divide one Float and one Var" (Binop (Div, Float 1.0, Var "x")) "1.0 /  x";
+  (* Div tests *)
+  parse_test "Divide two Ints" (Binop (Div, Int 1, Int 2)) "1 / 2";
+  parse_test "Divide two Floats" (Binop (Div, Float 1., Float 2.)) "1.0 / 2.0";
+  parse_test "Divide two Vars" (Binop (Div, Var "x", Var "y")) "x / y";
+  parse_test "Divide two Binops"
+    (Binop (Div, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "(x + y) / (a + b)";
+  parse_test "Divide one Int and one Float"
+    (Binop (Div, Int 1, Float 2.)) "1 / 2.0";
+  parse_test "Divide one Int and one Var"(Binop (Div, Int 1, Var "x")) "1 / x";
+  parse_test "Divide one Float and one Var"
+    (Binop (Div, Float 1.0, Var "x")) "1.0 / x";
 
-    (* Mod tests *)
+  (* Pow tests *)
+  parse_test "Exponentiate two Ints" (Binop (Pow, Int 1, Int 2)) "1 ^ 2";
+  parse_test "Exponentiate two Floats"
+    (Binop (Pow, Float 1., Float 2.)) "1.0 ^ 2.0";
+  parse_test "Exponentiate two Vars" (Binop (Pow, Var "x", Var "y")) "x ^ y";
+  parse_test "Exponentiate two Binops"
+    (Binop (Pow, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "(x + y) ^ (a + b)";
+  parse_test "Exponentiate one Int and one Float"
+    (Binop (Pow, Int 1, Float 2.)) "1 ^ 2.0";
+  parse_test "Exponentiate one Float and one Int"
+    (Binop (Pow, Float 2., Int 1)) "2.0 ^ 1";
+  parse_test "Exponentiate one Int and one Var"
+    (Binop (Pow, Int 1, Var "x")) "1 ^ x";
+  parse_test "Exponentiate one Var and one Int"
+    (Binop (Pow, Var "x", Int 1)) "x ^ 1";
+  parse_test "Exponentiate one Float and one Var"
+    (Binop (Pow, Float 1.0, Var "x")) "1.0 ^ x";
+  parse_test "Exponentiate one Var and one Float"
+    (Binop (Pow, Var "x", Float 1.0)) "x ^ 1.0";
 
-    (* Pow tests *)
-    parse_test "Exponentiate two Ints" (Binop (Pow, Int 1, Int 2)) "1 ^ 2";
-    parse_test "Exponentiate two Floats" (Binop (Pow, Float 1., Float 2.)) "1.0 ^ 2.0";
-    parse_test "Exponentiate two Vars" (Binop (Pow, Var "x", Var "y")) "x ^ y";
-    parse_test "Exponentiate two Binops" (Binop (Pow, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "(x + y) ^ (a + b)";
-    parse_test "Exponentiate one Int and one Float" (Binop (Pow, Int 1, Float 2.)) "1 ^ 2.0";
-    parse_test "Exponentiate one Float and one Int" (Binop (Pow, Float 2., Int 1)) "2.0 ^ 1";
-    parse_test "Exponentiate one Int and one Var" (Binop (Pow, Int 1, Var "x")) "1 ^ x";
-    parse_test "Exponentiate one Var and one Int" (Binop (Pow, Var "x", Int 1)) "x ^ 1";
-    parse_test "Exponentiate one Float and one Var" (Binop (Pow, Float 1.0, Var "x")) "1.0 ^ x";
-    parse_test "Exponentiate one Var and one Float" (Binop (Pow, Var "x", Float 1.0)) "x ^ 1.0";
+  (* Eq tests *)
+  parse_test "Equation of Ints" (Binop (Eq, Int 1, Int 1)) "1 = 1";
+  parse_test "Equation of Floats" (Binop (Eq, Float 1., Float 1.)) "1.0 = 1.0";
+  parse_test "Equation of Vars" (Binop (Eq, Var "x", Var "y")) "x = y";
+  parse_test "Equation two Binops"
+    (Binop (Eq, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "x + y = a + b";
+  parse_test "Equation of Int and Float" (Binop (Eq, Int 1, Float 1.)) "1 = 1.0";
+  parse_test "Equation of Int and Var" (Binop (Eq, Var "x", Int 1)) "x = 1";
+  parse_test "Equation of Float and Var"
+    (Binop (Eq, Var "x", Float 1.)) "x = 1.0";
 
-    (* Eq tests *)
-    parse_test "Equation of Ints" (Binop (Eq, Int 1, Int 1)) "1 = 1";
-    parse_test "Equation of Floats" (Binop (Eq, Float 1., Float 1.)) "1.0 = 1.0";
-    parse_test "Equation of Vars" (Binop (Eq, Var "x", Var "y")) "x = y";
-    parse_test "Equation two Binops" (Binop (Eq, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y = a + b";
-    parse_test "Equation of Int and Float" (Binop (Eq, Int 1, Float 1.)) "1 = 1.0";
-    parse_test "Equation of Int and Var" (Binop (Eq, Var "x", Int 1)) "x = 1";
-    parse_test "Equation of Float and Var" (Binop (Eq, Var "x", Float 1.)) "x = 1.0";
+  (* GT tests *)
+  parse_test "> inequality of Ints" (Binop (GT, Int 2, Int 1)) "2 > 1";
+  parse_test "> inequality of Floats"
+    (Binop (GT, Float 2., Float 1.)) "2.0 > 1.0";
+  parse_test "> inequality of Vars" (Binop (GT, Var "x", Var "y")) "x > y";
+  parse_test "> inequality  two Binops"
+    (Binop (GT, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "x + y > a + b";
+  parse_test "> inequality of Int and Float"
+    (Binop (GT, Int 2, Float 1.)) "2 > 1.0";
+  parse_test "> inequality of Int and Var" (Binop (GT, Var "x", Int 1)) "x > 1";
+  parse_test "> inequality of Float and Var"
+    (Binop (GT, Var "x", Float 1.)) "x > 1.0";
 
-    (* GT tests *)
-    parse_test "> inequality of Ints" (Binop (GT, Int 2, Int 1)) "2 > 1";
-    parse_test "> inequality of Floats" (Binop (GT, Float 2., Float 1.)) "2.0 > 1.0";
-    parse_test "> inequality of Vars" (Binop (GT, Var "x", Var "y")) "x > y";
-    parse_test "> inequality  two Binops" (Binop (GT, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y > a + b";
-    parse_test "> inequality of Int and Float" (Binop (GT, Int 2, Float 1.)) "2 > 1.0";
-    parse_test "> inequality of Int and Var" (Binop (GT, Var "x", Int 1)) "x > 1";
-    parse_test "> inequality of Float and Var" (Binop (GT, Var "x", Float 1.)) "x > 1.0";
+  (* GTE tests *)
+  parse_test ">= inequality of Ints" (Binop (GTE, Int 2, Int 1)) "2 >= 1";
+  parse_test ">= inequality of Floats"
+    (Binop (GTE, Float 2., Float 1.)) "2.0 >= 1.0";
+  parse_test ">= inequality of Vars" (Binop (GTE, Var "x", Var "y")) "x >= y";
+  parse_test ">= inequality two Binops"
+    (Binop (GTE, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "x + y >= a + b";
+  parse_test ">= inequality of Int and Float"
+    (Binop (GTE, Int 2, Float 1.)) "2 >= 1.0";
+  parse_test ">= inequality of Int and Var"
+    (Binop (GTE, Var "x", Int 1)) "x >= 1";
+  parse_test ">= inequality of Float and Var"
+    (Binop (GTE, Var "x", Float 1.)) "x >= 1.0";
 
-    (* GTE tests *)
-    parse_test ">= inequality of Ints" (Binop (GTE, Int 2, Int 1)) "2 >= 1";
-    parse_test ">= inequality of Floats" (Binop (GTE, Float 2., Float 1.)) "2.0 >= 1.0";
-    parse_test ">= inequality of Vars" (Binop (GTE, Var "x", Var "y")) "x >= y";
-    parse_test ">= inequality two Binops" (Binop (GTE, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y >= a + b";
-    parse_test ">= inequality of Int and Float" (Binop (GTE, Int 2, Float 1.)) "2 >= 1.0";
-    parse_test ">= inequality of Int and Var" (Binop (GTE, Var "x", Int 1)) "x >= 1";
-    parse_test ">= inequality of Float and Var" (Binop (GTE, Var "x", Float 1.)) "x >= 1.0";
+  (* LT tests *)
+  parse_test "< inequality of Ints" (Binop (LT, Int 1, Int 2)) "1 < 2";
+  parse_test "< inequality of Floats"
+    (Binop (LT, Float 1., Float 2.)) "1.0 < 2.0";
+  parse_test "< inequality of Vars" (Binop (LT, Var "x", Var "y")) "x < y";
+  parse_test "< inequality two Binops"
+    (Binop (LT, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y < a + b";
+  parse_test "< inequality of Int and Float"
+    (Binop (LT, Float 1., Int 2)) "1.0 < 2";
+  parse_test "< inequality of Int and Var" (Binop (LT, Var "x", Int 1)) "x < 1";
+  parse_test "< inequality of Float and Var"
+    (Binop (LT, Var "x", Float 1.)) "x < 1.0";
 
-    (* LT tests *)
-    parse_test "< inequality of Ints" (Binop (LT, Int 1, Int 2)) "1 < 2";
-    parse_test "< inequality of Floats" (Binop (LT, Float 1., Float 2.)) "1.0 < 2.0";
-    parse_test "< inequality of Vars" (Binop (LT, Var "x", Var "y")) "x < y";
-    parse_test "< inequality two Binops" (Binop (LT, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y < a + b";
-    parse_test "< inequality of Int and Float" (Binop (LT, Float 1., Int 2)) "1.0 < 2";
-    parse_test "< inequality of Int and Var" (Binop (LT, Var "x", Int 1)) "x < 1";
-    parse_test "< inequality of Float and Var" (Binop (LT, Var "x", Float 1.)) "x < 1.0";
+  (* LTE tests *)
+  parse_test "<= inequality of Ints" (Binop (LTE, Int 1, Int 2)) "1 <= 2";
+  parse_test "<= inequality of Floats"
+    (Binop (LTE, Float 1., Float 2.)) "1.0 <= 2.0";
+  parse_test "<= inequality of Vars" (Binop (LTE, Var "x", Var "y")) "x <= y";
+  parse_test "<= inequality two Binops"
+    (Binop (LTE, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "x + y <= a + b";
+  parse_test "<= inequality of Int and Float"
+    (Binop (LTE, Float 1., Int 2)) "1.0 <= 2";
+  parse_test "<= inequality of Int and Var"
+    (Binop (LTE, Var "x", Int 1)) "x <= 1";
+  parse_test "<= inequality of Float and Var"
+    (Binop (LTE, Var "x", Float 1.)) "x <= 1.0";
 
-    (* LTE tests *)
-    parse_test "<= inequality of Ints" (Binop (LTE, Int 1, Int 2)) "1 <= 2";
-    parse_test "<= inequality of Floats" (Binop (LTE, Float 1., Float 2.)) "1.0 <= 2.0";
-    parse_test "<= inequality of Vars" (Binop (LTE, Var "x", Var "y")) "x <= y";
-    parse_test "<= inequality two Binops" (Binop (LTE, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y <= a + b";
-    parse_test "<= inequality of Int and Float" (Binop (LTE, Float 1., Int 2)) "1.0 <= 2";
-    parse_test "<= inequality of Int and Var" (Binop (LTE, Var "x", Int 1)) "x <= 1";
-    parse_test "<= inequality of Float and Var" (Binop (LTE, Var "x", Float 1.)) "x <= 1.0";
+  (* Vector tests *)
+  parse_test "Int RowVector in R1" (Array (RowVector [1.])) "[1]";
+  parse_test "Int RowVector in R2" (Array (RowVector [1.; 2.])) "[1, 2]";
+  parse_test "Int RowVector in R3" (Array (RowVector [1.; 2.; 3.])) "[1, 2, 3]";
+  parse_test "Float RowVector in R1" (Array (RowVector [1.])) "[1.0]";
+  parse_test "Float RowVector in R2" (Array (RowVector [1.; 2.])) "[1.0, 2.0]";
+  parse_test "Float RowVector in R3"
+    (Array (RowVector [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
+  parse_test "Mixed type RowVector in R2"
+    (Array (RowVector [0.5; 2.])) "[0.5, 2]";
 
-    (* Vector tests *)
-    parse_test "Int RowVector in R1" (NumArray (RowVector [1.])) "[1]";
-    parse_test "Int RowVector in R2" (NumArray (RowVector [1.; 2.])) "[1, 2]";
-    parse_test "Int RowVector in R3" (NumArray (RowVector [1.; 2.; 3.])) "[1, 2, 3]";
-    parse_test "Float RowVector in R1" (NumArray (RowVector [1.])) "[1.0]";
-    parse_test "Float RowVector in R2" (NumArray (RowVector [1.; 2.])) "[1.0, 2.0]";
-    parse_test "Float RowVector in R3" (NumArray (RowVector [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
-    parse_test "Mixed type RowVector in R2" (NumArray (RowVector [0.5; 2.])) "[0.5, 2]";
+  parse_test "Int ColumnVector in R2" (Array (ColumnVector [1.; 2.])) "[1; 2]";
+  parse_test "Int ColumnVector in R3"
+    (Array (ColumnVector [1.; 2.; 3.])) "[1; 2; 3]";
+  parse_test "Float ColumnVector in R2"
+    (Array (ColumnVector [1.; 2.])) "[1.0; 2.0]";
+  parse_test "Float ColumnVector in R3"
+    (Array (ColumnVector [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
+  parse_test "Mixed type ColumnVector in R2"
+    (Array (ColumnVector [0.5; 2.])) "[0.5; 2]";
 
-    parse_test "Int ColumnVector in R2" (NumArray (ColumnVector [1.; 2.])) "[1; 2]";
-    parse_test "Int ColumnVector in R3" (NumArray (ColumnVector [1.; 2.; 3.])) "[1; 2; 3]";
-    parse_test "Float ColumnVector in R2" (NumArray (ColumnVector [1.; 2.])) "[1.0; 2.0]";
-    parse_test "Float ColumnVector in R3" (NumArray (ColumnVector [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
-    parse_test "Mixed type ColumnVector in R2" (NumArray (ColumnVector [0.5; 2.])) "[0.5; 2]";
-
-    (* Matrix tests *)
-    parse_test "Int Matrix in R(2x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]])) "[1, 2; 3, 4]";
-    parse_test "Int Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1, 2, 3; 4, 5, 6]";
-    parse_test "Int Matrix in R(3x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1, 2; 3, 4; 5, 6]";
-    parse_test "Int Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1, 2, 3; 4, 5, 6; 7, 8, 9]";
-    parse_test "Float Matrix in R(2x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
-    parse_test "Float Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
-    parse_test "Float Matrix in R(3x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
-    parse_test "Float Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
-    parse_test "Mixed type Matrix in R(2x2)" (NumArray (Matrix [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
-  ]
+  (* Matrix tests *)
+  parse_test "Int Matrix in R(2x2)"
+    (Array (Matrix [[1.;2.]; [3.;4.]])) "[1, 2; 3, 4]";
+  parse_test "Int Matrix in R(2x3)"
+    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1, 2, 3; 4, 5, 6]";
+  parse_test "Int Matrix in R(3x2)" 
+    (Array (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1, 2; 3, 4; 5, 6]";
+  parse_test "Int Matrix in R(2x3)" 
+    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]]))
+    "[1, 2, 3; 4, 5, 6; 7, 8, 9]";
+  parse_test "Float Matrix in R(2x2)" 
+    (Array (Matrix [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
+  parse_test "Float Matrix in R(2x3)" 
+    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
+  parse_test "Float Matrix in R(3x2)" 
+    (Array (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
+  parse_test "Float Matrix in R(2x3)" 
+    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) 
+    "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
+  parse_test "Mixed type Matrix in R(2x2)"
+    (Array (Matrix [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
+]
 
 let matrix_tests = [
   test "row reduce 3x3 matrix with two pivot columns" 
     (Matrix [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]])
     (Matrix (Linalg.rref [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (fun m -> string_of_expr (Array m));
   test "row reduce 3x4 matrix with three pivot columns" 
     (Matrix [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]])
     (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (fun m -> string_of_expr (Array m));
   test "row reduce 3x4 matrix with two pivot columns" 
     (Matrix [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]])
     (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (fun m -> string_of_expr (Array m));
   test "row reduce 4x4 matrix with two pivot columns" 
     (Matrix [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.];[0.;0.;0.;0.]])
-    (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.];[13.;14.;15.;16.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];
+                          [9.;10.;11.;12.];[13.;14.;15.;16.]]))
+    (fun m -> string_of_expr (Array m));
   test "row reduce 4x5 matrix with four pivot columns" 
     (Matrix [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];[0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]])
-    (Matrix (Linalg.rref [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];[~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (Matrix (Linalg.rref [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];
+                          [~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
+    (fun m -> string_of_expr (Array m));
   test "row reduce 10x10 random int matrix with 10 pivot columns" 
     (Matrix 
        [[1.;0.;0.;0.;0.;0.;0.;0.;0.;0.];[0.;1.;0.;0.;0.;0.;0.;0.;0.;0.];
@@ -249,27 +346,26 @@ let matrix_tests = [
         [0.;0.;0.;0.;1.;0.;0.;0.;0.;0.];[0.;0.;0.;0.;0.;1.;0.;0.;0.;0.];
         [0.;0.;0.;0.;0.;0.;1.;0.;0.;0.];[0.;0.;0.;0.;0.;0.;0.;1.;0.;0.];
         [0.;0.;0.;0.;0.;0.;0.;0.;1.;0.];[0.;0.;0.;0.;0.;0.;0.;0.;0.;1.]])
-    (Matrix (Linalg.rref 
-               [[10.;10.;2.;1.;8.;3.;3.;5.;6.;4.];
-                [2.;7.;8.;5.;3.;8.;9.;4.;1.;2.];[10.;1.;1.;4.;7.;3.;3.;9.;1.;8.];
-                [10.;9.;3.;8.;7.;6.;9.;6.;6.;4.];[5.;10.;1.;8.;2.;7.;3.;6.;8.;6.];
-                [9.;7.;1.;2.;2.;9.;10.;10.;10.;2.];[2.;8.;9.;5.;5.;10.;4.;3.;2.;7.];
-                [5.;8.;7.;5.;10.;6.;2.;8.;6.;3.];[10.;4.;4.;7.;4.;2.;3.;8.;5.;7.];
-                [8.;7.;10.;8.;6.;2.;7.;4.;1.;7.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (Matrix (Linalg.rref [
+         [10.;10.;2.;1.;8.;3.;3.;5.;6.;4.];
+         [2.;7.;8.;5.;3.;8.;9.;4.;1.;2.];[10.;1.;1.;4.;7.;3.;3.;9.;1.;8.];
+         [10.;9.;3.;8.;7.;6.;9.;6.;6.;4.];[5.;10.;1.;8.;2.;7.;3.;6.;8.;6.];
+         [9.;7.;1.;2.;2.;9.;10.;10.;10.;2.];[2.;8.;9.;5.;5.;10.;4.;3.;2.;7.];
+         [5.;8.;7.;5.;10.;6.;2.;8.;6.;3.];[10.;4.;4.;7.;4.;2.;3.;8.;5.;7.];
+         [8.;7.;10.;8.;6.;2.;7.;4.;1.;7.]]))
+    (fun m -> string_of_expr (Array m));
   test "row reduce 5x7 random float matrix with 5 pivot columns" 
-    (Matrix 
-       [[1.;0.;0.;0.;0.;~-.1.0165;0.0767];
-        [0.;1.;0.;0.;0.;~-.0.3439;0.3037];
-        [0.;0.;1.;0.;0.;1.0937;~-.0.2878];
-        [0.;0.;0.;1.;0.;~-.0.1570;0.1066];
-        [0.;0.;0.;0.;1.;0.3247;0.7126]])
+    (Matrix [[1.;0.;0.;0.;0.;~-.1.0165;0.0767];
+             [0.;1.;0.;0.;0.;~-.0.3439;0.3037];
+             [0.;0.;1.;0.;0.;1.0937;~-.0.2878];
+             [0.;0.;0.;1.;0.;~-.0.1570;0.1066];
+             [0.;0.;0.;0.;1.;0.3247;0.7126]])
     (Matrix (Linalg.rref [[0.401808033751942;0.239952525664903;0.49086409246808;0.111202755293787;0.0964545251683886;0.0597795429471558;0.0430238016578078];
                           [0.0759666916908419;0.41726706908437;0.489252638400019;0.780252068321138;0.131973292606335;0.234779913372406;0.168990029462704];
                           [0.239916153553658;0.0496544303257421;0.337719409821377;0.389738836961253;0.942050590775485;0.353158571222071;0.649115474956452];
                           [0.123318934835166;0.902716109915281;0.900053846417662;0.241691285913833;0.956134540229802;0.821194040197959;0.73172238565867];
                           [0.183907788282417;0.944787189721646;0.369246781120215;0.403912145588115;0.575208595078466;0.0154034376515551;0.647745963136307]]))
-    (fun m -> string_of_expr (NumArray m));
+    (fun m -> string_of_expr (Array m));
   test "row reduce 25x50 random float matrix" 
     (Matrix 
        [[1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
@@ -375,7 +471,7 @@ let matrix_tests = [
                 [2.;1.;11.;23.;29.;23.;48.;31.;20.;32.;41.;10.;40.;1.;20.;48.;20.;32.;19.;8.;39.;38.;25.;42.;6.;17.;1.;42.;37.;4.;24.;20.;47.;43.;4.;40.;2.;47.;18.;2.;48.;46.;13.;19.;39.;34.;47.;49.;3.;32.0];
                 [5.;41.;34.;49.;49.;18.;23.;32.;19.;19.;35.;13.;45.;48.;42.;19.;34.;48.;5.;35.;14.;29.;19.;30.;44.;24.;16.;10.;48.;20.;37.;10.;5.;14.;45.;9.;23.;37.;34.;7.;33.;6.;11.;15.;5.;20.;7.;22.;38.;42.0]]
             ))
-    (fun m -> string_of_expr (NumArray m));
+    (fun m -> string_of_expr (Array m));
 ]
 
 let lin_alg_tests =
@@ -387,7 +483,7 @@ let lin_alg_tests =
       (Matrix [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]])
       (Matrix (matrix_multiply [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]]
                  [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]]))
-      (fun m -> string_of_expr (NumArray m));
+      (fun m -> string_of_expr (Array m));
   ]
 
 let var_present_tests = let open Eval in [
@@ -405,28 +501,36 @@ let var_present_tests = let open Eval in [
 let inverse_tests = let open Inverse in [
     test "basic inverse for addition equation x + 4 = 5" 
       (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 ))
+         ("x")) Ast.string_of_expr;
     test "basic inverse for addition equation 4 + x = 5" 
       (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Add, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Add, Int 4, Var "x"), Int 5 ))
+         ("x")) Ast.string_of_expr;
     test "basic inverse for subtraction equation x - 4 = 5" 
       (Binop(Eq, Var "x", Binop(Add, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Sub, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Sub, Var "x", Int 4), Int 5 ))
+         ("x")) Ast.string_of_expr;
     test "basic inverse for subtraction equation 4 - x = 5" 
       (Binop(Eq, Binop(Sub, Int 4, Int 5), Var "x")) 
-      (Inverse.inverse (Binop(Eq, Binop(Sub, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Sub, Int 4, Var "x"), Int 5 ))
+         ("x")) Ast.string_of_expr;
     test "basic inverse for multiplication equation x * 4 = 5" 
       (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Mul, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Mul, Var "x", Int 4), Int 5 ))
+         ("x")) Ast.string_of_expr;
     test "basic inverse for multiplication equation 4 * x = 5" 
       (Binop(Eq, Binop(Div, Int 5, Int 4), Var "x")) 
-      (Inverse.inverse (Binop(Eq, Binop(Mul, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Mul, Int 4, Var "x"), Int 5 ))
+         ("x")) Ast.string_of_expr;
     test "basic inverse for division equation x / 4 = 5" 
       (Binop(Eq, Var "x", Binop(Mul, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Div, Var "x", Int 4), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Div, Var "x", Int 4), Int 5 ))
+         ("x")) Ast.string_of_expr;
     test "basic inverse for division equation 4 / x = 5" 
       (Binop(Eq, Binop(Div, Int 4, Int 5), Var "x")) 
-      (Inverse.inverse (Binop(Eq, Binop(Div, Int 4, Var "x"), Int 5 )) ("x")) Ast.string_of_expr;
+      (Inverse.inverse (Binop(Eq, Binop(Div, Int 4, Var "x"), Int 5 ))
+         ("x")) Ast.string_of_expr;
 
   ]
 
@@ -442,7 +546,8 @@ let prob_tests = let open Prob in [
 
     test "Unif p in range" 1. (Prob.uniform_pmf 0. 1. 0.5) string_of_float;
     test "Unif p out of range ge" 0. (Prob.uniform_pmf 0. 1. 2.) string_of_float;
-    test "Unif p out of range le" 0. (Prob.uniform_pmf 0. 1. (-1.)) string_of_float;
+    test "Unif p out of range le" 0.
+      (Prob.uniform_pmf 0. 1. (-1.)) string_of_float;
     test "Unif p on range ip" 1. (Prob.uniform_pmf 0. 1. 1.) string_of_float;
     test "Unif p on range low" 1. (Prob.uniform_pmf 0. 1. 0.) string_of_float;
     test "Unif c 0" 0. (Prob.uniform_cdf 0. 1. (-1.)) string_of_float;
@@ -462,13 +567,15 @@ let prob_tests = let open Prob in [
     test "Exp p 0" 0.5 (Prob.exponential_pmf 0.5 0.) string_of_float;
     test "Exp p 1" (exp (-1.)) (Prob.exponential_pmf 1. 1.) string_of_float;
     test "Exp c 0" 0. (Prob.exponential_cdf 1. 0.) string_of_float;
-    test "Exp c 1" (1. -. exp (-1.)) (Prob.exponential_cdf 1. 1.) string_of_float;
+    test "Exp c 1" (1. -. exp (-1.))
+      (Prob.exponential_cdf 1. 1.) string_of_float;
 
     test "Pois p 0" (exp (-1.)) (Prob.poisson_pmf 1. 0) string_of_float;
     test "Pois p 2" (exp (-1.) /. 2.) (Prob.poisson_pmf 1. 2) string_of_float;
 
     test "Pois c 0" (exp (-1.)) (Prob.poisson_cdf 1. 0) string_of_float;
-    test "Pois c 2" (5. *. exp (-1.) /. 2.) (Prob.poisson_cdf 1. 2) string_of_float;
+    test "Pois c 2" (5. *. exp (-1.) /. 2.)
+      (Prob.poisson_cdf 1. 2) string_of_float;
 
     test "Binom p 0" (0.5 ** 10.) (Prob.binomial_pmf 10 0.5 0) string_of_float;
     test "Binom p n" (0.5 ** 10.) (Prob.binomial_pmf 10 0.5 10) string_of_float;
@@ -479,120 +586,123 @@ let prob_tests = let open Prob in [
 
   ]
 
-let eval_tests = [
-  test "Var x is float" 0. (eval_numeric (Var "x") [("x", Float 0.)])
-    string_of_float;
-  test "Zero int evaluates to itself as a float" 0.
-    (eval_numeric (Int 0) []) string_of_float;
-  test "Postive int evaluates to itself as a float" 1.
-    (eval_numeric (Int 1) []) string_of_float;
-  test "Negative int evaluates to itself as a float" ~-.1.
-    (eval_numeric (Int ~-1) []) string_of_float;
+let eval_tests = 
+  let eval_expr e sigma = fst (Eval.eval_expr e sigma) in
+  [
+    test "Var x is float" (VFloat 0.) (eval_expr (Var "x") [("x", VFloat 0.)])
+      string_of_value;
+    test "Zero int evaluates to itself as a float" (VFloat 0.)
+      (eval_expr (Int 0) []) string_of_value;
+    test "Postive int evaluates to itself as a float" (VFloat 1.)
+      (eval_expr (Int 1) []) string_of_value;
+    test "Negative int evaluates to itself as a float" (VFloat ~-.1.)
+      (eval_expr (Int ~-1) []) string_of_value;
 
-  test "Zero float evaluates to itself as a float" 0.
-    (eval_numeric (Float 0.) []) string_of_float;
-  test "Postive float evaluates to itself as a float" 1.
-    (eval_numeric (Float 1.) []) string_of_float;
-  test "Negative float evaluates to itself as a float" ~-.1.
-    (eval_numeric (Float ~-.1.) []) string_of_float;
+    test "Zero float evaluates to itself as a float" (VFloat 0.)
+      (eval_expr (Float 0.) []) string_of_value;
+    test "Postive float evaluates to itself as a float" (VFloat 1.)
+      (eval_expr (Float 1.) []) string_of_value;
+    test "Negative float evaluates to itself as a float" (VFloat ~-.1.)
+      (eval_expr (Float ~-.1.) []) string_of_value;
 
-  test "Add two ints" 3.
-    (eval_numeric (Binop (Add, Int 1, Int 2)) []) string_of_float;
-  test "Add two floats" 3.
-    (eval_numeric (Binop (Add, Float 1., Float 2.)) []) string_of_float;
-  test "Add one int and one float" 3.
-    (eval_numeric (Binop (Add, Float 1., Int 2)) []) string_of_float;
+    test "Add two ints" (VFloat 3.)
+      (eval_expr (Binop (Add, Int 1, Int 2)) []) string_of_value;
+    test "Add two floats" (VFloat 3.)
+      (eval_expr (Binop (Add, Float 1., Float 2.)) []) string_of_value;
+    test "Add one int and one float" (VFloat 3.)
+      (eval_expr (Binop (Add, Float 1., Int 2)) []) string_of_value;
 
-  test "Subtract two ints" 0.
-    (eval_numeric (Binop (Sub, Int 1, Int 1)) []) string_of_float;
-  test "Subtract two floats" 0.
-    (eval_numeric (Binop (Sub, Float 1., Float 1.)) []) string_of_float;
-  test "Subtract one int and one float" 0.
-    (eval_numeric (Binop (Sub, Float 1., Int 1)) []) string_of_float;
+    test "Subtract two ints" (VFloat 0.)
+      (eval_expr (Binop (Sub, Int 1, Int 1)) []) string_of_value;
+    test "Subtract two floats" (VFloat 0.)
+      (eval_expr (Binop (Sub, Float 1., Float 1.)) []) string_of_value;
+    test "Subtract one int and one float" (VFloat 0.)
+      (eval_expr (Binop (Sub, Float 1., Int 1)) []) string_of_value;
 
-  test "Multiply two ints" 2.
-    (eval_numeric (Binop (Mul, Int 1, Int 2)) []) string_of_float;
-  test "Multiply two floats" 2.
-    (eval_numeric (Binop (Mul, Float 1., Float 2.)) []) string_of_float;
-  test "Multiply one int and one float" 2.
-    (eval_numeric (Binop (Mul, Float 1., Int 2)) []) string_of_float;
+    test "Multiply two ints" (VFloat 2.)
+      (eval_expr (Binop (Mul, Int 1, Int 2)) []) string_of_value;
+    test "Multiply two floats" (VFloat 2.)
+      (eval_expr (Binop (Mul, Float 1., Float 2.)) []) string_of_value;
+    test "Multiply one int and one float" (VFloat 2.)
+      (eval_expr (Binop (Mul, Float 1., Int 2)) []) string_of_value;
 
-  test "Divide two ints" 0.5
-    (eval_numeric (Binop (Div, Int 1, Int 2)) []) string_of_float;
-  test "Divide two floats" 0.5
-    (eval_numeric (Binop (Div, Float 1., Float 2.)) []) string_of_float;
-  test "Divide one int and one float" 0.5
-    (eval_numeric (Binop (Div, Float 1., Int 2)) []) string_of_float;
+    test "Divide two ints" (VFloat 0.5)
+      (eval_expr (Binop (Div, Int 1, Int 2)) []) string_of_value;
+    test "Divide two floats" (VFloat 0.5)
+      (eval_expr (Binop (Div, Float 1., Float 2.)) []) string_of_value;
+    test "Divide one int and one float" (VFloat 0.5)
+      (eval_expr (Binop (Div, Float 1., Int 2)) []) string_of_value;
 
-  test "Power two ints" 8.
-    (eval_numeric (Binop (Pow, Int 2, Int 3)) []) string_of_float;
-  test "Power two floats" 8.
-    (eval_numeric (Binop (Pow, Float 2., Float 3.)) []) string_of_float;
-  test "Power int power and float base" 8.
-    (eval_numeric (Binop (Pow, Float 2., Int 3)) []) string_of_float;
-  test "Power int base and float power" 8.
-    (eval_numeric (Binop (Pow, Int 2, Float 3.)) []) string_of_float;
+    test "Power two ints" (VFloat 8.)
+      (eval_expr (Binop (Pow, Int 2, Int 3)) []) string_of_value;
+    test "Power two floats" (VFloat 8.)
+      (eval_expr (Binop (Pow, Float 2., Float 3.)) []) string_of_value;
+    test "Power int power and float base" (VFloat 8.)
+      (eval_expr (Binop (Pow, Float 2., Int 3)) []) string_of_value;
+    test "Power int base and float power" (VFloat 8.)
+      (eval_expr (Binop (Pow, Int 2, Float 3.)) []) string_of_value;
 
-  test "modulo no remainder" (3 mod 3 |> float_of_int)
-    (eval_numeric (Binop (Mod, Float 3., Float 3.)) []) string_of_float;
-  test "modulo with p > q" (4 mod 3 |> float_of_int)
-    (eval_numeric (Binop (Mod, Float 4., Float 3.)) []) string_of_float;
-  test "modulo with p < q" (3 mod 4 |> float_of_int)
-    (eval_numeric (Binop (Mod, Float 3., Float 4.)) []) string_of_float;
-  test "modulo with -p" (~-3 mod 4 |> float_of_int)
-    (eval_numeric (Binop (Mod, Float ~-.3., Float 4.)) []) string_of_float;
-  test "modulo with -p no remainder" 0.
-    (eval_numeric (Binop (Mod, Float ~-.3., Float 3.)) []) string_of_float;
+    test "modulo no remainder" (VFloat (3 mod 3 |> float_of_int))
+      (eval_expr (Binop (Mod, Float 3., Float 3.)) []) string_of_value;
+    test "modulo with p > q" (VFloat (4 mod 3 |> float_of_int))
+      (eval_expr (Binop (Mod, Float 4., Float 3.)) []) string_of_value;
+    test "modulo with p < q" (VFloat (3 mod 4 |> float_of_int))
+      (eval_expr (Binop (Mod, Float 3., Float 4.)) []) string_of_value;
+    test "modulo with -p" (VFloat (~-3 mod 4 |> float_of_int))
+      (eval_expr (Binop (Mod, Float ~-.3., Float 4.)) []) string_of_value;
+    test "modulo with -p no remainder" (VFloat 0.)
+      (eval_expr (Binop (Mod, Float ~-.3., Float 3.)) []) string_of_value;
 
-  test "Pythagorean theorem c^2" (Float 25.)
-    (parse "3^2 + 4^2" |> fun inp -> eval_input inp [] (Float 0.) |> fst)
-    string_of_expr;
-  test "Pythagorean theorem c" (Float 5.)
-    (parse "(3^2 + 4^2)^(1/2)"
-     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
-  test "Quadratic formula" (Float ~-.0.25)
-    (parse "(-2 + (3^2 - 4 * 2 * 1)^(1/2)) / (2 * 2)"
-     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
-  test "PEMDAS test" (Float 4.)
-    (parse "3 + 3 * 2 / 3 - 1"
-     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
+    test "Pythagorean theorem c^2" (VFloat 25.)
+      (parse "3^2 + 4^2" |> fun inp -> Eval.eval_input inp [] |> fst)
+      string_of_value;
+    test "Pythagorean theorem c" (VFloat 5.)
+      (parse "(3^2 + 4^2)^(1/2)"
+       |> fun inp -> Eval.eval_input inp [] |> fst) string_of_value;
+    test "Quadratic formula" (VFloat ~-.0.25)
+      (parse "(-2 + (3^2 - 4 * 2 * 1)^(1/2)) / (2 * 2)"
+       |> fun inp -> Eval.eval_input inp [] |> fst) string_of_value;
+    test "PEMDAS test" (VFloat 4.)
+      (parse "3 + 3 * 2 / 3 - 1"
+       |> fun inp -> Eval.eval_input inp [] |> fst) string_of_value;
 
-  test "Equal two ints" (Bool.to_float true)
-    (eval_numeric (Binop (Eq, Int 2, Int 2)) []) string_of_float;
-  test "Equal two floats" (Bool.to_float true)
-    (eval_numeric (Binop (Eq, Float 2., Float 2.)) []) string_of_float;
-  test "Equal one int and one float" (Bool.to_float true)
-    (eval_numeric (Binop (Eq, Float 2., Int 2)) []) string_of_float;
+    test "Equal two ints" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (Eq, Int 2, Int 2)) []) string_of_value;
+    test "Equal two floats" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (Eq, Float 2., Float 2.)) []) string_of_value;
+    test "Equal one int and one float" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (Eq, Float 2., Int 2)) []) string_of_value;
 
-  test "Greater than two ints" (Bool.to_float true)
-    (eval_numeric (Binop (GT, Int 3, Int 2)) []) string_of_float;
-  test "Greater than two floats" (Bool.to_float true)
-    (eval_numeric (Binop (GT, Float 3., Float 2.)) []) string_of_float;
-  test "Greater than one int and one float" (Bool.to_float true)
-    (eval_numeric (Binop (GT, Float 3., Int 2)) []) string_of_float;
+    test "Greater than two ints" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GT, Int 3, Int 2)) []) string_of_value;
+    test "Greater than two floats" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GT, Float 3., Float 2.)) []) string_of_value;
+    test "Greater than one int and one float" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GT, Float 3., Int 2)) []) string_of_value;
 
-  test "Less than two ints" (Bool.to_float false)
-    (eval_numeric (Binop (LT, Int 3, Int 2)) []) string_of_float;
-  test "Less than two floats" (Bool.to_float false)
-    (eval_numeric (Binop (LT, Float 3., Float 2.)) []) string_of_float;
-  test "Less than one int and one float" (Bool.to_float false)
-    (eval_numeric (Binop (LT, Float 3., Int 2)) []) string_of_float;
+    test "Less than two ints" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LT, Int 3, Int 2)) []) string_of_value;
+    test "Less than two floats" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LT, Float 3., Float 2.)) []) string_of_value;
+    test "Less than one int and one float" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LT, Float 3., Int 2)) []) string_of_value;
 
-  test "Greater than or equal to two ints" (Bool.to_float true)
-    (eval_numeric (Binop (GTE, Int 3, Int 2)) []) string_of_float;
-  test "Greater than or equal to two floats" (Bool.to_float true)
-    (eval_numeric (Binop (GTE, Float 3., Float 2.)) []) string_of_float;
-  test "Greater than or equal to one int and one float" (Bool.to_float true)
-    (eval_numeric (Binop (GTE, Float 3., Int 2)) []) string_of_float;
+    test "Greater than or equal to two ints" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GTE, Int 3, Int 2)) []) string_of_value;
+    test "Greater than or equal to two floats" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GTE, Float 3., Float 2.)) []) string_of_value;
+    test "Greater than or equal to one int and one float"
+      (VFloat (Bool.to_float true)) (eval_expr (Binop (GTE, Float 3., Int 2)) [])
+      string_of_value;
 
-  test "Less than or equal to two ints" (Bool.to_float false)
-    (eval_numeric (Binop (LTE, Int 3, Int 2)) []) string_of_float;
-  test "Less than or equal to two floats" (Bool.to_float false)
-    (eval_numeric (Binop (LTE, Float 3., Float 2.)) []) string_of_float;
-  test "Less than or equal to one int and one float" (Bool.to_float false)
-    (eval_numeric (Binop (LTE, Float 3., Int 2)) []) string_of_float;
-
-] 
+    test "Less than or equal to two ints" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LTE, Int 3, Int 2)) []) string_of_value;
+    test "Less than or equal to two floats" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LTE, Float 3., Float 2.)) []) string_of_value;
+    test "Less than or equal to one int and one float"
+      (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LTE, Float 3., Int 2)) []) string_of_value;
+  ] 
 
 let suite =
   "test suite for OCamulator"  >::: List.flatten [

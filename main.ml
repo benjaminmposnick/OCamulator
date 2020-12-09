@@ -25,27 +25,35 @@ let print_store sigma =
   let rec print_store_aux = function
     | [] -> ()
     | (x, v)::t ->
-      cprint [blue] (x ^ " -> "); cprint_newline [magenta] (string_of_expr v);
+      cprint [blue] (x ^ " -> ");
+      cprint_newline [magenta] (string_of_value v);
       print_store_aux t
   in
-  if List.length sigma = 0 then cprint_newline [green] "No variables in scope"
-  else print_store_aux (List.sort compare sigma)
+  print_store_aux (List.sort compare sigma)
 
-(** [handle_syntax_error lexbuf input] determines the token in [input] where the
-    syntax error occurred during lexing and uses the information in [lexbuf] to
-    print a helpful error message to the terminal indicating the location of the
-    error. *)
+(** [handle_syntax_error lexbuf input] determines the token in [input] where
+    the syntax error occurred during lexing and prints a helpful error message
+    using the information in [lexbuf] to the terminal indicating the location
+    of the error. *)
 let handle_syntax_error lexbuf input =
   let pos = lexbuf.Lexing.lex_curr_p in
-  let invalid_token = Lexing.lexeme lexbuf in
-  let invalid_token_idx = pos.Lexing.pos_cnum in
-  let valid_tokens = String.sub input 0 (invalid_token_idx - 1) in
+  let invalid_token_idx = ref (pos.Lexing.pos_cnum - 1) in
+  let invalid_token =
+    try Char.escaped (input.[!invalid_token_idx]) with 
+    (* Token was not even recognized by lexer *)
+    | Invalid_argument _ -> invalid_token_idx := !invalid_token_idx + 1;
+      Char.escaped (input.[!invalid_token_idx]) in
+  let valid_tokens = 
+    try String.sub input 0 !invalid_token_idx with
+    | Invalid_argument _ -> "" in 
   let unlexed_tokens =
-    String.(sub input invalid_token_idx (length input - invalid_token_idx)) in
-  cprint_newline [red] ("Syntax error beginning at character "
-                        ^ (string_of_int invalid_token_idx) ^ " on token \""
+    let num_tokens = (String.length input - !invalid_token_idx - 1) in
+    try String.sub input (!invalid_token_idx + 1) num_tokens with
+    | Invalid_argument _ -> "" in
+  cprint_newline [red] ("Syntax Error: beginning at character "
+                        ^ (string_of_int !invalid_token_idx) ^ " on token \""
                         ^ invalid_token ^ "\"");
-  cprint [yellow] (valid_tokens);
+  cprint [yellow] valid_tokens;
   cprint [red; underline] invalid_token;
   cprint_newline [yellow] unlexed_tokens
 
@@ -68,16 +76,17 @@ let rec event_loop sigma =
       | None -> event_loop sigma
       | Some ast -> 
         let result = try Some (eval_input ast sigma) with
-          | Not_found -> cprint_newline [red] "Variable not in scope"; None in
+          | EvalError.UnboundVariable msg -> cprint_newline [red] msg; None
+          | EvalError.TypeError msg -> cprint_newline [red] msg; None in
         match result with
         | None -> event_loop sigma
-        | Some (value, sigma') -> let value_str = string_of_expr value in
+        | Some (value, sigma') -> let value_str = string_of_value value in
           cprint_newline [green] ("==> " ^ (value_str)); event_loop sigma'
   end;
   exit 0
 
 let main () =
   cprint_newline [blue] "Welcome to the OCamulator!";
-  event_loop [("ans", Float 0.)]
+  event_loop [("ans", VFloat 0.)]
 
 let () = main ()

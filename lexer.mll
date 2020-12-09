@@ -35,27 +35,27 @@ rule read =
   | ">=" { GTE }
   | "<=" { LTE }
   | ":=" { ASSIGN }
-  | "Binom" { BINOM }
-  | "Binomial" { BINOM }
-  | "Bern" { BERN }
-  | "Bernoulli" { BERN }
-  | "Unif" { UNIF }
-  | "Uniform" { UNIF }
-  | "Pois" { POIS }
-  | "Poisson" { POIS }
-  | "Exp" { EXP }
-  | "Exponential"  { EXP }
-  | "Geo" { GEO }
-  | "Geometric" { GEO }
-  | "Norm" { NORM }
-  | "Normal" { NORM } 
+  | "dot" { DOT }
+  | "binom" { BINOM }
+  | "binomial" { BINOM }
+  | "bern" { BERN }
+  | "bernoulli" { BERN }
+  | "unif" { UNIF }
+  | "uniform" { UNIF }
+  | "pois" { POIS }
+  | "poisson" { POIS }
+  | "exp" { EXP }
+  | "exponential"  { EXP }
+  | "geo" { GEO }
+  | "geometric" { GEO }
+  | "norm" { NORM }
+  | "normal" { NORM } 
   | "pdf" { PDF }
   | "cdf" { CDF }
   | "pi" { CONST_PI }
-  | "ans" { ANS }
+  | "$" { BEGIN_CMD }
   | row_vector { ROW_VECTOR (Lexing.lexeme lexbuf)}
   | col_vector { COL_VECTOR (Lexing.lexeme lexbuf)}
   | matrix { MATRIX (Lexing.lexeme lexbuf)}
-  | ':' { END_KW }
   | id { ID (Lexing.lexeme lexbuf) }
   | eof { EOF; }
