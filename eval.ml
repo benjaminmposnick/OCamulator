@@ -1,35 +1,14 @@
 open Ast
 
-(* ===========================================================================
-    EXCEPTIONS
-   ===========================================================================*)
-module EvalError = struct
-  let unbound_variable_msg =
-    "UnboundVariable Error: Variable not bound in current store: "
-
-  let non_numeric_value_msg =
-    "Type Error: Cannot use non-numeric values in arithmetic operation"
-
-  let non_vector_value_msg =
-    "Type Error: Cannot use non-vector values in vector operation"
-
-  let modulo_msg =
-    "Type Error: Cannot apply modulo operator to non-integer values"
-
-  let assign_msg = "Type Error: Cannot assign to non-variable: "
-
-  exception UnboundVariable of string
-
+module ComputationError = struct
+  exception EvalError of string
   exception TypeError of string
 end
 
-(* ===========================================================================
-    EVALUATION
-   ===========================================================================*)
-
 let modulo p q =
   if not (Float.(is_integer p && is_integer q)) then
-    raise (EvalError.(TypeError modulo_msg))
+    let error_msg = "Cannot apply modulo operator to non-integer values" in
+    raise (ComputationError.(TypeError error_msg))
   else
     let p' = int_of_float p in
     let q' = int_of_float q in
@@ -42,23 +21,37 @@ let rec var_present = function
 
 let eval_var x sigma =
   match List.assoc_opt x sigma with
-  | None -> raise (EvalError.(UnboundVariable (unbound_variable_msg ^ x)))
+  | None -> 
+    let error_msg = "Variable is undefined in current context: " ^ x in
+    raise (ComputationError.(EvalError error_msg))
   | Some value -> value, sigma
 
 let eval_prob dist sigma = 
   let value = 
     let open Prob in
+    let open Float in
+    let open ComputationError in
     match dist with
-    | Binomial (PDF, n, p, k) -> binomial_pmf n p k
-    | Binomial (CDF, n, p, k) -> binomial_cdf n p k
-    | Bernoulli (PDF, p, k) -> bernoulli_pmf p k
-    | Bernoulli (CDF, p, k) -> bernoulli_cdf p k
+    | Binomial (PDF, n, p, k) when is_integer n && is_integer k ->
+      binomial_pmf (int_of_float n) p (int_of_float k)
+    | Binomial (CDF, n, p, k) when is_integer n && is_integer k ->
+      binomial_cdf (int_of_float n) p (int_of_float k)
+    | Binomial (PDF, n, p, k) | Binomial (CDF, n, p, k) ->
+      raise (EvalError "n and k values of Binomial distribution must be integers")
+    | Bernoulli (PDF, p, k) when is_integer k -> bernoulli_pmf p (int_of_float k)
+    | Bernoulli (CDF, p, k) when is_integer k -> bernoulli_cdf p (int_of_float k)
+    | Bernoulli (PDF, p, k) | Bernoulli (CDF, p, k) ->
+      raise (EvalError "k value of Bernoulli distribution must be an integer")
     | Uniform (PDF, a, b, x) -> uniform_pmf a b x
     | Uniform (CDF, a, b, x) -> uniform_cdf a b x
-    | Poisson (PDF, l, x) -> poisson_pmf l x
-    | Poisson (CDF, l, x) -> poisson_cdf l x
-    | Geometric (PDF, p, k) -> geometric_pmf p k
-    | Geometric (CDF, p, k) -> geometric_cdf p k
+    | Poisson (PDF, l, x) when is_integer x -> poisson_pmf l (int_of_float x)
+    | Poisson (CDF, l, x) when is_integer x -> poisson_cdf l (int_of_float x)
+    | Poisson (PDF, l, x) | Poisson (CDF, l, x) -> 
+      raise (EvalError "x value of Poisson distribution must be an integer")
+    | Geometric (PDF, p, k) when is_integer k -> geometric_pmf p (int_of_float k)
+    | Geometric (CDF, p, k) when is_integer k -> geometric_cdf p (int_of_float k)
+    | Geometric (PDF, p, k) | Geometric (CDF, p, k) ->
+      raise (EvalError "k value of Geometric distribution must be an integer")
     | Exponential (PDF, l, x) -> exponential_pmf l x
     | Exponential (CDF, l, x) -> exponential_cdf l x
     | Normal (PDF, m, s, x) -> normal_pmf m s x
@@ -75,12 +68,19 @@ let float_list_from_vec vec =
   match vec with
   | RowVector lst -> lst
   | ColumnVector lst -> lst
-  | Matrix _ -> failwith "Not a vector"
+  | Matrix _ -> raise (ComputationError.EvalError ("Not a vector"))
 
 let list_of_float_lists_from_matrix mat =
+  let open List in
   match mat with
-  | Matrix lst -> lst
-  | RowVector _ | ColumnVector _ -> failwith "Not a matrix"
+  | RowVector _ | ColumnVector _ -> 
+    raise (ComputationError.EvalError ("Not a matrix"))
+  | Matrix m -> (* Matrix cannot be empty based off lexer/parser *)
+    let n_cols = length (hd m) in
+    if fold_left (fun acc lst -> acc && (length lst = n_cols)) true m then m
+    else 
+      let error_msg = "Each row must have the same number of columns" in
+      raise (ComputationError.EvalError (error_msg))
 
 let eval_binop_on_floats op f1 f2 sigma =
   let result = match op with
@@ -95,49 +95,99 @@ let eval_binop_on_floats op f1 f2 sigma =
     | GT -> Bool.to_float (f1 > f2)
     | LTE -> Bool.to_float (f1 <= f2)
     | GTE -> Bool.to_float (f1 >= f2)
-    | Assign -> raise (EvalError.(TypeError assign_msg))
-    | Dot -> raise (EvalError.(TypeError non_vector_value_msg))
+    | Assign ->
+      let error_msg = "Cannot assign to non-variable: " ^ string_of_float f1 in
+      raise (ComputationError.(TypeError error_msg))
+    | Dot ->
+      let error_msg = "Cannot use non-vector values in vector operation" in
+      raise (ComputationError.(TypeError error_msg))
   in
   (VFloat result, sigma)
 
 let eval_binop_on_vectors op v1 v2 sigma =
+  let open Linalg in
   let result = match op with
-    | Add -> VArray (RowVector (Linalg.component_wise_add v1 v2))
-    | Sub -> VArray (RowVector (Linalg.component_wise_subtract v1 v2))
-    | Mul -> VArray (RowVector (Linalg.component_wise_multiply v1 v2))
+    | Add -> VArray (RowVector (component_wise_add v1 v2))
+    | Sub -> VArray (RowVector (component_wise_subtract v1 v2))
+    | Mul -> VArray (RowVector (component_wise_multiply v1 v2))
     | Dot -> VFloat (Linalg.dot_product v1 v2)
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma)
 
-let eval_binop_on_matrix op m1 m2 sigma =
+let eval_binop_on_matrices op m1 m2 sigma =
+  let open Linalg in
   let result = match op with
+    | Add -> VArray (Matrix (List.map2 component_wise_add m1 m2))
+    | Sub -> VArray (Matrix (List.map2 component_wise_subtract m1 m2))
     | Mul -> VArray (Matrix (Linalg.matrix_multiply m1 m2))
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma)
+
+let eval_binop_btwn_scalar_and_array op k arr sigma =
+  let open List in
+  let multiply = fun x -> k *. x in
+  let exponentiate = fun x -> Float.pow x k in
+  let value = match arr, op with
+    | RowVector vec, Mul -> VArray (RowVector (map multiply vec))
+    | RowVector vec, Pow -> VArray (RowVector (map exponentiate vec))
+    | ColumnVector vec, Mul -> VArray (ColumnVector (map multiply vec))
+    | ColumnVector vec, Pow -> VArray (ColumnVector (map exponentiate vec))
+    | Matrix mat, Mul -> VArray (Matrix (map (map multiply) mat))
+    | Matrix mat, Pow -> VArray (Matrix (map (map exponentiate) mat))
+    | _, _ ->
+      raise (ComputationError.EvalError "Invalid operation between scalar and array")
+  in
+  (value, sigma)
+
+let eval_binop_btwn_matrix_and_vector op arr1 arr2 sigma =
+  let open Linalg in
+  let value = match arr1, arr2, op with
+    | VArray (RowVector vec), VArray (Matrix mat), Mul ->
+      RowVector (List.hd (matrix_multiply [vec] mat))
+    | VArray (Matrix mat), VArray (ColumnVector vec), Mul ->
+      let cvec = List.map (fun elem -> [elem]) vec in
+      ColumnVector (List.hd (matrix_multiply mat cvec))
+    | VArray (ColumnVector vec), VArray (Matrix mat), Mul ->
+      raise (ComputationError.EvalError "Shape error: first argument should be a row vector")
+    | VArray (Matrix mat), VArray (RowVector vec), Mul ->
+      raise (ComputationError.EvalError "Shape error: second argument should be a column vector")
+    | _, _, _ ->
+      raise (ComputationError.EvalError "Invalid operation between matrix and vector")
+  in
+  (VArray value, sigma)
 
 let rec eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
   let (v2, sigma'') = eval_expr e2 sigma in
   match v1, v2 with
   | VFloat f1, VFloat f2 -> eval_binop_on_floats op f1 f2 sigma''
-  | VArray (Matrix m1), VArray (Matrix m2) -> eval_binop_on_matrix op m1 m2 sigma 
-  | VArray (Matrix _), _ -> failwith "TODO: Add more functionality"
-  | _, VArray (Matrix _) -> failwith "TODO: Add more functionality"
+  | VArray (Matrix m1), VArray (Matrix m2) ->
+    eval_binop_on_matrices op m1 m2 sigma 
+  | VFloat f, VArray arr -> 
+    eval_binop_btwn_scalar_and_array op f arr sigma
+  | VArray arr, VFloat f -> 
+    eval_binop_btwn_scalar_and_array op f arr sigma
+  | VArray (Matrix _), VArray _ | VArray _, VArray (Matrix _) -> 
+    eval_binop_btwn_matrix_and_vector op v1 v2 sigma
   | VArray vec1, VArray vec2 -> begin
       let vec1' = float_list_from_vec vec1 in
       let vec2' = float_list_from_vec vec2 in
       eval_binop_on_vectors op vec1' vec2' sigma''
     end
-  | _ -> failwith "TODO"
 
 and evaluate_command cmd e sigma =
+  let open Linalg in
   let (value, sigma') = eval_expr e sigma in
   let result = match cmd, value with
     | "rref", VArray (Matrix m) -> VArray (Matrix (Linalg.rref m))
-    | "rref", _ -> failwith "Cannot row reduce a vector"
+    | "rref", _ ->
+      raise (ComputationError.EvalError "Cannot row reduce a vector")
     | "transpose", VArray arr -> VArray (Linalg.transpose arr)
+    | "pivots", VArray (Matrix m) -> VArray (RowVector (pivot_cols m))
+    | "pivots", _ ->
+      raise (ComputationError.EvalError "Cannot calculate pivots of a vector")
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma')
@@ -152,7 +202,10 @@ and eval_expr e sigma =
     eval_assign x v sigma'
   | Binop (op, e1, e2) -> eval_binop op e1 e2 sigma
   | Prob dist -> eval_prob dist sigma
-  | Array arr -> VArray arr, sigma
+  | Array arr -> begin match arr with 
+      | Matrix m -> VArray (Matrix (list_of_float_lists_from_matrix arr)), sigma
+      | _ -> VArray arr, sigma
+    end
   | Command (cmd, e) -> 
     let cmd' = String.lowercase_ascii cmd in
     evaluate_command cmd' e sigma 

@@ -18,3 +18,5 @@ val component_wise_add : float list -> float list -> float list
 val component_wise_subtract : float list -> float list -> float list
 
 val component_wise_multiply : float list -> float list -> float list
+
+val pivot_cols : float list list -> float list

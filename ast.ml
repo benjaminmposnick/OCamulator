@@ -31,11 +31,11 @@ type prob_func =
 
 (** [distribution] is the type of probability distributions. *)
 type distribution =
-  | Binomial of prob_func * int * float * int
-  | Bernoulli of prob_func * float * int
+  | Binomial of prob_func * float * float * float
+  | Bernoulli of prob_func * float * float
   | Uniform of prob_func * float * float * float
-  | Poisson of prob_func * float * int
-  | Geometric of prob_func * float * int
+  | Poisson of prob_func * float * float
+  | Geometric of prob_func * float * float
   | Exponential of prob_func * float * float
   | Normal of prob_func * float * float * float
 

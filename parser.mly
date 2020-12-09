@@ -32,6 +32,7 @@ let vector_as_float_list str sep =
 // Miscellaenous
 %token LPAREN RPAREN CONST_PI EOF BEGIN_CMD
 
+%left ID
 %right EQUALS GT LT GTE LTE ASSIGN DOT MOD
 %left PLUS MINUS
 %left TIMES OVER  
@@ -101,20 +102,26 @@ array_expr :
 			Array (Matrix (num_list))
 		}
 
+prob_input :
+	| i = INT { float_of_int i }
+	| f = FLOAT { f }
+	| CONST_PI { Float.pi }
+	;
+
 prob_expr :
-	| BINOM; fn = prob_func; n = INT; p = FLOAT; k = INT
+	| BINOM; fn = prob_func; n = prob_input; p = prob_input; k = prob_input
 		{ Prob (Binomial (fn, n, p, k)) } 
-	| BERN; fn = prob_func; p = FLOAT; k = INT
+	| BERN; fn = prob_func; p = prob_input; k = prob_input
 		{ Prob (Bernoulli (fn, p, k)) } 
-	| UNIF; fn = prob_func; a = FLOAT; b = FLOAT; x = FLOAT
+	| UNIF; fn = prob_func; a = prob_input; b = prob_input; x = prob_input
 		{ Prob (Uniform (fn, a, b, x)) }
-	| POIS; fn = prob_func; l = FLOAT; k = INT 
+	| POIS; fn = prob_func; l = prob_input; k = prob_input 
 	 	{ Prob (Poisson (fn, l, k)) }
-	| GEO; fn = prob_func; p = FLOAT k = INT
+	| GEO; fn = prob_func; p = prob_input k = prob_input
 		{ Prob (Geometric (fn, p, k)) }
-	| EXP; fn = prob_func; l = FLOAT; x = FLOAT
+	| EXP; fn = prob_func; l = prob_input; x = prob_input
 		{ Prob (Exponential (fn, l, x)) }
-	| NORM; fn = prob_func; m = FLOAT; s = FLOAT; x = FLOAT
+	| NORM; fn = prob_func; m = prob_input; s = prob_input; x = prob_input
 		{ Prob (Normal (fn, m, s, x)) }
 	;
 

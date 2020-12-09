@@ -41,8 +41,9 @@ let handle_syntax_error lexbuf input =
   let invalid_token =
     try Char.escaped (input.[!invalid_token_idx]) with 
     (* Token was not even recognized by lexer *)
-    | Invalid_argument _ -> invalid_token_idx := !invalid_token_idx + 1;
-      Char.escaped (input.[!invalid_token_idx]) in
+    | Invalid_argument _ -> failwith "Handled by lexer"
+    (* invalid_token_idx := !invalid_token_idx - 1; Char.escaped (input.[!invalid_token_idx]) *)
+  in
   let valid_tokens = 
     try String.sub input 0 !invalid_token_idx with
     | Invalid_argument _ -> "" in 
@@ -50,7 +51,7 @@ let handle_syntax_error lexbuf input =
     let num_tokens = (String.length input - !invalid_token_idx - 1) in
     try String.sub input (!invalid_token_idx + 1) num_tokens with
     | Invalid_argument _ -> "" in
-  cprint_newline [red] ("Syntax Error: beginning at character "
+  cprint_newline [red] ("Syntax Error: Illegal syntax starting at character "
                         ^ (string_of_int !invalid_token_idx) ^ " on token \""
                         ^ invalid_token ^ "\"");
   cprint [yellow] valid_tokens;
@@ -69,15 +70,15 @@ let rec event_loop sigma =
       (print_store sigma; event_loop sigma)
     else
       let lexbuf = Lexing.from_string input in
-      (* print_in_color yellow ("Parsed input: " ^ (string_of_input parsed_input)); *)
       let parsed_input = try Some (Parser.prog Lexer.read lexbuf) with
-        | _ -> handle_syntax_error lexbuf input; None in
+        | _ -> try handle_syntax_error lexbuf input; None with | _ -> None; in
       match parsed_input with
       | None -> event_loop sigma
       | Some ast -> 
         let result = try Some (eval_input ast sigma) with
-          | EvalError.UnboundVariable msg -> cprint_newline [red] msg; None
-          | EvalError.TypeError msg -> cprint_newline [red] msg; None in
+          | ComputationError.EvalError msg -> cprint_newline [red] msg; None
+          | ComputationError.TypeError msg -> cprint_newline [red] msg; None 
+          | Failure msg -> cprint_newline [red] msg; None in
         match result with
         | None -> event_loop sigma
         | Some (value, sigma') -> let value_str = string_of_value value in

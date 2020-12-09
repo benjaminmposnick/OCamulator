@@ -1,5 +1,8 @@
 {
 open Parser
+
+let print_error str =
+  ANSITerminal.print_string [ANSITerminal.red] (str ^ "\n")
 }
 
 let white = [' ' '\t' '\n']+
@@ -59,3 +62,6 @@ rule read =
   | matrix { MATRIX (Lexing.lexeme lexbuf)}
   | id { ID (Lexing.lexeme lexbuf) }
   | eof { EOF; }
+  | _ as c
+    { print_error ("Lexing Error: Unrecognized character: \""
+      ^ (Char.escaped c) ^ "\""); EOF }

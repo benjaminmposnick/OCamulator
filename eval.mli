@@ -12,8 +12,8 @@ val eval_expr : Ast.expr -> (string * Ast.value) list ->
   Requires: input is a valid ast *)
   val var_present : Ast.expr -> bool
 
-module EvalError : sig
-    exception UnboundVariable of string
+module ComputationError : sig
+    exception EvalError of string
     exception TypeError of string
 end
 
