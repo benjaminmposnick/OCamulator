@@ -505,13 +505,25 @@ let inverse_tests = let open Inverse in [
       (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 
       (Inverse.inverse ("x") (Binop(Eq, Binop(Mul, Int 4, Var "x"), Int 5 )) )
       Ast.string_of_expr;
+    test "basic inverse for multiplication equation 5 = 4 * x" 
+      (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 
+      (Inverse.inverse ("x") (Binop(Eq, Int 5, Binop(Mul, Int 4, Var "x") )) )
+      Ast.string_of_expr;
     test "basic inverse for division equation x / 4 = 5" 
       (Binop(Eq, Var "x", Binop(Mul, Int 5, Int 4))) 
       (Inverse.inverse ("x") (Binop(Eq, Binop(Div, Var "x", Int 4), Int 5 )) )
       Ast.string_of_expr;
+    test "basic inverse for division equation 5 = x / 4" 
+      (Binop(Eq, Var "x", Binop(Mul, Int 5, Int 4))) 
+      (Inverse.inverse ("x") (Binop(Eq, Int 5,Binop(Div, Var "x", Int 4) )) )
+      Ast.string_of_expr;
     test "basic inverse for division equation 4 / x = 5" 
       (Binop(Eq, Var "x", Binop(Div, Int 4, Int 5))) 
       (Inverse.inverse ("x") (Binop(Eq, Binop(Div, Int 4, Var "x"), Int 5 )) )
+      Ast.string_of_expr;
+    test "basic inverse for division equation 5 = 4 / x" 
+      (Binop(Eq, Var "x", Binop(Div, Int 4, Int 5))) 
+      (Inverse.inverse ("x") (Binop(Eq, Int 5, Binop(Div, Int 4, Var "x"))) )
       Ast.string_of_expr;
     test "basic inverse for division equation y / x = 5" 
       (Binop(Eq,  Var "x", Binop(Div, Var "y", Int 5))) 
