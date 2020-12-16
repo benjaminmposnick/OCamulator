@@ -148,7 +148,7 @@ let eval_binop_btwn_matrix_and_vector op arr1 arr2 sigma =
       RowVector (List.hd (matrix_multiply [vec] mat))
     | VArray (Matrix mat), VArray (ColumnVector vec), Mul ->
       let cvec = List.map (fun elem -> [elem]) vec in
-      ColumnVector (List.hd (matrix_multiply mat cvec))
+      ColumnVector (List.flatten (matrix_multiply mat cvec))
     | VArray (ColumnVector vec), VArray (Matrix mat), Mul ->
       raise (ComputationError.EvalError "Shape error: first argument should be a row vector")
     | VArray (Matrix mat), VArray (RowVector vec), Mul ->

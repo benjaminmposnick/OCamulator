@@ -1,7 +1,7 @@
 open Ast 
 open Eval
 
-(* Define colors for command-line output *)
+(* Define styles for command-line output *)
 let yellow = ANSITerminal.yellow
 let red = ANSITerminal.red
 let blue = ANSITerminal.blue

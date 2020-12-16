@@ -1,12 +1,12 @@
 (************************************************************ 
    Copyright (C) 2020.
    Created by Benjamin Posnick, Matthew Frucht, and Stephen Tse.
-   You may not redistribute this software, distribute any derivatives,
-   or use it for commercial purposes.
  ************************************************************) 
 
 (** Cornell University. CS 3110 Final Project
-    @author Benjamin Posnick (bmp53), Matthew Frucht (msf239), Stephen Tse (st624) *)
+    @author Benjamin Posnick (bmp53),
+            Matthew Frucht (msf239),
+            Stephen Tse (st624) *)
 
 (************************************************************ 
 

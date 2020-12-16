@@ -14,21 +14,26 @@ let transpose = function
           let next_row = map hd lst in
           let submatrix = map tl lst in
           transpose_matrix (next_row::acc) submatrix in
-    transpose_matrix [] mat |> (fun m -> Matrix m)
+    transpose_matrix [] mat
+    |> (fun m -> Matrix m)
 
 let is_symmetric m =
   let open List in
   let n_rows = length m in
   let n_cols = length (hd m) in
-  if n_cols <> n_rows then failwith "Matrix must be square"
+  if n_cols <> n_rows then
+    raise Eval.ComputationError.(EvalError "Matrix must be square")
   else
     let matrix = Matrix m in
     matrix = (transpose matrix)
 
+(** [component_wise_application v1 v2 op] is the result of applying the function
+    [op] component-wise to the elements of vectors [v1] and [v2].
+    Requires: [v1] and [v2] are the same length. *)
 let component_wise_application v1 v2 op =
   try List.map2 op v1 v2 with
   | Invalid_argument _ -> 
-    failwith "Vectors must be of same length"
+    raise Eval.ComputationError.(EvalError "Vectors must be the same length")
 
 let component_wise_add v1 v2 =
   component_wise_application v1 v2 ( +. )
@@ -52,13 +57,15 @@ let matrix_multiply m1 m2 =
   in
   map (fun row -> map (dot_product row) m2') m1
 
-(** [zero_out_entries matrix next_pivot_idx] is [matrix] with all entries 
-    above the pivot zeroed out, i.e. any row with index less than
-    [next_pivot_idx] *)
-let zero_out_entries matrix next_pivot_idx tolerance = 
+(** [zero_out_entries_below_pivot matrix next_pivot_idx tolerance] is [matrix]
+    with all entries below the pivot zeroed out, i.e. any row with index greater
+    than [next_pivot_idx]. Any entry less than [tolerance] is zeroed out to ensure
+    that round-off errors do not lead to more pivots being declared than are
+    truly present. *)
+let zero_out_entries_below_pivot matrix next_pivot_idx tolerance = 
   let open List in
   let pivot_row = nth matrix next_pivot_idx in
-  let rec zero_out_entries_aux acc idx matrix = 
+  let rec zero_out_aux acc idx matrix = 
     match matrix with
     | [] -> rev acc
     | next_row::remaining_rows -> 
@@ -69,18 +76,17 @@ let zero_out_entries matrix next_pivot_idx tolerance =
           let c = ~-.(entry /. pivot) in (* Scale factor for pivot *)
           let scaled_pivot_row = map (fun x -> c *. x) pivot_row in
           let round n = if Float.abs n <= tolerance then 0. else n in
-          let scaled_next_row = map2 (fun x y -> round (x +. y)) scaled_pivot_row next_row in
+          let scaled_next_row =
+            map2 (fun x y -> round (x +. y)) scaled_pivot_row next_row in
           (scaled_next_row::acc)
-        else
-          (next_row::acc)
-      in
-      zero_out_entries_aux acc' (idx + 1) remaining_rows
+        else (next_row::acc) in
+      zero_out_aux acc' (idx + 1) remaining_rows
   in
-  zero_out_entries_aux [] 0 matrix
+  zero_out_aux [] 0 matrix
 
 (** [swap_partial_pivot matrix next_pivot_idx partial_pivot_idx] is [matrix]
     except for the row with number [next_pivot_idx] is swapped with the row with 
-    number [partial_pivot_idx] 
+    number [partial_pivot_idx].
     Requires: [partial_pivot_idx] is the index of a valid pivot *)
 let swap_partial_pivot matrix next_pivot_idx partial_pivot_idx  = 
   let open List in
@@ -92,15 +98,14 @@ let swap_partial_pivot matrix next_pivot_idx partial_pivot_idx  =
       let acc' =
         if idx = next_pivot_idx then partial_pivot_row::acc
         else if idx = partial_pivot_idx then dest_row::acc
-        else next_row::acc
-      in
+        else next_row::acc in
       construct_matrix_after_swap acc' (idx + 1) remaining_rows
   in
   construct_matrix_after_swap [] 0 matrix
 
 (** [partial_pivot_idx col next_pivot_min] is the index of the largest entry in
     absolute value in [col] in a row greater than or equal to [next_pivot_idx]
-    Requires: [col] is a pivot column *)
+    Requires: [col] is a pivot column. *)
 let partial_pivot_idx col next_pivot_min =
   let (|<|) x y = Float.(abs x < abs y) in (* absolute value less than *)
   let rec partial_pivot_idx_aux (abs_max, abs_max_idx) curr_idx col =
@@ -109,8 +114,7 @@ let partial_pivot_idx col next_pivot_min =
     | x::xs ->
       let new_max = 
         if abs_max |<| x && next_pivot_min <= curr_idx then (x, curr_idx)
-        else (abs_max, abs_max_idx)
-      in
+        else (abs_max, abs_max_idx) in
       partial_pivot_idx_aux new_max (curr_idx + 1) xs
   in
   partial_pivot_idx_aux (0., ~-1) 0 col
@@ -133,16 +137,18 @@ let is_pivot_col col next_pivot_idx =
 
 (** [determine_tolerance matrix] is the tolerance for [matrix] that is used
     to determine negligible column elements which can be zeroed-out to reduce
-    roundoff error *)
+    roundoff errors. More specifically, if A = [matrix] and A is m X n, then the
+    tolerance is defined as:
+      max(m, n) * eps * l_inf_norm(A) 
+    where eps is machine epsilon and l_inf_norm is the L-infinity norm. *)
 let determine_tolerance matrix =
   let open List in
   let n_rows = length matrix in
   let n_cols = hd matrix |> length in
   let max_dim = max n_rows n_cols |> Float.of_int in
-  let open Float in
-  let machine_epsilon = epsilon in
+  let machine_epsilon = Float.epsilon in
   let col_sums = map (fold_left ( +. ) 0.) matrix in
-  let abs_col_sums = map (abs) col_sums in
+  let abs_col_sums = map (Float.abs) col_sums in
   let l_inf_norm = fold_left max ~-.1. abs_col_sums in
   max_dim *. machine_epsilon *. l_inf_norm
 
@@ -159,26 +165,30 @@ let matrix_of_column_list col_list =
   | _ -> failwith "Impossible"
 
 (** [row_echelon_form matrix] is [matrix] in echelon form, i.e. the result of
-    the forward phase of Gaussian elimination. 
-    Requires: [matrix] is no smaller than a 2x2 matrix *)
+    the forward phase of Gaussian elimination. The result of this algorithm is
+    deterministic but not unique -- that is, there are infinitely many valid
+    echelon forms of [matrix] but this algorithm will yield the same echelon
+    form if given the same input repeatedly. This implementation uses partial
+    pivoting to reduce round-off errors as well as zeros out any entries that are
+    smaller than [tolerance].
+    Requires: [matrix] is no smaller than a 2x2 matrix and [tolerance] is
+    computed by the function [determine_tolerance] applied to [matrix].  *)
 let row_echelon_form matrix tolerance = 
   let open List in
   let rec row_echelon_form_aux matrix next_pivot_idx acc pivot_col_idxs =
     let row_size = hd matrix |> length in 
-    if row_size = 0 then
-      (matrix_of_column_list acc, pivot_col_idxs)
+    if row_size = 0 then (matrix_of_column_list acc, pivot_col_idxs)
     else
       let next_col = map hd matrix in
-      if not (is_pivot_col next_col next_pivot_idx) then
-        (* Not a pivot column *)
+      if not (is_pivot_col next_col next_pivot_idx) then (* Not a pivot column *)
         let remaining_cols = map tl matrix in 
         let acc' = next_col::acc in
         row_echelon_form_aux remaining_cols next_pivot_idx acc' pivot_col_idxs
-      else
-        (* Is a pivot column *)
+      else (* Is a pivot column *)
         let partial_pivot_idx = partial_pivot_idx next_col next_pivot_idx in
         let matrix' = swap_partial_pivot matrix next_pivot_idx partial_pivot_idx in
-        let matrix'' = zero_out_entries matrix' next_pivot_idx tolerance in
+        let matrix'' =
+          zero_out_entries_below_pivot matrix' next_pivot_idx tolerance in
         let pivot_col = map hd matrix'' in
         let remaining_cols = map tl matrix'' in
         let acc' = pivot_col::acc in
@@ -188,6 +198,28 @@ let row_echelon_form matrix tolerance =
   in
   row_echelon_form_aux matrix 0 [] []
 
+(** [zero_out_entries_above_pivot matrix i j n_cols] uses the pivot located in
+    row [i] and column [j] of [matrix] to zero-out all entries above the 
+    pivot, i.e. any row with index less than [i], as part of the backward phase
+    of Gaussian elimination.
+    Requires: If A = [matrix], then A[[i][j]] is one of the pivots of matrix A.
+*)
+let zero_out_entries_above_pivot matrix i j n_cols = 
+  let pivot = matrix.(i).(j) in
+  let rec loop k =
+    if k = i then ()
+    else
+      let entry = matrix.(k).(j) in
+      let c = ~-.(entry /. pivot) in 
+      for idx = 0 to n_cols - 1 do
+        matrix.(k).(idx) <- (c *. matrix.(i).(idx)) +. matrix.(k).(idx)
+      done;
+      loop (k + 1) in
+  loop 0;
+  for idx = 0 to n_cols - 1 do
+    matrix.(i).(idx) <- ((1. /. pivot) *. matrix.(i).(idx))
+  done; ()
+
 (** [reduced_row_echelon_form matrix pivot_col_idxs] is [matrix] in reduced 
     row echelon form, i.e. the result of the backward phase of Gaussian
     elimination.
@@ -195,49 +227,33 @@ let row_echelon_form matrix tolerance =
     in row echelon form; [pivot_col_idxs] are the indexs of the columns of
     [matrix] that are pivot columns *)
 let reduced_row_echelon_form matrix pivot_col_idxs = 
-  let open List in
-  let n_cols = length (hd matrix) in
-  let n_pivots = length pivot_col_idxs in
+  let n_cols = List.(length (hd matrix)) in
+  let n_pivots = List.length pivot_col_idxs in
   let rec rref_aux matrix next_pivot_row_idx pivot_col_idxs =
-    (* print_endline (string_of_expr (NumArray (Matrix (Array.map Array.to_list matrix |> Array.to_list)))); *)
     match pivot_col_idxs with
     | [] -> matrix 
     | j::remaining_col_idxs -> 
-      let i = next_pivot_row_idx in
-      let pivot = matrix.(i).(j) in
-      let rec loop k =
-        if k = i then ()
-        else
-          let entry = matrix.(k).(j) in
-          let c = ~-.(entry /. pivot) in 
-          for idx = 0 to n_cols - 1 do
-            matrix.(k).(idx) <- (c *. matrix.(i).(idx)) +. matrix.(k).(idx)
-          done;
-          loop (k + 1)
-      in
-      loop 0;
-      for idx = 0 to n_cols - 1 do
-        matrix.(i).(idx) <- ((1. /. pivot) *. matrix.(i).(idx))
-      done;
+      zero_out_entries_above_pivot matrix next_pivot_row_idx j n_cols;
       rref_aux matrix (next_pivot_row_idx - 1) remaining_col_idxs
   in
-  let matrix_array = map Array.of_list matrix |> Array.of_list in
+  let matrix_array = List.map Array.of_list matrix |> Array.of_list in
   let rref_matrix = rref_aux matrix_array (n_pivots - 1) pivot_col_idxs in
-  Array.map Array.to_list rref_matrix
-  |> Array.to_list
+  Array.(map to_list rref_matrix) |> Array.to_list
 
 (** [purify tolerance matrix] is [matrix] except all negative zero entries are
-    converted to zero without the negative sign and any values in the matrix
-    less than [tolerance] are zeroed out. *)
+    converted to zero (i.e. without the negative) sign, any values in the
+    matrix less than or equal to [tolerance] are zeroed out, and all values are
+    expressed with up to four decimal places of precision. *)
 let purify tolerance matrix = 
   let open List in
-  let round x = 
+  let purify_aux x = 
     if Float.abs x <= tolerance then 0.
-    else x
-         |> Printf.sprintf "%.4f"
-         |> float_of_string
-         |> (fun x -> if x = ~-.0. then 0. else x) in
-  map (map round) matrix
+    else 
+      Printf.sprintf "%.4f" x
+      |> float_of_string
+      |> (fun x -> if x = ~-.0. then 0. else x)
+  in
+  map (map purify_aux) matrix
 
 let pivot_cols matrix =
   let tolerance = determine_tolerance matrix in
@@ -247,7 +263,7 @@ let pivot_cols matrix =
 
 let rref matrix =
   let tolerance = determine_tolerance matrix in
-  match row_echelon_form matrix tolerance with
-  | (echelon_form_matrix, pivot_col_idxs) ->
-    reduced_row_echelon_form echelon_form_matrix pivot_col_idxs
-    |> purify tolerance
+  let (echelon_form_matrix, pivot_col_idxs) = 
+    row_echelon_form matrix tolerance in
+  reduced_row_echelon_form echelon_form_matrix pivot_col_idxs
+  |> purify tolerance
