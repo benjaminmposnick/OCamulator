@@ -10,3 +10,13 @@ val is_symmetric : float list list -> bool
 val rref : float list list -> float list list
 
 val matrix_multiply : float list list -> float list list -> float list list
+
+val dot_product : float list -> float list  -> float
+
+val component_wise_add : float list -> float list -> float list
+
+val component_wise_subtract : float list -> float list -> float list
+
+val component_wise_multiply : float list -> float list -> float list
+
+val pivot_cols : float list list -> float list

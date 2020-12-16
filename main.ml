@@ -7,58 +7,87 @@ let red = ANSITerminal.red
 let blue = ANSITerminal.blue
 let green = ANSITerminal.green
 let magenta = ANSITerminal.magenta
+let white = ANSITerminal.white
+let underline = ANSITerminal.Underlined
 
-(** [print_in_color color str] prints [str] followed by a newline character to
-    the terminal styled with [color]. *)
-let print_in_color color str =
-  str ^ "\n" |> ANSITerminal.print_string [color]
+(** [cprint styles str] prints [str] to the terminal using [styles] to format
+    and color the output. *)
+let cprint styles str =
+  ANSITerminal.print_string styles str
 
-(** [print_store sigma] prints the contents of store [sigma] *)
+(** [cprint_newline styles str] prints [str] followed by a newline character to
+    the terminal using [styles] to format and color the output. *)
+let cprint_newline styles str =
+  cprint styles (str ^ "\n")
+
+(** [print_store sigma] prints the contents of store [sigma]. *)
 let print_store sigma =
   let rec print_store_aux = function
     | [] -> ()
     | (x, v)::t ->
-      ANSITerminal.print_string [blue] (x ^ " -> ");
-      print_in_color magenta (string_of_expr v);
+      cprint [blue] (x ^ " -> ");
+      cprint_newline [magenta] (string_of_value v);
       print_store_aux t
   in
-  if List.length sigma = 0 then print_in_color green "No variables in scope"
-  else print_store_aux (List.sort compare sigma)
+  print_store_aux (List.sort compare sigma)
 
-(** [event_loop sigma ans] runs the calculator session, where [sigma] is the
-    current store, which maps variable names to their current value in the
-    session, and [ans] is the result of the last computation. *)
-let rec event_loop sigma ans = 
-  print_string ">> ";
-  let input = read_line () in
-  let () =
-    if String.lowercase_ascii input = "quit" then 
-      print_in_color blue "Goodbye! Peace, love, and 3110."
-    else if String.lowercase_ascii input = "scope" then 
-      (print_store sigma; event_loop sigma ans)
-    else
-      let (ans, sigma') =
-        try
-          let parsed_input = parse input in
-          string_of_input parsed_input
-          |> ( ^ ) "Parsed input: " 
-          |> print_in_color yellow;
-          let (result, sigma') = eval_input parsed_input sigma ans in
-          string_of_expr result
-          |> ( ^ )  "==> "
-          |> print_in_color green;
-          (result, sigma')
-        with 
-        | Parser.Error -> print_in_color red "Invalid input"; (ans, sigma)
-        | Not_found -> print_in_color red "Variable is not in scope"; (ans, sigma)
-        | e -> print_in_color red "An error occurred during evaluation"; (ans, sigma)
-      in
-      event_loop sigma' ans
+(** [handle_syntax_error lexbuf input] determines the token in [input] where
+    the syntax error occurred during lexing and prints a helpful error message
+    using the information in [lexbuf] to the terminal indicating the location
+    of the error. *)
+let handle_syntax_error lexbuf input =
+  let pos = lexbuf.Lexing.lex_curr_p in
+  let invalid_token_idx = ref (pos.Lexing.pos_cnum - 1) in
+  let invalid_token =
+    try Char.escaped (input.[!invalid_token_idx]) with 
+    (* Token was not even recognized by lexer *)
+    | Invalid_argument _ -> failwith "Handled by lexer"
+    (* invalid_token_idx := !invalid_token_idx - 1; Char.escaped (input.[!invalid_token_idx]) *)
   in
+  let valid_tokens = 
+    try String.sub input 0 !invalid_token_idx with
+    | Invalid_argument _ -> "" in 
+  let unlexed_tokens =
+    let num_tokens = (String.length input - !invalid_token_idx - 1) in
+    try String.sub input (!invalid_token_idx + 1) num_tokens with
+    | Invalid_argument _ -> "" in
+  cprint_newline [red] ("Syntax Error: Illegal syntax starting at character "
+                        ^ (string_of_int !invalid_token_idx) ^ " on token \""
+                        ^ invalid_token ^ "\"");
+  cprint [yellow] valid_tokens;
+  cprint [red; underline] invalid_token;
+  cprint_newline [yellow] unlexed_tokens
+
+(** [event_loop sigma] runs the calculator session, where [sigma] is the
+    current store, which maps variable names to their current value in this
+    session. *)
+let rec event_loop sigma = 
+  cprint [white] ">> ";
+  let input = read_line () in begin
+    if String.lowercase_ascii input = "#quit" then 
+      cprint_newline [blue] "Goodbye! Peace, love, and 3110."
+    else if String.lowercase_ascii input = "#state" then 
+      (print_store sigma; event_loop sigma)
+    else
+      let lexbuf = Lexing.from_string input in
+      let parsed_input = try Some (Parser.prog Lexer.read lexbuf) with
+        | _ -> try handle_syntax_error lexbuf input; None with | _ -> None; in
+      match parsed_input with
+      | None -> event_loop sigma
+      | Some ast -> 
+        let result = try Some (eval_input ast sigma) with
+          | ComputationError.EvalError msg -> cprint_newline [red] msg; None
+          | ComputationError.TypeError msg -> cprint_newline [red] msg; None 
+          | Failure msg -> cprint_newline [red] msg; None in
+        match result with
+        | None -> event_loop sigma
+        | Some (value, sigma') -> let value_str = string_of_value value in
+          cprint_newline [green] ("==> " ^ (value_str)); event_loop sigma'
+  end;
   exit 0
 
 let main () =
-  print_in_color ANSITerminal.blue "Welcome to the OCamulator!";
-  event_loop [] (Float 0.)
+  cprint_newline [blue] "Welcome to the OCamulator!";
+  event_loop [("ans", VFloat 0.)]
 
 let () = main ()

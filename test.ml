@@ -1,381 +1,369 @@
 open OUnit2
 open Ast
-open Eval
 
 (** [test name expected_output fn_output print_fn] is an OUnit test case named
     [name] that asserts equality between [expected_output] and [fn_output].
-    [print_fn] is used to print the inputs when the assertion is false. *)
+    [print_fn] is used to print the inputs if the assertion is false. *)
 let test name expected_output fn_output print_fn =
   name >:: (fun _ -> assert_equal expected_output fn_output ~printer:print_fn)
 
+(** [parse str] is the abstract syntax tree that results from lexing and
+    parsing [str]. *)
+let parse str =
+  let lexbuf = Lexing.from_string str in
+  Parser.prog Lexer.read lexbuf
+
 (** [parse_test name expected_output input] is an OUnit test case named
     [name] that asserts equality between [expected_output] and the expression 
-    derived from the result of [Eval.parse input].  *)
+    resulting from [parse input].  *)
 let parse_test name expected_output input =
-  let parsed_input = Eval.parse input in
-  let create_parse_test expr =
-    test name expected_output expr Ast.string_of_expr in
-  match parsed_input with
-  | Command (_, e) -> create_parse_test e
-  | Expression e -> create_parse_test e
+  let parsed_input = parse input in
+  test name expected_output parsed_input Ast.string_of_expr 
 
-let parse_tests = let open Ast in [
-    (* Var tests *)
-    parse_test "variable 1 charcter name" (Var "x") "x";
-    parse_test "variable 2 charcter name" (Var "xi") "xi";
-    parse_test "variable multi-charcter name" (Var "delta") "delta";
+let parse_tests = [
+  (* Var tests *)
+  parse_test "variable 1 charcter name" (Var "x") "x";
+  parse_test "variable 2 charcter name" (Var "xi") "xi";
+  parse_test "variable multi-charcter name" (Var "delta") "delta";
 
-    (* Int tests *)
-    parse_test "one digit int" (Int 1) "1";
-    parse_test "two digit int" (Int 10) "10";
-    parse_test "three digit int" (Int 100) "100";
-    parse_test "one digit negative int" (Int ~-1) "-1";
-    parse_test "two digit negative int" (Int ~-10) "-10";
-    parse_test "three digit negative int" (Int ~-100) "-100";
+  (* Int tests *)
+  parse_test "one digit int" (Int 1) "1";
+  parse_test "two digit int" (Int 10) "10";
+  parse_test "three digit int" (Int 100) "100";
+  parse_test "one digit negative int" (Int ~-1) "-1";
+  parse_test "two digit negative int" (Int ~-10) "-10";
+  parse_test "three digit negative int" (Int ~-100) "-100";
 
-    (* Float tests *)
-    parse_test "1 with one decimal place" (Float 1.0) "1.0";
-    parse_test "1 with two decimal places" (Float 1.0) "1.00";
-    parse_test "10 with one decimal place" (Float 10.0) "10.0";
-    parse_test "10 with two decimal places" (Float 10.0) "10.00";
-    parse_test "100 with one decimal place" (Float 100.0) "100.0";
-    parse_test "100 with two decimal places" (Float 100.0) "100.00";
-    parse_test "float 0.1 with leading zero" (Float 0.1) "0.1";
-    parse_test "float 0.1 without leading zero" (Float 0.1) ".1";
-    parse_test "float 0.1 with trailing zero" (Float 0.1) "0.10";
-    parse_test "float 0.01 with leading zero" (Float 0.01) "0.01";
-    parse_test "float 0.01 without leading zero" (Float 0.01) ".01";
-    parse_test "float 0.01 with trailing zero" (Float 0.01) "0.010";
+  (* Float tests *)
+  parse_test "1 with one decimal place" (Float 1.0) "1.0";
+  parse_test "1 with two decimal places" (Float 1.0) "1.00";
+  parse_test "10 with one decimal place" (Float 10.0) "10.0";
+  parse_test "10 with two decimal places" (Float 10.0) "10.00";
+  parse_test "100 with one decimal place" (Float 100.0) "100.0";
+  parse_test "100 with two decimal places" (Float 100.0) "100.00";
+  parse_test "float 0.1 with leading zero" (Float 0.1) "0.1";
+  parse_test "float 0.1 without leading zero" (Float 0.1) ".1";
+  parse_test "float 0.1 with trailing zero" (Float 0.1) "0.10";
+  parse_test "float 0.01 with leading zero" (Float 0.01) "0.01";
+  parse_test "float 0.01 without leading zero" (Float 0.01) ".01";
+  parse_test "float 0.01 with trailing zero" (Float 0.01) "0.010";
 
-    parse_test "-1 with one decimal place" (Float ~-.1.0) "-1.0";
-    parse_test "-1 with two decimal places" (Float ~-.1.0) "-1.00";
-    parse_test "-10 with one decimal place" (Float ~-.10.0) "-10.0";
-    parse_test "-10 with two decimal places" (Float ~-.10.0) "-10.00";
-    parse_test "-100 with one decimal place" (Float ~-.100.0) "-100.0";
-    parse_test "-100 with two decimal places" (Float ~-.100.0) "-100.00";
-    parse_test "float -0.1 with leading zero" (Float ~-.0.1) "-0.1";
-    parse_test "float -0.1 without leading zero" (Float ~-.0.1) "-.1";
-    parse_test "float -0.1 with trailing zero" (Float ~-.0.1) "-0.10";
-    parse_test "float -0.01 with leading zero" (Float ~-.0.01) "-0.01";
-    parse_test "float -0.01 without leading zero" (Float ~-.0.01) "-.01";
-    parse_test "float -0.01 with trailing zero" (Float ~-.0.01) "-0.010";
+  parse_test "-1 with one decimal place" (Float ~-.1.0) "-1.0";
+  parse_test "-1 with two decimal places" (Float ~-.1.0) "-1.00";
+  parse_test "-10 with one decimal place" (Float ~-.10.0) "-10.0";
+  parse_test "-10 with two decimal places" (Float ~-.10.0) "-10.00";
+  parse_test "-100 with one decimal place" (Float ~-.100.0) "-100.0";
+  parse_test "-100 with two decimal places" (Float ~-.100.0) "-100.00";
+  parse_test "float -0.1 with leading zero" (Float ~-.0.1) "-0.1";
+  parse_test "float -0.1 without leading zero" (Float ~-.0.1) "-.1";
+  parse_test "float -0.1 with trailing zero" (Float ~-.0.1) "-0.10";
+  parse_test "float -0.01 with leading zero" (Float ~-.0.01) "-0.01";
+  parse_test "float -0.01 without leading zero" (Float ~-.0.01) "-.01";
+  parse_test "float -0.01 with trailing zero" (Float ~-.0.01) "-0.010";
 
-    (* Space tests *)
-    parse_test "Space left of operator" (Binop (Add, Int 1, Int 2)) "1 +2";
-    parse_test "Space right of operator " (Binop (Add, Int 1, Int 2)) "1+ 2";
-    parse_test "Space both sides of operator " (Binop (Add, Int 1, Int 2)) "1 + 2";
+  (* Space tests *)
+  parse_test "Space left of operator" (Binop (Add, Int 1, Int 2)) "1 +2";
+  parse_test "Space right of operator " (Binop (Add, Int 1, Int 2)) "1+ 2";
+  parse_test "Space both sides of operator "
+    (Binop (Add, Int 1, Int 2)) "1 + 2";
 
-    (* Add tests *)
-    parse_test "Add two Ints" (Binop (Add, Int 1, Int 2)) "1 + 2";
-    parse_test "Add two Floats" (Binop (Add, Float 1., Float 2.)) "1.0 + 2.0";
-    parse_test "Add two Vars" (Binop (Add, Var "x", Var "y")) "x + y";
-    parse_test "Add one Int and one Float" (Binop (Add, Int 1, Float 2.)) "1 + 2.0";
-    parse_test "Add one Int and one Var" (Binop (Add, Int 1, Var "x")) "1 + x";
-    parse_test "Add one Float and one Var" (Binop (Add, Float 1.0, Var "x")) "1.0 + x";
+  (* Add tests *)
+  parse_test "Add two Ints" (Binop (Add, Int 1, Int 2)) "1 + 2";
+  parse_test "Add two Floats" (Binop (Add, Float 1., Float 2.)) "1.0 + 2.0";
+  parse_test "Add two Vars" (Binop (Add, Var "x", Var "y")) "x + y";
+  parse_test "Add one Int and one Float"
+    (Binop (Add, Int 1, Float 2.)) "1 + 2.0";
+  parse_test "Add one Int and one Var" (Binop (Add, Int 1, Var "x")) "1 + x";
+  parse_test "Add one Float and one Var"
+    (Binop (Add, Float 1.0, Var "x")) "1.0 + x";
 
-    parse_test "Add an Int and Binop" (Binop (Add, Binop (Add, Int 1, Int 2), Int 3)) "1 + 2 + 3";
-    parse_test "Add an Int and Binop, forced right assoc" (Binop (Add, Int 1, Binop (Add, Int 2, Int 3))) "1 + (2 + 3)";
-    parse_test "Add an Float and Binop" (Binop (Add, Float 1.0, Binop (Add, Int 2, Int 3))) "1.0 + (2 + 3)";
-    parse_test "Add an Var and Binop" (Binop (Add, Var "x", Binop (Add, Int 2, Int 3))) "x + (2 + 3)";
-    parse_test "Add two Binops" (Binop (Add, Binop (Add, Int 2, Int 3), Binop (Add, Int 2, Int 3))) "(2 + 3) + (2 + 3)";
-    parse_test "Add three Binops" (Binop (Add, Binop (Add, Binop (Add, Int 2, Int 3), Int 2), Int 3)) "2 + 3 + 2 + 3";
+  parse_test "Add an Int and Binop"
+    (Binop (Add, Binop (Add, Int 1, Int 2), Int 3)) "1 + 2 + 3";
+  parse_test "Add an Int and Binop, forced right assoc"
+    (Binop (Add, Int 1, Binop (Add, Int 2, Int 3))) "1 + (2 + 3)";
+  parse_test "Add an Float and Binop"
+    (Binop (Add, Float 1.0, Binop (Add, Int 2, Int 3))) "1.0 + (2 + 3)";
+  parse_test "Add an Var and Binop"
+    (Binop (Add, Var "x", Binop (Add, Int 2, Int 3))) "x + (2 + 3)";
+  parse_test "Add two Binops"
+    (Binop (Add, Binop (Add, Int 2, Int 3), Binop (Add, Int 2, Int 3)))
+    "(2 + 3) + (2 + 3)";
+  parse_test "Add three Binops"
+    (Binop (Add, Binop (Add, Binop (Add, Int 2, Int 3), Int 2), Int 3))
+    "2 + 3 + 2 + 3";
 
-    parse_test "Add - and + Ints" (Binop (Add, Int ~-1, Int 2)) "-1 + 2";
-    parse_test "Add + and - Ints" (Binop (Add, Int 1, Int ~-2)) "1 + -2";
-    parse_test "Add + and - Ints with parens" (Binop (Add, Int 1, Int ~-2)) "1 + (-2)";
-    parse_test "Add two - Ints" (Binop (Add, Int ~-1, Int ~-2)) "-1 + -2";
-    parse_test "Add + and - Ints with parens" (Binop (Add, Int ~-1, Int ~-2)) "(-1) + (-2)";
+  parse_test "Add - and + Ints" (Binop (Add, Int ~-1, Int 2)) "-1 + 2";
+  parse_test "Add + and - Ints" (Binop (Add, Int 1, Int ~-2)) "1 + -2";
+  parse_test "Add + and - Ints with parens"
+    (Binop (Add, Int 1, Int ~-2)) "1 + (-2)";
+  parse_test "Add two - Ints" (Binop (Add, Int ~-1, Int ~-2)) "-1 + -2";
+  parse_test "Add + and - Ints with parens"
+    (Binop (Add, Int ~-1, Int ~-2)) "(-1) + (-2)";
 
-    parse_test "Add - and + Floats" (Binop (Add, Float ~-.1., Float 2.)) "-1.0 + 2.0";
-    parse_test "Add + and - Floats" (Binop (Add, Float 1., Float ~-.2.)) "1.0 + -2.0";
-    parse_test "Add + and - Floats with parens" (Binop (Add, Float 1., Float ~-.2.)) "1.0 + (-2.0)";
-    parse_test "Add two - Floats" (Binop (Add, Float ~-.1., Float ~-.2.)) "-1.0 + -2.0";
-    parse_test "Add + and - Floats with parens" (Binop (Add, Float ~-.1., Float ~-.2.)) "(-1.0) + (-2.0)";
+  parse_test "Add - and + Floats"
+    (Binop (Add, Float ~-.1., Float 2.)) "-1.0 + 2.0";
+  parse_test "Add + and - Floats"
+    (Binop (Add, Float 1., Float ~-.2.)) "1.0 + -2.0";
+  parse_test "Add + and - Floats with parens"
+    (Binop (Add, Float 1., Float ~-.2.)) "1.0 + (-2.0)";
+  parse_test "Add two - Floats"
+    (Binop (Add, Float ~-.1., Float ~-.2.)) "-1.0 + -2.0";
+  parse_test "Add + and - Floats with parens"
+    (Binop (Add, Float ~-.1., Float ~-.2.)) "(-1.0) + (-2.0)";
 
-    (* Sub tests *)
-    parse_test "Subtract two Ints" (Binop (Sub, Int 1, Int 2)) "1 - 2";
-    parse_test "Subtract two Floats" (Binop (Sub, Float 1., Float 2.)) "1.0 - 2.0";
-    parse_test "Subtract two Vars" (Binop (Sub, Var "x", Var "y")) "x - y";
-    parse_test "Subtract two Binops" (Binop (Sub, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "(x + y) - (a + b)";
-    parse_test "Subtract one Int and one Float" (Binop (Sub, Int 1, Float 2.)) "1 - 2.0";
-    parse_test "Subtract one Int and one Var" (Binop (Sub, Int 1, Var "x")) "1 - x";
-    parse_test "Subtract one Float and one Var" (Binop (Sub, Float 1.0, Var "x")) "1.0 - x";
+  (* Sub tests *)
+  parse_test "Subtract two Ints"
+    (Binop (Sub, Int 1, Int 2)) "1 - 2";
+  parse_test "Subtract two Floats"
+    (Binop (Sub, Float 1., Float 2.)) "1.0 - 2.0";
+  parse_test "Subtract two Vars"
+    (Binop (Sub, Var "x", Var "y")) "x - y";
+  parse_test "Subtract two Binops"
+    (Binop (Sub, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "(x + y) - (a + b)";
+  parse_test "Subtract one Int and one Float"
+    (Binop (Sub, Int 1, Float 2.)) "1 - 2.0";
+  parse_test "Subtract one Int and one Var"
+    (Binop (Sub, Int 1, Var "x")) "1 - x";
+  parse_test "Subtract one Float and one Var"
+    (Binop (Sub, Float 1.0, Var "x")) "1.0 - x";
 
-    parse_test "Subtract - and + Ints" (Binop (Sub, Int ~-1, Int 2)) "-1 - 2";
-    parse_test "Subtract + and - Ints" (Binop (Sub, Int 1, Int ~-2)) "1 - -2";
-    parse_test "Subtract + and - Ints with parens" (Binop (Sub, Int 1, Int ~-2)) "1 - (-2)";
-    parse_test "Subtract two - Ints" (Binop (Sub, Int ~-1, Int ~-2)) "-1 - -2";
-    parse_test "Subtract + and - Ints with parens" (Binop (Sub, Int ~-1, Int ~-2)) "(-1) - (-2)";
+  parse_test "Subtract - and + Ints" (Binop (Sub, Int ~-1, Int 2)) "-1 - 2";
+  parse_test "Subtract + and - Ints" (Binop (Sub, Int 1, Int ~-2)) "1 - -2";
+  parse_test "Subtract + and - Ints with parens"
+    (Binop (Sub, Int 1, Int ~-2)) "1 - (-2)";
+  parse_test "Subtract two - Ints" (Binop (Sub, Int ~-1, Int ~-2)) "-1 - -2";
+  parse_test "Subtract + and - Ints with parens"
+    (Binop (Sub, Int ~-1, Int ~-2)) "(-1) - (-2)";
 
-    parse_test "Subtract - and + Floats" (Binop (Sub, Float ~-.1., Float 2.)) "-1.0 - 2.0";
-    parse_test "Subtract + and - Floats" (Binop (Sub, Float 1., Float ~-.2.)) "1.0 - -2.0";
-    parse_test "Subtract + and - Floats with parens" (Binop (Sub, Float 1., Float ~-.2.)) "1.0 - (-2.0)";
-    parse_test "Subtract two - Floats" (Binop (Sub, Float ~-.1., Float ~-.2.)) "-1.0 - -2.0";
-    parse_test "Subtract + and - Floats with parens" (Binop (Sub, Float ~-.1., Float ~-.2.)) "(-1.0) - (-2.0)";
+  parse_test "Subtract - and + Floats"
+    (Binop (Sub, Float ~-.1., Float 2.)) "-1.0 - 2.0";
+  parse_test "Subtract + and - Floats"
+    (Binop (Sub, Float 1., Float ~-.2.)) "1.0 - -2.0";
+  parse_test "Subtract + and - Floats with parens"
+    (Binop (Sub, Float 1., Float ~-.2.)) "1.0 - (-2.0)";
+  parse_test "Subtract two - Floats"
+    (Binop (Sub, Float ~-.1., Float ~-.2.)) "-1.0 - -2.0";
+  parse_test "Subtract + and - Floats with parens"
+    (Binop (Sub, Float ~-.1., Float ~-.2.)) "(-1.0) - (-2.0)";
 
-    (* Mul tests *)
-    parse_test "Multiply two Ints" (Binop (Mul, Int 1, Int 2)) "1 * 2";
-    parse_test "Multiply two Floats" (Binop (Mul, Float 1., Float 2.)) "1.0 * 2.0";
-    parse_test "Multiply two Vars" (Binop (Mul, Var "x", Var "y")) "x * y";
-    parse_test "Multiply two Binops" (Binop (Mul, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "(x + y) * (a + b)";
-    parse_test "Multiply one Int and one Float" (Binop (Mul, Int 1, Float 2.)) "1 * 2.0";
-    parse_test "Multiply one Int and one Var" (Binop (Mul, Int 1, Var "x")) "1 * x";
-    parse_test "Multiply one Float and one Var" (Binop (Mul, Float 1.0, Var "x")) "1.0 * x";
-    parse_test "Multiply one Int and one Var shortcut" (Binop (Mul, Int 2, Var "x")) "2x";
-    parse_test "Multiply one Float and one Var shortcut" (Binop (Mul, Float 2.0, Var "x")) "2.0x";
-    parse_test "Multiply one - Int and one Var shortcut" (Binop (Mul, Int ~-2, Var "x")) "-2x";
-    parse_test "Multiply one - Float and one Var shortcut" (Binop (Mul, Float ~-.2.0, Var "x")) "-2.0x";
+  (* Mul tests *)
+  parse_test "Multiply two Ints" (Binop (Mul, Int 1, Int 2)) "1 * 2";
+  parse_test "Multiply two Floats" (Binop (Mul, Float 1., Float 2.)) "1.0 * 2.0";
+  parse_test "Multiply two Vars" (Binop (Mul, Var "x", Var "y")) "x * y";
+  parse_test "Multiply two Binops"
+    (Binop (Mul, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "(x + y) * (a + b)";
+  parse_test "Multiply one Int and one Float"
+    (Binop (Mul, Int 1, Float 2.)) "1 * 2.0";
+  parse_test "Multiply one Int and one Var"
+    (Binop (Mul, Int 1, Var "x")) "1 * x";
+  parse_test "Multiply one Float and one Var"
+    (Binop (Mul, Float 1.0, Var "x")) "1.0 * x";
+  parse_test "Multiply one Int and one Var shortcut"
+    (Binop (Mul, Int 2, Var "x")) "2x";
+  parse_test "Multiply one Float and one Var shortcut"
+    (Binop (Mul, Float 2.0, Var "x")) "2.0x";
+  parse_test "Multiply one - Int and one Var shortcut"
+    (Binop (Mul, Int ~-2, Var "x")) "-2x";
+  parse_test "Multiply one - Float and one Var shortcut"
+    (Binop (Mul, Float ~-.2.0, Var "x")) "-2.0x";
 
-    (* Div tests *)
-    parse_test "Divide two Ints" (Binop (Div, Int 1, Int 2)) "1 / 2";
-    parse_test "Divide two Floats" (Binop (Div, Float 1., Float 2.)) "1.0 / 2.0";
-    parse_test "Divide two Vars" (Binop (Div, Var "x", Var "y")) "x / y";
-    parse_test "Divide two Binops" (Binop (Div, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "(x + y) / (a + b)";
-    parse_test "Divide one Int and one Float" (Binop (Div, Int 1, Float 2.)) "1 / 2.0";
-    parse_test "Divide one Int and one Var" (Binop (Div, Int 1, Var "x")) "1 / x";
-    parse_test "Divide one Float and one Var" (Binop (Div, Float 1.0, Var "x")) "1.0 /  x";
+  (* Div tests *)
+  parse_test "Divide two Ints" (Binop (Div, Int 1, Int 2)) "1 / 2";
+  parse_test "Divide two Floats" (Binop (Div, Float 1., Float 2.)) "1.0 / 2.0";
+  parse_test "Divide two Vars" (Binop (Div, Var "x", Var "y")) "x / y";
+  parse_test "Divide two Binops"
+    (Binop (Div, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "(x + y) / (a + b)";
+  parse_test "Divide one Int and one Float"
+    (Binop (Div, Int 1, Float 2.)) "1 / 2.0";
+  parse_test "Divide one Int and one Var"(Binop (Div, Int 1, Var "x")) "1 / x";
+  parse_test "Divide one Float and one Var"
+    (Binop (Div, Float 1.0, Var "x")) "1.0 / x";
 
-    (* Mod tests *)
+  (* Pow tests *)
+  parse_test "Exponentiate two Ints" (Binop (Pow, Int 1, Int 2)) "1 ^ 2";
+  parse_test "Exponentiate two Floats"
+    (Binop (Pow, Float 1., Float 2.)) "1.0 ^ 2.0";
+  parse_test "Exponentiate two Vars" (Binop (Pow, Var "x", Var "y")) "x ^ y";
+  parse_test "Exponentiate two Binops"
+    (Binop (Pow, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "(x + y) ^ (a + b)";
+  parse_test "Exponentiate one Int and one Float"
+    (Binop (Pow, Int 1, Float 2.)) "1 ^ 2.0";
+  parse_test "Exponentiate one Float and one Int"
+    (Binop (Pow, Float 2., Int 1)) "2.0 ^ 1";
+  parse_test "Exponentiate one Int and one Var"
+    (Binop (Pow, Int 1, Var "x")) "1 ^ x";
+  parse_test "Exponentiate one Var and one Int"
+    (Binop (Pow, Var "x", Int 1)) "x ^ 1";
+  parse_test "Exponentiate one Float and one Var"
+    (Binop (Pow, Float 1.0, Var "x")) "1.0 ^ x";
+  parse_test "Exponentiate one Var and one Float"
+    (Binop (Pow, Var "x", Float 1.0)) "x ^ 1.0";
 
-    (* Pow tests *)
-    parse_test "Exponentiate two Ints" (Binop (Pow, Int 1, Int 2)) "1 ^ 2";
-    parse_test "Exponentiate two Floats" (Binop (Pow, Float 1., Float 2.)) "1.0 ^ 2.0";
-    parse_test "Exponentiate two Vars" (Binop (Pow, Var "x", Var "y")) "x ^ y";
-    parse_test "Exponentiate two Binops" (Binop (Pow, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "(x + y) ^ (a + b)";
-    parse_test "Exponentiate one Int and one Float" (Binop (Pow, Int 1, Float 2.)) "1 ^ 2.0";
-    parse_test "Exponentiate one Float and one Int" (Binop (Pow, Float 2., Int 1)) "2.0 ^ 1";
-    parse_test "Exponentiate one Int and one Var" (Binop (Pow, Int 1, Var "x")) "1 ^ x";
-    parse_test "Exponentiate one Var and one Int" (Binop (Pow, Var "x", Int 1)) "x ^ 1";
-    parse_test "Exponentiate one Float and one Var" (Binop (Pow, Float 1.0, Var "x")) "1.0 ^ x";
-    parse_test "Exponentiate one Var and one Float" (Binop (Pow, Var "x", Float 1.0)) "x ^ 1.0";
+  (* Eq tests *)
+  parse_test "Equation of Ints" (Binop (Eq, Int 1, Int 1)) "1 = 1";
+  parse_test "Equation of Floats" (Binop (Eq, Float 1., Float 1.)) "1.0 = 1.0";
+  parse_test "Equation of Vars" (Binop (Eq, Var "x", Var "y")) "x = y";
+  parse_test "Equation two Binops"
+    (Binop (Eq, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "x + y = a + b";
+  parse_test "Equation of Int and Float" (Binop (Eq, Int 1, Float 1.)) "1 = 1.0";
+  parse_test "Equation of Int and Var" (Binop (Eq, Var "x", Int 1)) "x = 1";
+  parse_test "Equation of Float and Var"
+    (Binop (Eq, Var "x", Float 1.)) "x = 1.0";
 
-    (* Eq tests *)
-    parse_test "Equation of Ints" (Binop (Eq, Int 1, Int 1)) "1 = 1";
-    parse_test "Equation of Floats" (Binop (Eq, Float 1., Float 1.)) "1.0 = 1.0";
-    parse_test "Equation of Vars" (Binop (Eq, Var "x", Var "y")) "x = y";
-    parse_test "Equation two Binops" (Binop (Eq, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y = a + b";
-    parse_test "Equation of Int and Float" (Binop (Eq, Int 1, Float 1.)) "1 = 1.0";
-    parse_test "Equation of Int and Var" (Binop (Eq, Var "x", Int 1)) "x = 1";
-    parse_test "Equation of Float and Var" (Binop (Eq, Var "x", Float 1.)) "x = 1.0";
+  (* GT tests *)
+  parse_test "> inequality of Ints" (Binop (GT, Int 2, Int 1)) "2 > 1";
+  parse_test "> inequality of Floats"
+    (Binop (GT, Float 2., Float 1.)) "2.0 > 1.0";
+  parse_test "> inequality of Vars" (Binop (GT, Var "x", Var "y")) "x > y";
+  parse_test "> inequality  two Binops"
+    (Binop (GT, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "x + y > a + b";
+  parse_test "> inequality of Int and Float"
+    (Binop (GT, Int 2, Float 1.)) "2 > 1.0";
+  parse_test "> inequality of Int and Var" (Binop (GT, Var "x", Int 1)) "x > 1";
+  parse_test "> inequality of Float and Var"
+    (Binop (GT, Var "x", Float 1.)) "x > 1.0";
 
-    (* GT tests *)
-    parse_test "> inequality of Ints" (Binop (GT, Int 2, Int 1)) "2 > 1";
-    parse_test "> inequality of Floats" (Binop (GT, Float 2., Float 1.)) "2.0 > 1.0";
-    parse_test "> inequality of Vars" (Binop (GT, Var "x", Var "y")) "x > y";
-    parse_test "> inequality  two Binops" (Binop (GT, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y > a + b";
-    parse_test "> inequality of Int and Float" (Binop (GT, Int 2, Float 1.)) "2 > 1.0";
-    parse_test "> inequality of Int and Var" (Binop (GT, Var "x", Int 1)) "x > 1";
-    parse_test "> inequality of Float and Var" (Binop (GT, Var "x", Float 1.)) "x > 1.0";
+  (* GTE tests *)
+  parse_test ">= inequality of Ints" (Binop (GTE, Int 2, Int 1)) "2 >= 1";
+  parse_test ">= inequality of Floats"
+    (Binop (GTE, Float 2., Float 1.)) "2.0 >= 1.0";
+  parse_test ">= inequality of Vars" (Binop (GTE, Var "x", Var "y")) "x >= y";
+  parse_test ">= inequality two Binops"
+    (Binop (GTE, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "x + y >= a + b";
+  parse_test ">= inequality of Int and Float"
+    (Binop (GTE, Int 2, Float 1.)) "2 >= 1.0";
+  parse_test ">= inequality of Int and Var"
+    (Binop (GTE, Var "x", Int 1)) "x >= 1";
+  parse_test ">= inequality of Float and Var"
+    (Binop (GTE, Var "x", Float 1.)) "x >= 1.0";
 
-    (* GTE tests *)
-    parse_test ">= inequality of Ints" (Binop (GTE, Int 2, Int 1)) "2 >= 1";
-    parse_test ">= inequality of Floats" (Binop (GTE, Float 2., Float 1.)) "2.0 >= 1.0";
-    parse_test ">= inequality of Vars" (Binop (GTE, Var "x", Var "y")) "x >= y";
-    parse_test ">= inequality two Binops" (Binop (GTE, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y >= a + b";
-    parse_test ">= inequality of Int and Float" (Binop (GTE, Int 2, Float 1.)) "2 >= 1.0";
-    parse_test ">= inequality of Int and Var" (Binop (GTE, Var "x", Int 1)) "x >= 1";
-    parse_test ">= inequality of Float and Var" (Binop (GTE, Var "x", Float 1.)) "x >= 1.0";
+  (* LT tests *)
+  parse_test "< inequality of Ints" (Binop (LT, Int 1, Int 2)) "1 < 2";
+  parse_test "< inequality of Floats"
+    (Binop (LT, Float 1., Float 2.)) "1.0 < 2.0";
+  parse_test "< inequality of Vars" (Binop (LT, Var "x", Var "y")) "x < y";
+  parse_test "< inequality two Binops"
+    (Binop (LT, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y < a + b";
+  parse_test "< inequality of Int and Float"
+    (Binop (LT, Float 1., Int 2)) "1.0 < 2";
+  parse_test "< inequality of Int and Var" (Binop (LT, Var "x", Int 1)) "x < 1";
+  parse_test "< inequality of Float and Var"
+    (Binop (LT, Var "x", Float 1.)) "x < 1.0";
 
-    (* LT tests *)
-    parse_test "< inequality of Ints" (Binop (LT, Int 1, Int 2)) "1 < 2";
-    parse_test "< inequality of Floats" (Binop (LT, Float 1., Float 2.)) "1.0 < 2.0";
-    parse_test "< inequality of Vars" (Binop (LT, Var "x", Var "y")) "x < y";
-    parse_test "< inequality two Binops" (Binop (LT, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y < a + b";
-    parse_test "< inequality of Int and Float" (Binop (LT, Float 1., Int 2)) "1.0 < 2";
-    parse_test "< inequality of Int and Var" (Binop (LT, Var "x", Int 1)) "x < 1";
-    parse_test "< inequality of Float and Var" (Binop (LT, Var "x", Float 1.)) "x < 1.0";
+  (* LTE tests *)
+  parse_test "<= inequality of Ints" (Binop (LTE, Int 1, Int 2)) "1 <= 2";
+  parse_test "<= inequality of Floats"
+    (Binop (LTE, Float 1., Float 2.)) "1.0 <= 2.0";
+  parse_test "<= inequality of Vars" (Binop (LTE, Var "x", Var "y")) "x <= y";
+  parse_test "<= inequality two Binops"
+    (Binop (LTE, Binop(Add, Var "x", Var "y"),
+            Binop(Add, Var "a", Var "b"))) "x + y <= a + b";
+  parse_test "<= inequality of Int and Float"
+    (Binop (LTE, Float 1., Int 2)) "1.0 <= 2";
+  parse_test "<= inequality of Int and Var"
+    (Binop (LTE, Var "x", Int 1)) "x <= 1";
+  parse_test "<= inequality of Float and Var"
+    (Binop (LTE, Var "x", Float 1.)) "x <= 1.0";
 
-    (* LTE tests *)
-    parse_test "<= inequality of Ints" (Binop (LTE, Int 1, Int 2)) "1 <= 2";
-    parse_test "<= inequality of Floats" (Binop (LTE, Float 1., Float 2.)) "1.0 <= 2.0";
-    parse_test "<= inequality of Vars" (Binop (LTE, Var "x", Var "y")) "x <= y";
-    parse_test "<= inequality two Binops" (Binop (LTE, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y <= a + b";
-    parse_test "<= inequality of Int and Float" (Binop (LTE, Float 1., Int 2)) "1.0 <= 2";
-    parse_test "<= inequality of Int and Var" (Binop (LTE, Var "x", Int 1)) "x <= 1";
-    parse_test "<= inequality of Float and Var" (Binop (LTE, Var "x", Float 1.)) "x <= 1.0";
+  (* Vector tests *)
+  parse_test "Int RowVector in R1" (Array (RowVector [1.])) "[1]";
+  parse_test "Int RowVector in R2" (Array (RowVector [1.; 2.])) "[1, 2]";
+  parse_test "Int RowVector in R3" (Array (RowVector [1.; 2.; 3.])) "[1, 2, 3]";
+  parse_test "Float RowVector in R1" (Array (RowVector [1.])) "[1.0]";
+  parse_test "Float RowVector in R2" (Array (RowVector [1.; 2.])) "[1.0, 2.0]";
+  parse_test "Float RowVector in R3"
+    (Array (RowVector [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
+  parse_test "Mixed type RowVector in R2"
+    (Array (RowVector [0.5; 2.])) "[0.5, 2]";
 
-    (* Vector tests *)
-    parse_test "Int RowVector in R1" (NumArray (RowVector [1.])) "[1]";
-    parse_test "Int RowVector in R2" (NumArray (RowVector [1.; 2.])) "[1, 2]";
-    parse_test "Int RowVector in R3" (NumArray (RowVector [1.; 2.; 3.])) "[1, 2, 3]";
-    parse_test "Float RowVector in R1" (NumArray (RowVector [1.])) "[1.0]";
-    parse_test "Float RowVector in R2" (NumArray (RowVector [1.; 2.])) "[1.0, 2.0]";
-    parse_test "Float RowVector in R3" (NumArray (RowVector [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
-    parse_test "Mixed type RowVector in R2" (NumArray (RowVector [0.5; 2.])) "[0.5, 2]";
+  parse_test "Int ColumnVector in R2" (Array (ColumnVector [1.; 2.])) "[1; 2]";
+  parse_test "Int ColumnVector in R3"
+    (Array (ColumnVector [1.; 2.; 3.])) "[1; 2; 3]";
+  parse_test "Float ColumnVector in R2"
+    (Array (ColumnVector [1.; 2.])) "[1.0; 2.0]";
+  parse_test "Float ColumnVector in R3"
+    (Array (ColumnVector [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
+  parse_test "Mixed type ColumnVector in R2"
+    (Array (ColumnVector [0.5; 2.])) "[0.5; 2]";
 
-    parse_test "Int ColumnVector in R2" (NumArray (ColumnVector [1.; 2.])) "[1; 2]";
-    parse_test "Int ColumnVector in R3" (NumArray (ColumnVector [1.; 2.; 3.])) "[1; 2; 3]";
-    parse_test "Float ColumnVector in R2" (NumArray (ColumnVector [1.; 2.])) "[1.0; 2.0]";
-    parse_test "Float ColumnVector in R3" (NumArray (ColumnVector [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
-    parse_test "Mixed type ColumnVector in R2" (NumArray (ColumnVector [0.5; 2.])) "[0.5; 2]";
+  (* Matrix tests *)
+  parse_test "Int Matrix in R(2x2)"
+    (Array (Matrix [[1.;2.]; [3.;4.]])) "[1, 2; 3, 4]";
+  parse_test "Int Matrix in R(2x3)"
+    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1, 2, 3; 4, 5, 6]";
+  parse_test "Int Matrix in R(3x2)" 
+    (Array (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1, 2; 3, 4; 5, 6]";
+  parse_test "Int Matrix in R(2x3)" 
+    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]]))
+    "[1, 2, 3; 4, 5, 6; 7, 8, 9]";
+  parse_test "Float Matrix in R(2x2)" 
+    (Array (Matrix [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
+  parse_test "Float Matrix in R(2x3)" 
+    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
+  parse_test "Float Matrix in R(3x2)" 
+    (Array (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
+  parse_test "Float Matrix in R(2x3)" 
+    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) 
+    "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
+  parse_test "Mixed type Matrix in R(2x2)"
+    (Array (Matrix [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
+]
 
-    (* Matrix tests *)
-    parse_test "Int Matrix in R(2x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]])) "[1, 2; 3, 4]";
-    parse_test "Int Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1, 2, 3; 4, 5, 6]";
-    parse_test "Int Matrix in R(3x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1, 2; 3, 4; 5, 6]";
-    parse_test "Int Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1, 2, 3; 4, 5, 6; 7, 8, 9]";
-    parse_test "Float Matrix in R(2x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
-    parse_test "Float Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
-    parse_test "Float Matrix in R(3x2)" (NumArray (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
-    parse_test "Float Matrix in R(2x3)" (NumArray (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
-    parse_test "Mixed type Matrix in R(2x2)" (NumArray (Matrix [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
-  ]
+let parse_text_file filename =
+  let ic = open_in filename in
+  let line = input_line ic in
+  parse line
+
+let matrix_to_list = function
+  | Array (Matrix lst) -> lst
+  | _ -> failwith "Invalid input"
 
 let matrix_tests = [
   test "row reduce 3x3 matrix with two pivot columns" 
     (Matrix [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]])
     (Matrix (Linalg.rref [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (fun m -> string_of_expr (Array m));
   test "row reduce 3x4 matrix with three pivot columns" 
     (Matrix [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]])
     (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (fun m -> string_of_expr (Array m));
   test "row reduce 3x4 matrix with two pivot columns" 
     (Matrix [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]])
     (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (fun m -> string_of_expr (Array m));
   test "row reduce 4x4 matrix with two pivot columns" 
     (Matrix [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.];[0.;0.;0.;0.]])
-    (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.];[13.;14.;15.;16.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];
+                          [9.;10.;11.;12.];[13.;14.;15.;16.]]))
+    (fun m -> string_of_expr (Array m));
   test "row reduce 4x5 matrix with four pivot columns" 
-    (Matrix [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];[0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]])
-    (Matrix (Linalg.rref [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];[~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (Matrix [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];
+             [0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]])
+    (Matrix (Linalg.rref [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];
+                          [~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
+    (fun m -> string_of_expr (Array m));
   test "row reduce 10x10 random int matrix with 10 pivot columns" 
-    (Matrix 
-       [[1.;0.;0.;0.;0.;0.;0.;0.;0.;0.];[0.;1.;0.;0.;0.;0.;0.;0.;0.;0.];
-        [0.;0.;1.;0.;0.;0.;0.;0.;0.;0.];[0.;0.;0.;1.;0.;0.;0.;0.;0.;0.];
-        [0.;0.;0.;0.;1.;0.;0.;0.;0.;0.];[0.;0.;0.;0.;0.;1.;0.;0.;0.;0.];
-        [0.;0.;0.;0.;0.;0.;1.;0.;0.;0.];[0.;0.;0.;0.;0.;0.;0.;1.;0.;0.];
-        [0.;0.;0.;0.;0.;0.;0.;0.;1.;0.];[0.;0.;0.;0.;0.;0.;0.;0.;0.;1.]])
-    (Matrix (Linalg.rref 
-               [[10.;10.;2.;1.;8.;3.;3.;5.;6.;4.];
-                [2.;7.;8.;5.;3.;8.;9.;4.;1.;2.];[10.;1.;1.;4.;7.;3.;3.;9.;1.;8.];
-                [10.;9.;3.;8.;7.;6.;9.;6.;6.;4.];[5.;10.;1.;8.;2.;7.;3.;6.;8.;6.];
-                [9.;7.;1.;2.;2.;9.;10.;10.;10.;2.];[2.;8.;9.;5.;5.;10.;4.;3.;2.;7.];
-                [5.;8.;7.;5.;10.;6.;2.;8.;6.;3.];[10.;4.;4.;7.;4.;2.;3.;8.;5.;7.];
-                [8.;7.;10.;8.;6.;2.;7.;4.;1.;7.]]))
-    (fun m -> string_of_expr (NumArray m));
+    (parse_text_file "./tests/rref/10x10_int_out.txt")
+    (Array (Matrix (Linalg.rref (
+         parse_text_file "./tests/rref/10x10_int_in.txt" |> matrix_to_list))))
+    (fun m -> string_of_expr m);
   test "row reduce 5x7 random float matrix with 5 pivot columns" 
-    (Matrix 
-       [[1.;0.;0.;0.;0.;~-.1.0165;0.0767];
-        [0.;1.;0.;0.;0.;~-.0.3439;0.3037];
-        [0.;0.;1.;0.;0.;1.0937;~-.0.2878];
-        [0.;0.;0.;1.;0.;~-.0.1570;0.1066];
-        [0.;0.;0.;0.;1.;0.3247;0.7126]])
-    (Matrix (Linalg.rref [[0.401808033751942;0.239952525664903;0.49086409246808;0.111202755293787;0.0964545251683886;0.0597795429471558;0.0430238016578078];
-                          [0.0759666916908419;0.41726706908437;0.489252638400019;0.780252068321138;0.131973292606335;0.234779913372406;0.168990029462704];
-                          [0.239916153553658;0.0496544303257421;0.337719409821377;0.389738836961253;0.942050590775485;0.353158571222071;0.649115474956452];
-                          [0.123318934835166;0.902716109915281;0.900053846417662;0.241691285913833;0.956134540229802;0.821194040197959;0.73172238565867];
-                          [0.183907788282417;0.944787189721646;0.369246781120215;0.403912145588115;0.575208595078466;0.0154034376515551;0.647745963136307]]))
-    (fun m -> string_of_expr (NumArray m));
-  test "row reduce 25x50 random float matrix" 
-    (Matrix 
-       [[1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0;0.0];
-        [0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;1.0]]
-    )
-    (Matrix (Linalg.rref 
-               [[39.;39.;26.;12.;42.;32.;36.;23.;27.;7.;36.;25.;37.;18.;41.;21.;6.;39.;44.;36.;42.;35.;34.;34.;8.;36.;27.;45.;46.;27.;3.;35.;26.;47.;30.;1.;40.;28.;22.;1.;41.;5.;11.;24.;21.;8.;23.;17.;33.;2.0];
-                [7.;2.;34.;33.;10.;40.;42.;12.;16.;20.;21.;2.;18.;46.;8.;1.;40.;29.;21.;19.;6.;10.;12.;15.;26.;47.;8.;47.;23.;45.;43.;2.;44.;24.;25.;32.;26.;13.;1.;34.;7.;24.;19.;38.;11.;14.;2.;22.;12.;47.0];
-                [2.;6.;50.;6.;19.;47.;42.;40.;18.;42.;47.;44.;24.;35.;9.;21.;12.;24.;50.;31.;12.;21.;20.;19.;9.;21.;39.;24.;29.;44.;16.;1.;23.;12.;38.;26.;34.;24.;18.;46.;36.;14.;35.;9.;7.;43.;23.;36.;31.;46.0];
-                [21.;4.;47.;6.;22.;7.;39.;42.;4.;48.;50.;26.;21.;43.;22.;29.;3.;43.;10.;17.;33.;45.;45.;25.;26.;6.;35.;31.;9.;29.;30.;16.;20.;50.;12.;31.;22.;28.;9.;13.;33.;29.;24.;35.;19.;12.;43.;4.;9.;18.0];
-                [9.;19.;11.;44.;46.;33.;43.;23.;34.;30.;7.;12.;27.;34.;4.;10.;40.;18.;7.;28.;36.;18.;4.;32.;37.;8.;44.;17.;20.;23.;15.;48.;34.;10.;42.;45.;6.;38.;18.;19.;17.;20.;12.;28.;46.;2.;16.;2.;48.;15.0];
-                [41.;7.;17.;16.;49.;38.;42.;22.;35.;36.;23.;2.;47.;33.;45.;38.;36.;22.;30.;39.;15.;50.;16.;25.;17.;26.;42.;32.;34.;20.;16.;48.;25.;12.;24.;43.;19.;37.;35.;17.;39.;31.;9.;13.;40.;38.;46.;5.;49.;46.0];
-                [25.;3.;17.;50.;28.;39.;43.;33.;20.;13.;37.;48.;49.;21.;12.;21.;30.;23.;4.;21.;14.;24.;5.;26.;42.;35.;22.;30.;46.;49.;29.;33.;29.;36.;43.;7.;5.;32.;17.;3.;37.;12.;17.;15.;21.;12.;20.;10.;10.;5.0];
-                [21.;30.;38.;49.;17.;5.;11.;36.;26.;48.;22.;6.;33.;32.;34.;25.;21.;27.;48.;14.;17.;24.;27.;36.;33.;19.;7.;1.;9.;25.;12.;28.;4.;28.;1.;23.;46.;23.;9.;8.;5.;50.;14.;42.;13.;44.;21.;40.;7.;41.0];
-                [47.;50.;10.;21.;45.;17.;43.;41.;25.;14.;7.;12.;40.;6.;42.;32.;37.;31.;27.;11.;24.;42.;21.;26.;34.;44.;32.;1.;46.;25.;34.;34.;48.;27.;7.;18.;48.;28.;29.;15.;40.;14.;31.;20.;2.;50.;34.;4.;25.;21.0];
-                [40.;47.;16.;49.;36.;28.;2.;2.;2.;25.;37.;20.;3.;8.;39.;41.;39.;41.;25.;24.;14.;37.;13.;47.;49.;18.;45.;29.;32.;43.;31.;46.;27.;34.;24.;50.;9.;11.;39.;7.;3.;46.;45.;16.;44.;22.;15.;19.;23.;13.0];
-                [33.;14.;8.;6.;50.;29.;3.;26.;16.;26.;43.;43.;34.;21.;42.;8.;9.;2.;23.;31.;30.;47.;1.;7.;2.;8.;39.;10.;21.;32.;40.;4.;39.;14.;3.;50.;19.;4.;27.;46.;21.;49.;8.;26.;33.;13.;47.;15.;3.;4.0];
-                [45.;12.;33.;17.;48.;44.;27.;45.;18.;15.;43.;9.;11.;11.;34.;50.;27.;21.;46.;26.;45.;27.;24.;45.;17.;47.;45.;22.;8.;50.;3.;20.;8.;25.;28.;22.;30.;7.;4.;7.;42.;28.;27.;30.;47.;4.;18.;15.;21.;5.0];
-                [33.;47.;11.;50.;41.;2.;25.;23.;47.;24.;30.;27.;20.;37.;31.;20.;9.;16.;7.;15.;45.;39.;8.;46.;7.;49.;49.;42.;47.;7.;7.;9.;37.;24.;15.;43.;12.;17.;48.;38.;49.;47.;49.;10.;39.;22.;1.;14.;48.;5.0];
-                [21.;46.;12.;34.;24.;1.;18.;49.;14.;1.;42.;37.;43.;11.;34.;28.;1.;30.;30.;19.;15.;39.;12.;32.;18.;8.;12.;43.;37.;1.;30.;31.;12.;12.;28.;47.;41.;23.;3.;4.;34.;7.;2.;36.;35.;17.;3.;47.;17.;20.0];
-                [14.;50.;9.;21.;30.;10.;16.;37.;15.;23.;18.;43.;15.;2.;16.;29.;47.;16.;15.;42.;12.;38.;2.;45.;3.;50.;49.;24.;37.;33.;29.;46.;25.;33.;40.;23.;20.;16.;25.;4.;25.;9.;35.;47.;5.;16.;7.;36.;29.;2.0];
-                [1.;34.;49.;11.;12.;19.;20.;36.;18.;7.;35.;16.;27.;17.;22.;21.;8.;15.;39.;48.;45.;31.;48.;36.;13.;6.;8.;15.;43.;10.;18.;35.;9.;17.;25.;8.;45.;5.;39.;15.;38.;40.;29.;44.;38.;30.;33.;15.;45.;12.0];
-                [11.;28.;36.;48.;23.;8.;12.;19.;11.;49.;5.;28.;19.;15.;18.;14.;49.;18.;1.;5.;28.;42.;17.;49.;30.;33.;46.;24.;36.;20.;39.;23.;39.;36.;17.;39.;8.;38.;11.;12.;16.;2.;7.;43.;6.;33.;10.;7.;26.;43.0];
-                [23.;43.;20.;27.;28.;9.;33.;39.;43.;22.;17.;9.;48.;11.;6.;32.;25.;35.;49.;22.;19.;14.;44.;20.;31.;27.;16.;2.;4.;47.;30.;16.;13.;22.;19.;38.;33.;18.;22.;20.;38.;2.;47.;10.;16.;2.;49.;13.;20.;50.0];
-                [40.;37.;4.;47.;32.;4.;8.;5.;44.;20.;39.;17.;18.;12.;6.;36.;48.;32.;24.;46.;19.;24.;1.;40.;47.;1.;45.;1.;13.;15.;11.;18.;21.;48.;27.;42.;28.;49.;47.;27.;15.;4.;10.;11.;4.;35.;5.;34.;29.;22.0];
-                [6.;13.;7.;23.;27.;18.;18.;8.;28.;29.;14.;31.;12.;25.;29.;16.;40.;7.;5.;43.;46.;18.;14.;18.;29.;45.;5.;21.;2.;39.;50.;10.;11.;21.;22.;37.;38.;48.;3.;25.;18.;30.;39.;5.;17.;21.;12.;27.;6.;49.0];
-                [34.;37.;37.;5.;28.;50.;43.;5.;43.;5.;32.;47.;14.;34.;26.;7.;34.;36.;38.;39.;10.;26.;2.;41.;15.;7.;42.;41.;5.;19.;17.;10.;13.;39.;5.;10.;42.;44.;20.;14.;14.;37.;40.;20.;41.;32.;6.;40.;3.;31.0];
-                [9.;12.;3.;12.;27.;37.;46.;31.;28.;14.;50.;32.;36.;13.;21.;15.;16.;29.;28.;3.;15.;46.;40.;40.;1.;17.;16.;15.;41.;6.;32.;11.;2.;32.;18.;37.;48.;9.;14.;47.;13.;28.;6.;39.;39.;15.;49.;18.;25.;35.0];
-                [24.;10.;30.;38.;13.;37.;50.;13.;25.;1.;29.;50.;23.;8.;4.;19.;18.;50.;45.;46.;33.;28.;28.;2.;37.;16.;32.;23.;3.;9.;37.;20.;3.;45.;5.;29.;13.;15.;39.;22.;39.;24.;39.;42.;37.;18.;14.;12.;31.;44.0];
-                [3.;24.;49.;22.;9.;40.;17.;38.;32.;35.;2.;5.;37.;28.;4.;36.;17.;41.;14.;16.;26.;20.;19.;12.;8.;7.;24.;15.;32.;15.;32.;48.;5.;43.;42.;20.;37.;27.;49.;20.;12.;18.;23.;47.;33.;32.;44.;32.;44.;7.0];
-                [32.;24.;43.;31.;37.;41.;3.;17.;40.;35.;36.;2.;5.;6.;7.;6.;21.;41.;46.;10.;44.;49.;3.;49.;44.;47.;45.;50.;38.;15.;33.;12.;21.;13.;32.;46.;14.;49.;45.;37.;33.;25.;6.;25.;46.;25.;39.;22.;30.;13.0];
-                [12.;24.;25.;28.;33.;33.;3.;39.;41.;16.;10.;2.;43.;13.;42.;21.;9.;22.;14.;33.;25.;1.;26.;34.;5.;17.;43.;16.;37.;48.;30.;25.;6.;28.;25.;12.;9.;39.;6.;18.;45.;15.;8.;5.;7.;29.;5.;45.;27.;43.0];
-                [11.;24.;10.;36.;40.;6.;18.;42.;22.;33.;6.;12.;15.;4.;4.;36.;9.;47.;50.;41.;32.;13.;46.;12.;29.;39.;2.;41.;4.;26.;17.;8.;25.;50.;50.;47.;23.;27.;28.;19.;39.;29.;20.;15.;20.;37.;26.;26.;37.;17.0];
-                [27.;34.;23.;27.;10.;27.;10.;38.;35.;29.;2.;11.;1.;31.;10.;35.;19.;14.;5.;36.;22.;9.;29.;7.;2.;4.;39.;5.;47.;50.;3.;21.;19.;39.;45.;30.;37.;33.;34.;28.;44.;8.;1.;2.;36.;18.;30.;28.;4.;37.0];
-                [3.;12.;3.;39.;20.;14.;46.;17.;16.;45.;30.;18.;38.;4.;23.;2.;25.;48.;5.;44.;42.;26.;1.;37.;37.;7.;24.;45.;3.;12.;44.;43.;13.;5.;9.;26.;45.;20.;9.;48.;21.;41.;4.;3.;20.;35.;26.;9.;2.;43.0];
-                [24.;25.;28.;49.;12.;36.;29.;41.;1.;2.;48.;26.;17.;27.;50.;4.;32.;48.;33.;10.;18.;40.;2.;33.;16.;10.;9.;13.;25.;47.;34.;1.;13.;28.;4.;21.;4.;29.;22.;33.;14.;46.;50.;19.;36.;49.;46.;41.;9.;15.0];
-                [3.;44.;47.;29.;49.;12.;12.;22.;1.;22.;6.;47.;1.;25.;34.;30.;44.;15.;44.;3.;22.;17.;15.;18.;49.;48.;37.;13.;45.;14.;48.;5.;43.;46.;32.;34.;29.;45.;12.;32.;2.;5.;16.;1.;8.;16.;2.;46.;25.;13.0];
-                [44.;23.;29.;20.;50.;7.;1.;26.;47.;49.;14.;9.;9.;8.;23.;14.;10.;49.;12.;37.;5.;15.;46.;11.;43.;10.;3.;35.;31.;36.;7.;47.;1.;21.;12.;13.;16.;26.;33.;34.;45.;24.;20.;6.;49.;3.;6.;43.;6.;19.0];
-                [48.;28.;26.;6.;50.;13.;33.;8.;6.;38.;25.;45.;45.;16.;4.;6.;43.;46.;28.;39.;31.;13.;10.;28.;5.;30.;49.;29.;18.;35.;8.;15.;50.;1.;47.;18.;40.;24.;6.;24.;45.;36.;15.;28.;48.;22.;8.;41.;33.;42.0];
-                [2.;2.;36.;36.;33.;11.;37.;47.;13.;26.;13.;34.;34.;10.;32.;9.;34.;11.;50.;14.;16.;48.;20.;28.;30.;42.;30.;11.;22.;8.;19.;49.;5.;47.;28.;31.;19.;24.;38.;26.;42.;47.;7.;37.;32.;17.;33.;7.;45.;1.0];
-                [44.;29.;47.;8.;40.;27.;16.;24.;44.;22.;11.;46.;11.;47.;10.;32.;32.;39.;13.;30.;24.;45.;24.;17.;19.;30.;30.;47.;43.;33.;50.;24.;50.;24.;43.;39.;2.;40.;6.;16.;23.;9.;23.;32.;17.;24.;32.;21.;10.;26.0];
-                [32.;17.;7.;14.;2.;33.;30.;14.;21.;47.;25.;29.;31.;42.;4.;14.;22.;22.;15.;10.;18.;49.;35.;3.;11.;19.;4.;8.;5.;10.;10.;47.;29.;48.;26.;22.;49.;24.;6.;7.;47.;7.;50.;11.;15.;43.;5.;38.;5.;38.0];
-                [39.;24.;49.;35.;16.;29.;50.;40.;39.;16.;3.;49.;37.;33.;39.;10.;48.;15.;15.;33.;34.;38.;13.;32.;24.;47.;21.;18.;8.;19.;21.;45.;47.;8.;40.;19.;46.;21.;46.;19.;1.;21.;29.;26.;34.;10.;28.;39.;22.;20.0];
-                [24.;48.;25.;30.;5.;49.;3.;3.;14.;17.;38.;19.;48.;35.;11.;20.;26.;1.;3.;22.;2.;24.;42.;35.;15.;44.;40.;42.;45.;14.;39.;22.;8.;5.;9.;12.;48.;43.;27.;24.;4.;1.;41.;48.;47.;13.;16.;3.;11.;14.0];
-                [49.;5.;10.;44.;31.;39.;14.;8.;8.;21.;27.;26.;18.;32.;34.;38.;40.;27.;40.;49.;44.;1.;21.;9.;30.;40.;43.;17.;34.;13.;22.;39.;27.;11.;33.;14.;40.;20.;29.;48.;26.;17.;15.;42.;18.;1.;13.;44.;36.;46.0];
-                [38.;47.;30.;18.;21.;4.;19.;32.;15.;1.;21.;10.;40.;5.;39.;47.;9.;44.;6.;22.;30.;16.;29.;27.;25.;24.;18.;24.;12.;50.;34.;22.;29.;21.;4.;29.;40.;45.;24.;7.;45.;17.;7.;24.;22.;33.;44.;8.;15.;48.0];
-                [33.;40.;39.;39.;34.;31.;18.;28.;13.;12.;30.;37.;10.;7.;38.;47.;45.;12.;42.;12.;42.;8.;8.;49.;46.;48.;40.;32.;40.;46.;49.;10.;1.;4.;33.;42.;20.;38.;38.;8.;8.;45.;28.;34.;28.;34.;11.;18.;37.;41.0];
-                [49.;21.;28.;9.;18.;10.;20.;44.;6.;10.;44.;22.;30.;16.;46.;23.;41.;20.;39.;41.;35.;50.;22.;16.;14.;25.;45.;19.;37.;39.;6.;45.;33.;6.;26.;24.;12.;38.;23.;6.;12.;14.;3.;22.;35.;16.;4.;42.;13.;22.0];
-                [28.;3.;9.;27.;1.;25.;35.;11.;16.;10.;2.;26.;45.;12.;46.;16.;20.;32.;33.;31.;11.;45.;29.;5.;35.;1.;44.;38.;27.;33.;43.;18.;46.;9.;17.;18.;7.;27.;43.;41.;48.;17.;2.;24.;15.;47.;34.;9.;46.;26.0];
-                [35.;9.;40.;18.;50.;13.;37.;7.;20.;14.;40.;25.;47.;44.;30.;6.;42.;3.;39.;1.;3.;43.;26.;13.;48.;16.;35.;46.;5.;50.;2.;46.;29.;50.;23.;38.;16.;25.;19.;28.;14.;30.;15.;46.;17.;21.;39.;41.;7.;45.0];
-                [48.;46.;4.;13.;48.;22.;21.;36.;36.;37.;14.;39.;31.;11.;23.;3.;43.;10.;6.;38.;21.;43.;43.;22.;16.;47.;20.;50.;5.;5.;17.;25.;28.;32.;21.;27.;39.;8.;3.;21.;32.;24.;32.;35.;14.;14.;18.;32.;35.;9.0];
-                [16.;32.;44.;36.;30.;26.;35.;15.;14.;16.;29.;28.;31.;12.;43.;44.;12.;9.;13.;13.;18.;15.;39.;13.;16.;12.;12.;44.;26.;9.;35.;2.;45.;17.;5.;24.;3.;49.;47.;18.;32.;26.;34.;26.;39.;30.;16.;7.;5.;36.0];
-                [39.;19.;27.;39.;19.;3.;50.;35.;49.;11.;40.;20.;41.;29.;47.;28.;32.;23.;14.;30.;1.;46.;46.;12.;34.;13.;39.;46.;6.;39.;5.;19.;37.;43.;17.;25.;7.;45.;26.;38.;25.;19.;32.;2.;15.;10.;22.;29.;50.;19.0];
-                [32.;16.;4.;30.;20.;9.;15.;10.;24.;10.;8.;39.;48.;34.;46.;30.;50.;6.;28.;21.;8.;15.;26.;40.;48.;31.;13.;4.;43.;19.;45.;33.;6.;44.;5.;10.;12.;27.;47.;12.;31.;2.;44.;18.;40.;42.;48.;30.;27.;39.0];
-                [2.;1.;11.;23.;29.;23.;48.;31.;20.;32.;41.;10.;40.;1.;20.;48.;20.;32.;19.;8.;39.;38.;25.;42.;6.;17.;1.;42.;37.;4.;24.;20.;47.;43.;4.;40.;2.;47.;18.;2.;48.;46.;13.;19.;39.;34.;47.;49.;3.;32.0];
-                [5.;41.;34.;49.;49.;18.;23.;32.;19.;19.;35.;13.;45.;48.;42.;19.;34.;48.;5.;35.;14.;29.;19.;30.;44.;24.;16.;10.;48.;20.;37.;10.;5.;14.;45.;9.;23.;37.;34.;7.;33.;6.;11.;15.;5.;20.;7.;22.;38.;42.0]]
-            ))
-    (fun m -> string_of_expr (NumArray m));
+    (parse_text_file "./tests/rref/5x7_float_out.txt")
+    (Array (Matrix (Linalg.rref (
+         parse_text_file "./tests/rref/5x7_float_in.txt" |> matrix_to_list))))
+    (fun m -> string_of_expr m);
+  test "row reduce 25x50 random int matrix" 
+    (parse_text_file "./tests/rref/25x50_int_out.txt")
+    (Array (Matrix (Linalg.rref (
+         parse_text_file "./tests/rref/25x50_int_in.txt" |> matrix_to_list))))
+    (fun m -> string_of_expr m);
 ]
 
 let lin_alg_tests =
@@ -387,7 +375,7 @@ let lin_alg_tests =
       (Matrix [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]])
       (Matrix (matrix_multiply [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]]
                  [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]]))
-      (fun m -> string_of_expr (NumArray m));
+      (fun m -> string_of_expr (Array m));
   ]
 
 let var_present_tests = let open Eval in [
@@ -539,6 +527,7 @@ let solve_tests = let open Solve in [
       (Solve.solve ("x") (Binop(Eq, Binop(Div, Binop(Mul, Int 4, Var "y"),
                                               Var "x"), Int 5 )) )
       Ast.string_of_expr;
+
   ]
 
 let prob_tests = let open Prob in [
@@ -553,7 +542,8 @@ let prob_tests = let open Prob in [
 
     test "Unif p in range" 1. (Prob.uniform_pmf 0. 1. 0.5) string_of_float;
     test "Unif p out of range ge" 0. (Prob.uniform_pmf 0. 1. 2.) string_of_float;
-    test "Unif p out of range le" 0. (Prob.uniform_pmf 0. 1. (-1.)) string_of_float;
+    test "Unif p out of range le" 0.
+      (Prob.uniform_pmf 0. 1. (-1.)) string_of_float;
     test "Unif p on range ip" 1. (Prob.uniform_pmf 0. 1. 1.) string_of_float;
     test "Unif p on range low" 1. (Prob.uniform_pmf 0. 1. 0.) string_of_float;
     test "Unif c 0" 0. (Prob.uniform_cdf 0. 1. (-1.)) string_of_float;
@@ -573,13 +563,15 @@ let prob_tests = let open Prob in [
     test "Exp p 0" 0.5 (Prob.exponential_pmf 0.5 0.) string_of_float;
     test "Exp p 1" (exp (-1.)) (Prob.exponential_pmf 1. 1.) string_of_float;
     test "Exp c 0" 0. (Prob.exponential_cdf 1. 0.) string_of_float;
-    test "Exp c 1" (1. -. exp (-1.)) (Prob.exponential_cdf 1. 1.) string_of_float;
+    test "Exp c 1" (1. -. exp (-1.))
+      (Prob.exponential_cdf 1. 1.) string_of_float;
 
     test "Pois p 0" (exp (-1.)) (Prob.poisson_pmf 1. 0) string_of_float;
     test "Pois p 2" (exp (-1.) /. 2.) (Prob.poisson_pmf 1. 2) string_of_float;
 
     test "Pois c 0" (exp (-1.)) (Prob.poisson_cdf 1. 0) string_of_float;
-    test "Pois c 2" (5. *. exp (-1.) /. 2.) (Prob.poisson_cdf 1. 2) string_of_float;
+    test "Pois c 2" (5. *. exp (-1.) /. 2.)
+      (Prob.poisson_cdf 1. 2) string_of_float;
 
     test "Binom p 0" (0.5 ** 10.) (Prob.binomial_pmf 10 0.5 0) string_of_float;
     test "Binom p n" (0.5 ** 10.) (Prob.binomial_pmf 10 0.5 10) string_of_float;
@@ -590,120 +582,123 @@ let prob_tests = let open Prob in [
 
   ]
 
-let eval_tests = [
-  test "Var x is float" 0. (eval_numeric (Var "x") [("x", Float 0.)])
-    string_of_float;
-  test "Zero int evaluates to itself as a float" 0.
-    (eval_numeric (Int 0) []) string_of_float;
-  test "Postive int evaluates to itself as a float" 1.
-    (eval_numeric (Int 1) []) string_of_float;
-  test "Negative int evaluates to itself as a float" ~-.1.
-    (eval_numeric (Int ~-1) []) string_of_float;
+let eval_tests = 
+  let eval_expr e sigma = fst (Eval.eval_expr e sigma) in
+  [
+    test "Var x is float" (VFloat 0.) (eval_expr (Var "x") [("x", VFloat 0.)])
+      string_of_value;
+    test "Zero int evaluates to itself as a float" (VFloat 0.)
+      (eval_expr (Int 0) []) string_of_value;
+    test "Postive int evaluates to itself as a float" (VFloat 1.)
+      (eval_expr (Int 1) []) string_of_value;
+    test "Negative int evaluates to itself as a float" (VFloat ~-.1.)
+      (eval_expr (Int ~-1) []) string_of_value;
 
-  test "Zero float evaluates to itself as a float" 0.
-    (eval_numeric (Float 0.) []) string_of_float;
-  test "Postive float evaluates to itself as a float" 1.
-    (eval_numeric (Float 1.) []) string_of_float;
-  test "Negative float evaluates to itself as a float" ~-.1.
-    (eval_numeric (Float ~-.1.) []) string_of_float;
+    test "Zero float evaluates to itself as a float" (VFloat 0.)
+      (eval_expr (Float 0.) []) string_of_value;
+    test "Postive float evaluates to itself as a float" (VFloat 1.)
+      (eval_expr (Float 1.) []) string_of_value;
+    test "Negative float evaluates to itself as a float" (VFloat ~-.1.)
+      (eval_expr (Float ~-.1.) []) string_of_value;
 
-  test "Add two ints" 3.
-    (eval_numeric (Binop (Add, Int 1, Int 2)) []) string_of_float;
-  test "Add two floats" 3.
-    (eval_numeric (Binop (Add, Float 1., Float 2.)) []) string_of_float;
-  test "Add one int and one float" 3.
-    (eval_numeric (Binop (Add, Float 1., Int 2)) []) string_of_float;
+    test "Add two ints" (VFloat 3.)
+      (eval_expr (Binop (Add, Int 1, Int 2)) []) string_of_value;
+    test "Add two floats" (VFloat 3.)
+      (eval_expr (Binop (Add, Float 1., Float 2.)) []) string_of_value;
+    test "Add one int and one float" (VFloat 3.)
+      (eval_expr (Binop (Add, Float 1., Int 2)) []) string_of_value;
 
-  test "Subtract two ints" 0.
-    (eval_numeric (Binop (Sub, Int 1, Int 1)) []) string_of_float;
-  test "Subtract two floats" 0.
-    (eval_numeric (Binop (Sub, Float 1., Float 1.)) []) string_of_float;
-  test "Subtract one int and one float" 0.
-    (eval_numeric (Binop (Sub, Float 1., Int 1)) []) string_of_float;
+    test "Subtract two ints" (VFloat 0.)
+      (eval_expr (Binop (Sub, Int 1, Int 1)) []) string_of_value;
+    test "Subtract two floats" (VFloat 0.)
+      (eval_expr (Binop (Sub, Float 1., Float 1.)) []) string_of_value;
+    test "Subtract one int and one float" (VFloat 0.)
+      (eval_expr (Binop (Sub, Float 1., Int 1)) []) string_of_value;
 
-  test "Multiply two ints" 2.
-    (eval_numeric (Binop (Mul, Int 1, Int 2)) []) string_of_float;
-  test "Multiply two floats" 2.
-    (eval_numeric (Binop (Mul, Float 1., Float 2.)) []) string_of_float;
-  test "Multiply one int and one float" 2.
-    (eval_numeric (Binop (Mul, Float 1., Int 2)) []) string_of_float;
+    test "Multiply two ints" (VFloat 2.)
+      (eval_expr (Binop (Mul, Int 1, Int 2)) []) string_of_value;
+    test "Multiply two floats" (VFloat 2.)
+      (eval_expr (Binop (Mul, Float 1., Float 2.)) []) string_of_value;
+    test "Multiply one int and one float" (VFloat 2.)
+      (eval_expr (Binop (Mul, Float 1., Int 2)) []) string_of_value;
 
-  test "Divide two ints" 0.5
-    (eval_numeric (Binop (Div, Int 1, Int 2)) []) string_of_float;
-  test "Divide two floats" 0.5
-    (eval_numeric (Binop (Div, Float 1., Float 2.)) []) string_of_float;
-  test "Divide one int and one float" 0.5
-    (eval_numeric (Binop (Div, Float 1., Int 2)) []) string_of_float;
+    test "Divide two ints" (VFloat 0.5)
+      (eval_expr (Binop (Div, Int 1, Int 2)) []) string_of_value;
+    test "Divide two floats" (VFloat 0.5)
+      (eval_expr (Binop (Div, Float 1., Float 2.)) []) string_of_value;
+    test "Divide one int and one float" (VFloat 0.5)
+      (eval_expr (Binop (Div, Float 1., Int 2)) []) string_of_value;
 
-  test "Power two ints" 8.
-    (eval_numeric (Binop (Pow, Int 2, Int 3)) []) string_of_float;
-  test "Power two floats" 8.
-    (eval_numeric (Binop (Pow, Float 2., Float 3.)) []) string_of_float;
-  test "Power int power and float base" 8.
-    (eval_numeric (Binop (Pow, Float 2., Int 3)) []) string_of_float;
-  test "Power int base and float power" 8.
-    (eval_numeric (Binop (Pow, Int 2, Float 3.)) []) string_of_float;
+    test "Power two ints" (VFloat 8.)
+      (eval_expr (Binop (Pow, Int 2, Int 3)) []) string_of_value;
+    test "Power two floats" (VFloat 8.)
+      (eval_expr (Binop (Pow, Float 2., Float 3.)) []) string_of_value;
+    test "Power int power and float base" (VFloat 8.)
+      (eval_expr (Binop (Pow, Float 2., Int 3)) []) string_of_value;
+    test "Power int base and float power" (VFloat 8.)
+      (eval_expr (Binop (Pow, Int 2, Float 3.)) []) string_of_value;
 
-  test "modulo no remainder" (3 mod 3 |> float_of_int)
-    (eval_numeric (Binop (Mod, Float 3., Float 3.)) []) string_of_float;
-  test "modulo with p > q" (4 mod 3 |> float_of_int)
-    (eval_numeric (Binop (Mod, Float 4., Float 3.)) []) string_of_float;
-  test "modulo with p < q" (3 mod 4 |> float_of_int)
-    (eval_numeric (Binop (Mod, Float 3., Float 4.)) []) string_of_float;
-  test "modulo with -p" (~-3 mod 4 |> float_of_int)
-    (eval_numeric (Binop (Mod, Float ~-.3., Float 4.)) []) string_of_float;
-  test "modulo with -p no remainder" 0.
-    (eval_numeric (Binop (Mod, Float ~-.3., Float 3.)) []) string_of_float;
+    test "modulo no remainder" (VFloat (3 mod 3 |> float_of_int))
+      (eval_expr (Binop (Mod, Float 3., Float 3.)) []) string_of_value;
+    test "modulo with p > q" (VFloat (4 mod 3 |> float_of_int))
+      (eval_expr (Binop (Mod, Float 4., Float 3.)) []) string_of_value;
+    test "modulo with p < q" (VFloat (3 mod 4 |> float_of_int))
+      (eval_expr (Binop (Mod, Float 3., Float 4.)) []) string_of_value;
+    test "modulo with -p" (VFloat (~-3 mod 4 |> float_of_int))
+      (eval_expr (Binop (Mod, Float ~-.3., Float 4.)) []) string_of_value;
+    test "modulo with -p no remainder" (VFloat 0.)
+      (eval_expr (Binop (Mod, Float ~-.3., Float 3.)) []) string_of_value;
 
-  test "Pythagorean theorem c^2" (Float 25.)
-    (parse "3^2 + 4^2" |> fun inp -> eval_input inp [] (Float 0.) |> fst)
-    string_of_expr;
-  test "Pythagorean theorem c" (Float 5.)
-    (parse "(3^2 + 4^2)^(1/2)"
-     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
-  test "Quadratic formula" (Float ~-.0.25)
-    (parse "(-2 + (3^2 - 4 * 2 * 1)^(1/2)) / (2 * 2)"
-     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
-  test "PEMDAS test" (Float 4.)
-    (parse "3 + 3 * 2 / 3 - 1"
-     |> fun inp -> eval_input inp [] (Float 0.) |> fst) string_of_expr;
+    test "Pythagorean theorem c^2" (VFloat 25.)
+      (parse "3^2 + 4^2" |> fun inp -> Eval.eval_input inp [] |> fst)
+      string_of_value;
+    test "Pythagorean theorem c" (VFloat 5.)
+      (parse "(3^2 + 4^2)^(1/2)"
+       |> fun inp -> Eval.eval_input inp [] |> fst) string_of_value;
+    test "Quadratic formula" (VFloat ~-.0.25)
+      (parse "(-2 + (3^2 - 4 * 2 * 1)^(1/2)) / (2 * 2)"
+       |> fun inp -> Eval.eval_input inp [] |> fst) string_of_value;
+    test "PEMDAS test" (VFloat 4.)
+      (parse "3 + 3 * 2 / 3 - 1"
+       |> fun inp -> Eval.eval_input inp [] |> fst) string_of_value;
 
-  test "Equal two ints" (Bool.to_float true)
-    (eval_numeric (Binop (Eq, Int 2, Int 2)) []) string_of_float;
-  test "Equal two floats" (Bool.to_float true)
-    (eval_numeric (Binop (Eq, Float 2., Float 2.)) []) string_of_float;
-  test "Equal one int and one float" (Bool.to_float true)
-    (eval_numeric (Binop (Eq, Float 2., Int 2)) []) string_of_float;
+    test "Equal two ints" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (Eq, Int 2, Int 2)) []) string_of_value;
+    test "Equal two floats" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (Eq, Float 2., Float 2.)) []) string_of_value;
+    test "Equal one int and one float" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (Eq, Float 2., Int 2)) []) string_of_value;
 
-  test "Greater than two ints" (Bool.to_float true)
-    (eval_numeric (Binop (GT, Int 3, Int 2)) []) string_of_float;
-  test "Greater than two floats" (Bool.to_float true)
-    (eval_numeric (Binop (GT, Float 3., Float 2.)) []) string_of_float;
-  test "Greater than one int and one float" (Bool.to_float true)
-    (eval_numeric (Binop (GT, Float 3., Int 2)) []) string_of_float;
+    test "Greater than two ints" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GT, Int 3, Int 2)) []) string_of_value;
+    test "Greater than two floats" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GT, Float 3., Float 2.)) []) string_of_value;
+    test "Greater than one int and one float" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GT, Float 3., Int 2)) []) string_of_value;
 
-  test "Less than two ints" (Bool.to_float false)
-    (eval_numeric (Binop (LT, Int 3, Int 2)) []) string_of_float;
-  test "Less than two floats" (Bool.to_float false)
-    (eval_numeric (Binop (LT, Float 3., Float 2.)) []) string_of_float;
-  test "Less than one int and one float" (Bool.to_float false)
-    (eval_numeric (Binop (LT, Float 3., Int 2)) []) string_of_float;
+    test "Less than two ints" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LT, Int 3, Int 2)) []) string_of_value;
+    test "Less than two floats" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LT, Float 3., Float 2.)) []) string_of_value;
+    test "Less than one int and one float" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LT, Float 3., Int 2)) []) string_of_value;
 
-  test "Greater than or equal to two ints" (Bool.to_float true)
-    (eval_numeric (Binop (GTE, Int 3, Int 2)) []) string_of_float;
-  test "Greater than or equal to two floats" (Bool.to_float true)
-    (eval_numeric (Binop (GTE, Float 3., Float 2.)) []) string_of_float;
-  test "Greater than or equal to one int and one float" (Bool.to_float true)
-    (eval_numeric (Binop (GTE, Float 3., Int 2)) []) string_of_float;
+    test "Greater than or equal to two ints" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GTE, Int 3, Int 2)) []) string_of_value;
+    test "Greater than or equal to two floats" (VFloat (Bool.to_float true))
+      (eval_expr (Binop (GTE, Float 3., Float 2.)) []) string_of_value;
+    test "Greater than or equal to one int and one float"
+      (VFloat (Bool.to_float true)) (eval_expr (Binop (GTE, Float 3., Int 2)) [])
+      string_of_value;
 
-  test "Less than or equal to two ints" (Bool.to_float false)
-    (eval_numeric (Binop (LTE, Int 3, Int 2)) []) string_of_float;
-  test "Less than or equal to two floats" (Bool.to_float false)
-    (eval_numeric (Binop (LTE, Float 3., Float 2.)) []) string_of_float;
-  test "Less than or equal to one int and one float" (Bool.to_float false)
-    (eval_numeric (Binop (LTE, Float 3., Int 2)) []) string_of_float;
-
-] 
+    test "Less than or equal to two ints" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LTE, Int 3, Int 2)) []) string_of_value;
+    test "Less than or equal to two floats" (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LTE, Float 3., Float 2.)) []) string_of_value;
+    test "Less than or equal to one int and one float"
+      (VFloat (Bool.to_float false))
+      (eval_expr (Binop (LTE, Float 3., Int 2)) []) string_of_value;
+  ] 
 
 let suite =
   "test suite for OCamulator"  >::: List.flatten [
