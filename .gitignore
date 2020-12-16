@@ -2,3 +2,5 @@ _build/
 *.byte
 _coverage/
 bisect*.coverage
+.pyc
+Search.code-search

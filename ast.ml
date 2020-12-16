@@ -22,9 +22,10 @@ type binop =
 type array = 
   | RowVector of float list
   | ColumnVector of float list
-  | Matrix of float list list  (* Treated as list of row vectors *)
+  (** [Matrix] representation invariant: treated as a list of row vectors *)
+  | Matrix of float list list 
 
-(** [prob_func] is the type of density functions. *)
+(** [prob_func] is the type of density functions for distributions. *)
 type prob_func =
   | PDF
   | CDF
@@ -50,7 +51,7 @@ type expr =
   | Command of string * expr
 
 (** [value] is the type of values which result from evaluating expressions
-    under the big-step semantics. *)
+    under the big-step relation/. *)
 type value =
   | VFloat of float
   | VArray of array
@@ -62,8 +63,8 @@ type value =
 (** [string_of_prob_func prob_func] is the string respresentation of
     [prob_func]. *)
 let string_of_prob_func = function
-  | PDF -> "Probability Density Function"
-  | CDF -> "Cumulative Density Function"
+  | PDF -> "PDF"
+  | CDF -> "CDF"
 
 (** [string_of_binop binop] is the string respresentation of [binop]. *)
 let string_of_binop = function
@@ -94,25 +95,25 @@ let string_of_matrix mat =
     probability distribution [dist]. *)
 let string_of_distribution = function
   | Binomial (func, n, p, k) ->
-    "Binomial Distrubution " ^ string_of_prob_func func 
+    "Binomial " ^ string_of_prob_func func 
   | Bernoulli (func, p, k) ->
-    "Bernoulli Distrubution " ^ string_of_prob_func func 
+    "Bernoulli " ^ string_of_prob_func func 
   | Uniform (func, a, b, x) ->
-    "Uniform Distrubution " ^ string_of_prob_func func 
+    "Uniform " ^ string_of_prob_func func 
   | Poisson (func, l, k) ->
-    "Poisson Distrubution " ^ string_of_prob_func func 
+    "Poisson " ^ string_of_prob_func func 
   | Geometric (func, p, k) ->
-    "Geometric Distrubution " ^ string_of_prob_func func 
+    "Geometric " ^ string_of_prob_func func 
   | Exponential (func, l, x) ->
-    "Expontential Distrubution " ^ string_of_prob_func func 
+    "Expontential " ^ string_of_prob_func func 
   | Normal (func, m, s, x) ->
-    "Normal Distrubution " ^ string_of_prob_func func 
+    "Normal " ^ string_of_prob_func func 
 
 (** [string_of_array arr] is the string representation of array [arr]*)
 let string_of_array = function
   | RowVector vec -> "RowVector [" ^ (string_of_vector_contents ", " vec) ^ "]"
   | ColumnVector vec -> "ColVector [" ^ (string_of_vector_contents "; " vec) ^ "]"
-  | Matrix mat -> "Matrix \n" ^ (string_of_matrix mat)
+  | Matrix mat -> "Matrix [\n" ^ (string_of_matrix mat) ^ "\n]"
 
 (** [string_of_expr expr] is the string respresentation of expression [expr]. *)
 let rec string_of_expr = function
