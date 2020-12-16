@@ -26,10 +26,15 @@ let is_symmetric m =
     matrix = (transpose matrix)
 
 let component_wise_application v1 v2 op =
-  List.map2 op v1 v2
+  try List.map2 op v1 v2 with
+  | Invalid_argument _ -> 
+    failwith "Vectors must be of same length"
 
-let component_wise_add v1 v2 op =
+let component_wise_add v1 v2 =
   component_wise_application v1 v2 ( +. )
+
+let component_wise_subtract v1 v2 =
+  component_wise_application v1 v2 ( -. )
 
 let component_wise_multiply v1 v2 =
   component_wise_application v1 v2 ( *. )
@@ -233,6 +238,12 @@ let purify tolerance matrix =
          |> float_of_string
          |> (fun x -> if x = ~-.0. then 0. else x) in
   map (map round) matrix
+
+let pivot_cols matrix =
+  let tolerance = determine_tolerance matrix in
+  snd (row_echelon_form matrix tolerance)
+  |> List.sort compare
+  |> List.map (fun i -> float_of_int i)
 
 let rref matrix =
   let tolerance = determine_tolerance matrix in
