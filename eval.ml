@@ -1,6 +1,6 @@
 open Ast
 open Prob
-open Inverse
+open Solve
 
 let parse str =
   let lexbuf = Lexing.from_string str in
@@ -90,7 +90,7 @@ let rec eval_input parsed_input sigma ans =
       match e with 
       | NumArray arr -> (NumArray (eval_array arr cmd sigma), sigma)
       | Var x -> eval_input (Command (c, List.assoc x sigma)) sigma ans
-      | Binop _ as eq -> (inverse eq c, sigma)
+      | Binop _ as eq -> (solve c eq, sigma)
       | _ ->
         if cmd = "evaluate" then (Float (eval_numeric e sigma), sigma)
         else failwith "No operation specified for this input"

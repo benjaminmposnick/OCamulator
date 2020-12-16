@@ -2,8 +2,6 @@ open Ast
 
 exception InvalidBinop
 
-(** [has_var e1, e2 var] is true if [e1] or [e2] contain the Variable
-    [var], false otherwise. *)
 let rec has_var e1 var = 
   if e1 = var then true
   else
@@ -11,8 +9,8 @@ let rec has_var e1 var =
     | Binop (op', e1', e2') -> has_var e1' var or has_var e2' var
     | _ -> false
 
-(** [match_inner_ast ast] is the tuple of contents of the Ast expression if it is a
-    Binop expression and contains a variable.
+(** [match_inner_ast ast] is the tuple of contents of the Ast expression if it
+    is a Binop expression and contains a variable.
     Otherwise, [match_ast ast] is the input ast *)
 let match_inner_ast ast var = match ast with
   | Binop (op, e1, e2) -> if has_var e1 var or has_var e2 var
@@ -86,51 +84,51 @@ let inverse_helper (op, e_var, e_other) var =
   (* let (op, e_var, e_other) = match_ast e var in *)
   match e_var with 
   | Binop(Add, e1, e2) -> 
-      let e_var', e_other' = if has_var e1 var then e1, e2 else e2, e1 in
-      Binop(op, e_var', Binop(Sub, e_other, e_other'))
+    let e_var', e_other' = if has_var e1 var then e1, e2 else e2, e1 in
+    Binop(op, e_var', Binop(Sub, e_other, e_other'))
   | Binop(Sub, e1, e2) -> 
-      if has_var e1 var 
-      then Binop(op, e1, Binop(Add, e_other, e2))
-      else Binop(op, e2, Binop(Sub, e1, e_other))
+    if has_var e1 var 
+    then Binop(op, e1, Binop(Add, e_other, e2))
+    else Binop(op, e2, Binop(Sub, e1, e_other))
   | Binop(Mul, e1, e2) -> 
-      let e_var', e_other' = if has_var e1 var then e1, e2 else e2, e1 in
-      Binop(op, e_var', Binop(Div, e_other, e_other'))
+    let e_var', e_other' = if has_var e1 var then e1, e2 else e2, e1 in
+    Binop(op, e_var', Binop(Div, e_other, e_other'))
   | Binop(Div, e1, e2) -> 
-      if has_var e1 var 
-      then Binop(op, e1, Binop(Mul, e_other, e2))
-      else Binop(op, e2, Binop(Div, e1, e_other))
+    if has_var e1 var 
+    then Binop(op, e1, Binop(Mul, e_other, e2))
+    else Binop(op, e2, Binop(Div, e1, e_other))
 
   (* | Var _ -> e
-  | Int _ -> e *)
+     | Int _ -> e *)
   | _ -> failwith "not or subtraction"
 
-(** [inverse_step var e] implements the primitive operation
+(** [step_solve var e] implements the primitive operation
     [FILL IN].  Requires: [e] and [var] are both Expr, and var is 
     specifically a Var. *)
-let inverse_step var e = 
+let step_solve var e = 
   match e with
   | Binop (op, e1, e2) -> begin
-        let e_var, e_other = if has_var e1 var then e1, e2 else e2, e1 in
-        inverse_helper (op, e_var, e_other) var
+      let e_var, e_other = if has_var e1 var then e1, e2 else e2, e1 in
+      inverse_helper (op, e_var, e_other) var
     end
   | _ -> failwith "not binop"
 
-let rec inverse var e = 
+let rec solve var e = 
   let (op, e1, e2) = match_ast e (Var var) in
   if e1 = Var var or e2 = Var var then e
   else if (has_var e1 (Var var) or  has_var e2 (Var var)) = false
   then failwith "No variable given"
-  else e |> inverse_step (Var var) |> inverse var
+  else e |> step_solve (Var var) |> solve var
 
 (** TODO: specification *)
 (* let inverse_old ast var = 
-  let (rel_op, e1, e2) = match_ast ast var in
-  let (bop, _, _), e = 
+   let (rel_op, e1, e2) = match_ast ast var in
+   let (bop, _, _), e = 
     try match_inner_ast e1 var, e1 with
     | InvalidBinop -> match_inner_ast e2 var, e2 in
-  match bop with
-  | Add -> inverse_add ast e"var"  (* pass [rel_op] in *)
-  | Sub -> inverse_sub ast e"var"  (* pass [rel_op] in *)
-  | Div -> inverse_div ast e"var"  (* pass [rel_op] in, negate if div by negative *)
-  | Mul -> inverse_mul ast e var  (* pass [rel_op] in, negate if div by negative *)
-  | _ -> failwith "Unimplimented equation type" *)
+   match bop with
+   | Add -> inverse_add ast e"var"  (* pass [rel_op] in *)
+   | Sub -> inverse_sub ast e"var"  (* pass [rel_op] in *)
+   | Div -> inverse_div ast e"var"  (* pass [rel_op] in, negate if div by negative *)
+   | Mul -> inverse_mul ast e var  (* pass [rel_op] in, negate if div by negative *)
+   | _ -> failwith "Unimplimented equation type" *)
