@@ -390,39 +390,143 @@ let var_present_tests = let open Eval in [
       true (Eval.var_present (Binop (Add, Var "x", Var "y")) ) string_of_bool;  
   ]
 
-let inverse_tests = let open Inverse in [
-    test "basic inverse for addition equation x + 4 = 5" 
+let solve_tests = let open Solve in [
+    (* has_var tests *)
+    test "has_var x: x" 
+      true 
+      (Solve.has_var (Var "x") (Var "x"))
+      string_of_bool; 
+    test "has_var x: 5" 
+      false 
+      (Solve.has_var (Int 5) (Var "x"))
+      string_of_bool; 
+    test "has_var x: x + 3 = 5" 
+      true 
+      (Solve.has_var (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 ))
+         (Var "x"))
+      string_of_bool; 
+    test "has_var x: y + 3 = 5" 
+      false 
+      (Solve.has_var (Binop(Eq, Binop(Add, Var "y", Int 4), Int 5 ))
+         (Var "x"))
+      string_of_bool; 
+    test "has_var x: 4 + 4 = 5" 
+      false 
+      (Solve.has_var (Binop(Eq, Binop(Add, Int 4, Int 4), Int 5 ))
+         (Var "x"))
+      string_of_bool; 
+    test "has_var x: 4 - 3 + 4 * x = 5" 
+      true 
+      (Solve.has_var (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Int 3), 
+                                        Binop(Mul, Int 4, Var "x")), Int 5 ))
+         (Var "x"))
+      string_of_bool;  
+    test "has_var x: 4 - x + 4 * 3 = 5" 
+      true 
+      (Solve.has_var (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Var "x"), 
+                                        Binop(Mul, Int 4, Int 3)), Int 5 ))
+         (Var "x"))
+      string_of_bool;  
+    test "has_var x: 4 - 6 + 4 * 3 = 5" 
+      false
+      (Solve.has_var (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Int 6), 
+                                        Binop(Mul, Int 4, Int 3)), Int 5 ))
+         (Var "x"))
+      string_of_bool;  
+
+
+    (* main solve tests *)
+    test "basic solve for addition equation x + 4 = 5" 
       (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 ))
-         ("x")) Ast.string_of_expr;
-    test "basic inverse for addition equation 4 + x = 5" 
+      (Solve.solve ("x") (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 )))
+      Ast.string_of_expr;
+    test "basic solve for addition equation 4 + x = 5" 
       (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Add, Int 4, Var "x"), Int 5 ))
-         ("x")) Ast.string_of_expr;
-    test "basic inverse for subtraction equation x - 4 = 5" 
+      (Solve.solve ("x") (Binop(Eq, Binop(Add, Int 4, Var "x"), Int 5 )))
+      Ast.string_of_expr;
+    test "basic solve for addition equation 4 = 5 + x" 
+      (Binop(Eq, Var "x", Binop(Sub, Int 4, Int 5))) 
+      (Solve.solve ("x") (Binop(Eq, Int 4, Binop(Add, Int 5, Var "x"))))
+      Ast.string_of_expr;
+    test "solve for addition equation 4 + x + 7 = 5 + 2" 
+      (Binop(Eq, Var "x", Binop (Sub, Binop (Sub, Binop (Add, Int 5, Int 2), 
+                                             Int 4), Int 7)))
+      (Solve.solve ("x") (Binop(Eq, Binop(Add, Int 4, 
+                                              Binop(Add, Var "x", Int 7)),
+                                    Binop(Add, Int 5, Int 2) )))
+      Ast.string_of_expr;
+    test "solve for addition equation 4 + 7 = 5 + x + 2" 
+      (Binop (Eq, Var "x", Binop (Sub, Binop (Sub, 
+                                              Binop (Add, Int 4, Int 7), 
+                                              Int 5), Int 2)))
+      (Solve.solve ("x") (Binop(Eq, Binop(Add, Int 4, Int 7), 
+                                    Binop(Add, Int 5, 
+                                          Binop(Add, Var "x", Int 2)) ))) 
+      Ast.string_of_expr;
+    test "basic solve for subtraction equation x - 4 = 5" 
       (Binop(Eq, Var "x", Binop(Add, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Sub, Var "x", Int 4), Int 5 ))
-         ("x")) Ast.string_of_expr;
-    test "basic inverse for subtraction equation 4 - x = 5" 
-      (Binop(Eq, Binop(Sub, Int 4, Int 5), Var "x")) 
-      (Inverse.inverse (Binop(Eq, Binop(Sub, Int 4, Var "x"), Int 5 ))
-         ("x")) Ast.string_of_expr;
-    test "basic inverse for multiplication equation x * 4 = 5" 
+      (Solve.solve ("x") (Binop(Eq, Binop(Sub, Var "x", Int 4), Int 5 )))
+      Ast.string_of_expr;
+    test "basic solve for subtraction equation 4 - x = 5" 
+      (Binop(Eq, Var "x", Binop(Sub, Int 4, Int 5))) 
+      (Solve.solve ("x") (Binop(Eq, Binop(Sub, Int 4, Var "x"), Int 5 )))
+      Ast.string_of_expr;
+    test "basic solve for subtraction equation 5 = 4 - x" 
+      (Binop(Eq, Var "x", Binop(Sub, Int 4, Int 5))) 
+      (Solve.solve ("x") (Binop(Eq, Int 5, Binop(Sub, Int 4, Var "x") )))
+      Ast.string_of_expr;
+    test "basic solve for subtraction equation 5 = x - 4" 
+      (Binop(Eq, Var "x", Binop(Add, Int 5, Int 4))) 
+      (Solve.solve ("x") (Binop(Eq, Int 5, Binop(Sub, Var "x", Int 4) )))
+      Ast.string_of_expr;
+    test "solve for subtraction equation 5 = x - 4 + 3" 
+      (Binop(Eq, Var "x", Binop(Add, Int 5, Binop(Add, Int 4, Int 3)))) 
+      (Solve.solve ("x") (Binop(Eq, Int 5, 
+                                    Binop(Sub, Var "x", 
+                                          Binop(Add, Int 4, Int 3)) )))
+      Ast.string_of_expr;
+    test "basic solve for multiplication equation x * 4 = 5" 
       (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Mul, Var "x", Int 4), Int 5 ))
-         ("x")) Ast.string_of_expr;
-    test "basic inverse for multiplication equation 4 * x = 5" 
-      (Binop(Eq, Binop(Div, Int 5, Int 4), Var "x")) 
-      (Inverse.inverse (Binop(Eq, Binop(Mul, Int 4, Var "x"), Int 5 ))
-         ("x")) Ast.string_of_expr;
-    test "basic inverse for division equation x / 4 = 5" 
+      (Solve.solve ("x") (Binop(Eq, Binop(Mul, Var "x", Int 4), Int 5 )) )
+      Ast.string_of_expr;
+    test "basic solve for multiplication equation 4 * x = 5" 
+      (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 
+      (Solve.solve ("x") (Binop(Eq, Binop(Mul, Int 4, Var "x"), Int 5 )) )
+      Ast.string_of_expr;
+    test "basic solve for multiplication equation 5 = 4 * x" 
+      (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 
+      (Solve.solve ("x") (Binop(Eq, Int 5, Binop(Mul, Int 4, Var "x") )) )
+      Ast.string_of_expr;
+    test "basic solve for division equation x / 4 = 5" 
       (Binop(Eq, Var "x", Binop(Mul, Int 5, Int 4))) 
-      (Inverse.inverse (Binop(Eq, Binop(Div, Var "x", Int 4), Int 5 ))
-         ("x")) Ast.string_of_expr;
-    test "basic inverse for division equation 4 / x = 5" 
-      (Binop(Eq, Binop(Div, Int 4, Int 5), Var "x")) 
-      (Inverse.inverse (Binop(Eq, Binop(Div, Int 4, Var "x"), Int 5 ))
-         ("x")) Ast.string_of_expr;
+      (Solve.solve ("x") (Binop(Eq, Binop(Div, Var "x", Int 4), Int 5 )) )
+      Ast.string_of_expr;
+    test "basic solve for division equation 5 = x / 4" 
+      (Binop(Eq, Var "x", Binop(Mul, Int 5, Int 4))) 
+      (Solve.solve ("x") (Binop(Eq, Int 5,Binop(Div, Var "x", Int 4) )) )
+      Ast.string_of_expr;
+    test "basic solve for division equation 4 / x = 5" 
+      (Binop(Eq, Var "x", Binop(Div, Int 4, Int 5))) 
+      (Solve.solve ("x") (Binop(Eq, Binop(Div, Int 4, Var "x"), Int 5 )) )
+      Ast.string_of_expr;
+    test "basic solve for division equation 5 = 4 / x" 
+      (Binop(Eq, Var "x", Binop(Div, Int 4, Int 5))) 
+      (Solve.solve ("x") (Binop(Eq, Int 5, Binop(Div, Int 4, Var "x"))) )
+      Ast.string_of_expr;
+    test "basic solve for division equation y / x = 5" 
+      (Binop(Eq,  Var "x", Binop(Div, Var "y", Int 5))) 
+      (Solve.solve ("x") (Binop(Eq, Binop(Div, Var "y", Var "x"), Int 5 )) )
+      Ast.string_of_expr;
+    test "solve equation y / x = (5 + z)" 
+      (Binop(Eq, Var "x", Binop(Div, Var "y", Binop (Add, Int 5, Var "z")))) 
+      (Solve.solve ("x") (Binop(Eq, Binop(Div, Var "y", Var "x"), 
+                                    Binop (Add, Int 5, Var "z"))) )
+      Ast.string_of_expr;
+    test "basic solve for division equation 4y / x = 5" 
+      (Binop(Eq,  Var "x", Binop(Div, Binop(Mul, Int 4, Var "y"), Int 5))) 
+      (Solve.solve ("x") (Binop(Eq, Binop(Div, Binop(Mul, Int 4, Var "y"),
+                                              Var "x"), Int 5 )) )
+      Ast.string_of_expr;
 
   ]
 
@@ -602,7 +706,7 @@ let suite =
     matrix_tests;
     lin_alg_tests;
     var_present_tests;
-    inverse_tests;
+    solve_tests;
     prob_tests;
     eval_tests
   ]

@@ -1,4 +1,6 @@
 open Ast
+open Prob
+open Solve
 
 module ComputationError = struct
   exception EvalError of string
@@ -176,10 +178,16 @@ let rec eval_binop op e1 e2 sigma  =
       let vec2' = float_list_from_vec vec2 in
       eval_binop_on_vectors op vec1' vec2' sigma''
     end
+  | _ -> failwith "Error evaluating binop"
 
 and evaluate_command cmd e sigma =
   let open Linalg in
-  let (value, sigma') = eval_expr e sigma in
+  let (value, sigma') = if cmd <> "solve" then eval_expr e sigma
+    else
+      match e with
+      | Binop(op, e1, e2) -> (VEquation (op, e1, e2)), sigma
+      | _ -> failwith "Invalid operation on a non-equation"
+  in
   let result = match cmd, value with
     | "rref", VArray (Matrix m) -> VArray (Matrix (Linalg.rref m))
     | "rref", _ ->
@@ -188,6 +196,14 @@ and evaluate_command cmd e sigma =
     | "pivots", VArray (Matrix m) -> VArray (RowVector (pivot_cols m))
     | "pivots", _ ->
       raise (ComputationError.EvalError "Cannot calculate pivots of a vector")
+    | "solve", VEquation (op, e1, e2) -> begin
+      print_endline "What variable would you like to solve for? ";
+      let input = read_line () in 
+      let solve_output = solve input (Binop(op, e1, e2)) in
+          match solve_output with
+          |Binop (op, e1, e2) -> VEquation (op, e1, e2)
+          |_ -> failwith "Error solving equation"
+      end
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma')
