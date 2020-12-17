@@ -196,13 +196,14 @@ and evaluate_command cmd e sigma =
     | "pivots", VArray (Matrix m) -> VArray (RowVector (pivot_cols m))
     | "pivots", _ ->
       raise (ComputationError.EvalError "Cannot calculate pivots of a vector")
+    | "det", VArray (Matrix m) -> VFloat (Linalg.determinant m)
     | "solve", VEquation (op, e1, e2) -> begin
-      print_endline "What variable would you like to solve for? ";
-      let input = read_line () in 
-      let solve_output = solve input (Binop(op, e1, e2)) in
-          match solve_output with
-          |Binop (op, e1, e2) -> VEquation (op, e1, e2)
-          |_ -> failwith "Error solving equation"
+        print_endline "What variable would you like to solve for? ";
+        let input = read_line () in 
+        let solve_output = solve input (Binop(op, e1, e2)) in
+        match solve_output with
+        |Binop (op, e1, e2) -> VEquation (op, e1, e2)
+        |_ -> failwith "Error solving equation"
       end
     | _ -> failwith "TODO: Add more functionality"
   in

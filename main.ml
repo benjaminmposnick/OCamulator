@@ -1,5 +1,4 @@
 open Ast 
-open Eval
 
 (* Define styles for command-line output *)
 let yellow = ANSITerminal.yellow
@@ -75,9 +74,9 @@ let rec event_loop sigma =
       match parsed_input with
       | None -> event_loop sigma
       | Some ast -> 
-        let result = try Some (eval_input ast sigma) with
-          | ComputationError.EvalError msg -> cprint_newline [red] msg; None
-          | ComputationError.TypeError msg -> cprint_newline [red] msg; None 
+        let result = try Some (Eval.eval_input ast sigma) with
+          | Eval.ComputationError.EvalError msg -> cprint_newline [red] msg; None
+          | Eval.ComputationError.TypeError msg -> cprint_newline [red] msg; None 
           | Failure msg -> cprint_newline [red] msg; None in
         match result with
         | None -> event_loop sigma

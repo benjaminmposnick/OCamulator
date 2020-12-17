@@ -22,7 +22,7 @@ let is_symmetric m =
   let n_rows = length m in
   let n_cols = length (hd m) in
   if n_cols <> n_rows then
-    raise Eval.ComputationError.(EvalError "Matrix must be square")
+    failwith "Matrix must be square"
   else
     let matrix = Matrix m in
     matrix = (transpose matrix)
@@ -33,7 +33,7 @@ let is_symmetric m =
 let component_wise_application v1 v2 op =
   try List.map2 op v1 v2 with
   | Invalid_argument _ -> 
-    raise Eval.ComputationError.(EvalError "Vectors must be the same length")
+    failwith "Vectors must be the same length"
 
 let component_wise_add v1 v2 =
   component_wise_application v1 v2 ( +. )
@@ -267,3 +267,58 @@ let rref matrix =
     row_echelon_form matrix tolerance in
   reduced_row_echelon_form echelon_form_matrix pivot_col_idxs
   |> purify tolerance
+
+(** [lu_decomposition matrix] is the LU decomposition of [matrix], i.e. the
+    pair of matrices L and U such that if A = [matrix], then A = LU. Computed
+    using the Doolittle method. 
+    Requires: [matrix] is square. *)
+let lu_decomposition matrix =
+  let n_rows = List.length matrix in
+  let n_cols = List.(length (hd matrix)) in
+  if n_cols <> n_rows then
+    failwith "Matrix must be square"
+  else
+    let open Array in
+    let n = n_rows in
+    let get_ith_col_of_u u i =
+      let u_i = make n 0. in
+      for j = 0 to n - 1 do
+        u_i.(j) <- u.(j).(i);
+      done; u_i in
+    let a = List.map of_list matrix |> of_list in
+    let l = make_matrix n n 0. in
+    let u = make_matrix n n 0. in
+    for k = 0 to n - 1 do
+      l.(k).(k) <- 1.;
+      for j = k to n - 1 do
+        let u_j = get_ith_col_of_u u j in
+        u.(k).(j) <- a.(k).(j) -. (dot_product (to_list l.(k)) (to_list u_j))
+      done;
+      for i = k + 1 to n - 1 do
+        let u_k = get_ith_col_of_u u k in
+        l.(i).(k) <- (1. /. u.(k).(k)) *. (a.(i).(k) -. (dot_product (to_list l.(i)) (to_list u_k)))
+      done;
+    done;
+    let list_of_array arr = Array.(map to_list arr) |> Array.to_list in
+    (list_of_array l, list_of_array u)
+
+(** [diagonal_product matrix] is the product of the entries on the main
+    diagonal of [matrix].
+    Requires: [matrix] is square. *)
+let diagonal_product matrix =
+  let n_rows = List.length matrix in
+  let n_cols = List.(length (hd matrix)) in
+  if n_cols <> n_rows then
+    failwith "Matrix must be square"
+  else
+    let open Array in
+    let a = List.map of_list matrix |> of_list in
+    let diag = make n_rows 0. in
+    for i = 0 to n_rows - 1 do
+      diag.(i) <- a.(i).(i)
+    done;
+    Array.fold_left ( *. ) 1. diag
+
+let determinant matrix =
+  let (l, u) = lu_decomposition matrix in
+  (diagonal_product l) *. (diagonal_product u)

@@ -45,3 +45,7 @@ val rref : float list list -> float list list
 (** [pivot_cols matrix] is a list of the pivot columns of [matrix], found
     via Gaussian elimination. *)
 val pivot_cols : float list list -> float list
+
+val lu_decomposition : float list list -> (float list list * float list list)
+
+val determinant : float list list -> float

@@ -114,7 +114,7 @@ let string_of_distribution = function
 let string_of_array = function
   | RowVector vec -> "RowVector [" ^ (string_of_vector_contents ", " vec) ^ "]"
   | ColumnVector vec -> "ColVector [" ^ (string_of_vector_contents "; " vec) ^ "]"
-  | Matrix mat -> "Matrix " ^ (string_of_matrix mat)
+  | Matrix mat -> "Matrix \n" ^ (string_of_matrix mat)
 
 (** [string_of_expr expr] is the string respresentation of expression [expr]. *)
 let rec string_of_expr = function
