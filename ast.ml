@@ -55,6 +55,7 @@ type expr =
 type value =
   | VFloat of float
   | VArray of array
+  | VEquation of binop * expr * expr
 
 (* ===========================================================================
     TO STRING FUNCTIONS
@@ -130,3 +131,4 @@ let rec string_of_expr = function
 let string_of_value = function
   | VFloat f -> "Float " ^ string_of_float f
   | VArray arr -> string_of_array arr
+  | VEquation (op, e1, e2) -> string_of_expr (Binop (op, e1, e2))
