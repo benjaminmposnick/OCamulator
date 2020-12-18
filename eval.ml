@@ -109,9 +109,9 @@ let eval_binop_on_floats op f1 f2 sigma =
 let eval_binop_on_vectors op v1 v2 sigma =
   let open Linalg in
   let result = match op with
-    | Add -> VArray (RowVector (component_wise_add v1 v2))
-    | Sub -> VArray (RowVector (component_wise_subtract v1 v2))
-    | Mul -> VArray (RowVector (component_wise_multiply v1 v2))
+    | Add -> VVector (RowVector (component_wise_add v1 v2))
+    | Sub -> VVector (RowVector (component_wise_subtract v1 v2))
+    | Mul -> VVector (RowVector (component_wise_multiply v1 v2))
     | Dot -> VFloat (Linalg.dot_product v1 v2)
     | _ -> failwith "TODO: Add more functionality"
   in
@@ -180,24 +180,35 @@ let rec eval_binop op e1 e2 sigma  =
     end
   | _ -> failwith "Error evaluating binop"
 
-and evaluate_command cmd e sigma =
-  let open Linalg in
-  let (value, sigma') = if cmd <> "solve" then eval_expr e sigma
-    else
+and evaluate_command cmd e sigma = assert false
+(*   let open Linalg in
+     let (value, sigma') = if cmd <> "solve" then eval_expr e sigma
+     else
       match e with
       | Binop(op, e1, e2) -> (VEquation (op, e1, e2)), sigma
       | _ -> failwith "Invalid operation on a non-equation"
-  in
-  let result = match cmd, value with
-    | "rref", VArray (Matrix m) -> VArray (Matrix (Linalg.rref m))
-    | "rref", _ ->
+     in
+     let result = match cmd, value with
+     | "rref", VArray (Matrix m) -> VArray (Matrix (Linalg.rref m))
+     | "rref", _ ->
       raise (ComputationError.EvalError "Cannot row reduce a vector")
-    | "transpose", VArray arr -> VArray (Linalg.transpose arr)
-    | "pivots", VArray (Matrix m) -> VArray (RowVector (pivot_cols m))
-    | "pivots", _ ->
+     | "transpose", VArray arr -> VArray (Linalg.transpose arr)
+     | "pivots", VArray (Matrix m) -> VArray (RowVector (pivot_cols m))
+     | "pivots", _ ->
       raise (ComputationError.EvalError "Cannot calculate pivots of a vector")
-    | "det", VArray (Matrix m) -> VFloat (Linalg.determinant m)
-    | "solve", VEquation (op, e1, e2) -> begin
+     | "det", VArray (Matrix m) -> VFloat (Linalg.determinant m)
+     | "plu",  VArray (Matrix m) -> let (p, l, u) = Linalg.plu_decomposition m in
+      VList [VArray (Matrix p); VArray (Matrix l); VArray (Matrix u)]
+     | _, VList lst when String.(length cmd > 0 && get cmd 0 = '#')-> begin
+        match int_of_string_opt (String.(sub cmd 1 (length cmd - 1))) with
+        | None -> raise (ComputationError.EvalError "Cannot index list with non-integer")
+        | Some idx -> begin
+            match List.nth_opt lst (idx - 1) with
+            | None -> raise (ComputationError.EvalError "Index out of bounds")
+            | Some v -> v
+          end
+      end
+     | "solve", VEquation (op, e1, e2) -> begin
         print_endline "What variable would you like to solve for? ";
         let input = read_line () in 
         let solve_output = solve input (Binop(op, e1, e2)) in
@@ -205,9 +216,9 @@ and evaluate_command cmd e sigma =
         |Binop (op, e1, e2) -> VEquation (op, e1, e2)
         |_ -> failwith "Error solving equation"
       end
-    | _ -> failwith "TODO: Add more functionality"
-  in
-  (result, sigma')
+     | _ -> failwith "TODO: Add more functionality"
+     in
+     (result, sigma') *)
 
 and eval_expr e sigma =
   match e with
@@ -219,10 +230,8 @@ and eval_expr e sigma =
     eval_assign x v sigma'
   | Binop (op, e1, e2) -> eval_binop op e1 e2 sigma
   | Prob dist -> eval_prob dist sigma
-  | Array arr -> begin match arr with 
-      | Matrix m -> VArray (Matrix (list_of_float_lists_from_matrix arr)), sigma
-      | _ -> VArray arr, sigma
-    end
+  | Matrix mat ->  VMatrix (list_of_float_lists_from_matrix mat), sigma
+  | Vector vec -> VVector vec, sigma
   | Command (cmd, e) -> 
     let cmd' = String.lowercase_ascii cmd in
     evaluate_command cmd' e sigma 

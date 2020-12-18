@@ -1,3 +1,5 @@
+open Vector
+
 (* ===========================================================================
     TYPE DEFINITIONS
    ===========================================================================*)
@@ -17,13 +19,6 @@ type binop =
   | GTE
   | Assign
   | Dot
-
-(** [array] is the type of vectors and matrices. *)
-type array = 
-  | RowVector of float list
-  | ColumnVector of float list
-  (** [Matrix] representation invariant: treated as a list of row vectors *)
-  | Matrix of float list list 
 
 (** [prob_func] is the type of density functions for distributions. *)
 type prob_func =
@@ -45,7 +40,8 @@ type expr =
   | Var of string
   | Int of int
   | Float of float
-  | Array of array
+  | Matrix of Matrix.t
+  | Vector of Vector.t
   | Binop of binop * expr * expr
   | Prob of distribution
   | Command of string * expr
@@ -54,8 +50,11 @@ type expr =
     under the big-step relation/. *)
 type value =
   | VFloat of float
-  | VArray of array
+  | VMatrix of Matrix.t
+  | VVector of Vector.t
   | VEquation of binop * expr * expr
+  | VInt of int
+  | VList of value list
 
 (* ===========================================================================
     TO STRING FUNCTIONS
@@ -83,15 +82,6 @@ let string_of_binop = function
   | Assign -> "Assign"
   | Dot -> "Dot"
 
-(** [string_of_vector_contents sep vec] is the string respresentation of the
-    contents of vector [vec], where each entry is separated by [sep]. *)
-let string_of_vector_contents sep vec =
-  List.map string_of_float vec |> String.concat sep
-
-(** [string_of_matrix mat] is the string respresentation of matrix [mat]. *)
-let string_of_matrix mat =
-  List.map (string_of_vector_contents ", ") mat |> String.concat ";\n"
-
 (** [string_of_distribution dis] is the string respresentation of the
     probability distribution [dist]. *)
 let string_of_distribution = function
@@ -110,12 +100,6 @@ let string_of_distribution = function
   | Normal (func, m, s, x) ->
     "Normal " ^ string_of_prob_func func 
 
-(** [string_of_array arr] is the string representation of array [arr]*)
-let string_of_array = function
-  | RowVector vec -> "RowVector [" ^ (string_of_vector_contents ", " vec) ^ "]"
-  | ColumnVector vec -> "ColVector [" ^ (string_of_vector_contents "; " vec) ^ "]"
-  | Matrix mat -> "Matrix \n" ^ (string_of_matrix mat)
-
 (** [string_of_expr expr] is the string respresentation of expression [expr]. *)
 let rec string_of_expr = function
   | Var x -> "Var " ^ x
@@ -124,11 +108,24 @@ let rec string_of_expr = function
   | Binop (op, e1, e2) -> "Binop (" ^ (string_of_binop op) ^ ", " ^
                           (string_of_expr e1) ^ ", " ^ (string_of_expr e2) ^ ")"
   | Prob dist -> string_of_distribution dist
-  | Array arr -> string_of_array arr
   | Command (cmd, e) -> "Command (" ^ cmd ^ ", " ^ (string_of_expr e) ^ ")"
+  | Vector vec -> "Vector \n" ^ Vector.string_of_vector vec
+  | Matrix mat -> "Matrix \n" ^ Matrix.string_of_matrix mat
 
 (** [string_of_value val] is the string respresentation of value [val]. *)
-let string_of_value = function
+let rec string_of_value = function
+  | VInt f -> "Int " ^ string_of_int f
   | VFloat f -> "Float " ^ string_of_float f
-  | VArray arr -> string_of_array arr
+  | VVector vec -> "Vector \n" ^ Vector.string_of_vector vec
+  | VMatrix mat -> "Matrix \n" ^ Matrix.string_of_matrix mat
   | VEquation (op, e1, e2) -> string_of_expr (Binop (op, e1, e2))
+  | VList lst -> 
+    let rec string_of_value_list lst i acc =
+      match lst with
+      | [] -> acc
+      | h :: t ->
+        let acc' =
+          acc ^ "\n[Entry " ^ (string_of_int i) ^ "] " ^ (string_of_value h) in
+        string_of_value_list t (i + 1) acc'
+    in
+    string_of_value_list lst 1 "Value List:"
