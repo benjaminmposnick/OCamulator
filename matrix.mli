@@ -73,3 +73,7 @@ val row_sums : t -> float list
 val apply_to_all : (float -> float) -> t -> t
 
 val string_of_matrix : t -> string
+
+val of_vectors : Vector.t list -> t
+
+val map : (float list -> 'a) -> t -> 'a list

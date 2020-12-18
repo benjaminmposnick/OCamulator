@@ -65,9 +65,8 @@ let elementary_row_addition pivot_row next_row tolerance =
 let zero_out_entries_below_pivot matrix next_pivot_idx tolerance = 
   let open List in
   let pivot_row = Matrix.get_row matrix next_pivot_idx in
-  let n_rows = Matrix.n_rows matrix in
   let rec zero_out_aux acc idx matrix = 
-    if idx = n_rows then List.rev acc
+    if Matrix.n_rows matrix = 0 then List.rev acc
     else
       let next_row = Matrix.get_row matrix 0 in
       let remaining_rows = Matrix.drop_row matrix 0 in
@@ -174,8 +173,7 @@ let row_echelon_form matrix tolerance =
     pivot, i.e. any row with index less than [i], as part of the backward phase
     of Gaussian elimination.
     Requires: If [A] =def= [matrix], then [A][[i][j]] is one of the pivots of
-    matrix [A].
-*)
+    matrix [A]. *)
 let zero_out_entries_above_pivot matrix i j n_cols = 
   let a = Matrix.to_array matrix in
   let pivot = a.(i).(j) in
@@ -216,12 +214,14 @@ let pivot_cols matrix =
   let tolerance = determine_tolerance matrix in
   snd (row_echelon_form matrix tolerance)
   |> List.sort compare
+  |> List.map (fun i -> VInt i)
 
 let rref matrix =
   let tolerance = determine_tolerance matrix in
   let (echelon_form, pivot_col_idxs) = row_echelon_form matrix tolerance in
   reduced_row_echelon_form echelon_form pivot_col_idxs
   |> purify tolerance
+
 
 (* ===========================================================================
    MATRIX FACTORIZATIONS

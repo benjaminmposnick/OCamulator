@@ -1,6 +1,7 @@
 open Ast
 open Prob
 open Solve
+open Vector
 
 module ComputationError = struct
   exception EvalError of string
@@ -66,24 +67,6 @@ let eval_assign x v sigma =
   |> List.cons (x, v) 
   |> fun sigma' -> v, sigma'
 
-let float_list_from_vec vec =
-  match vec with
-  | RowVector lst -> lst
-  | ColumnVector lst -> lst
-  | Matrix _ -> raise (ComputationError.EvalError ("Not a vector"))
-
-let list_of_float_lists_from_matrix mat =
-  let open List in
-  match mat with
-  | RowVector _ | ColumnVector _ -> 
-    raise (ComputationError.EvalError ("Not a matrix"))
-  | Matrix m -> (* Matrix cannot be empty based off lexer/parser *)
-    let n_cols = length (hd m) in
-    if fold_left (fun acc lst -> acc && (length lst = n_cols)) true m then m
-    else 
-      let error_msg = "Each row must have the same number of columns" in
-      raise (ComputationError.EvalError (error_msg))
-
 let eval_binop_on_floats op f1 f2 sigma =
   let result = match op with
     | Add -> f1 +. f2
@@ -106,38 +89,40 @@ let eval_binop_on_floats op f1 f2 sigma =
   in
   (VFloat result, sigma)
 
-let eval_binop_on_vectors op v1 v2 sigma =
-  let open Linalg in
+let eval_binop_on_vectors op (v1 : Vector.t) (v2 : Vector.t) sigma =
+  let open Vector in
   let result = match op with
-    | Add -> VVector (RowVector (component_wise_add v1 v2))
-    | Sub -> VVector (RowVector (component_wise_subtract v1 v2))
-    | Mul -> VVector (RowVector (component_wise_multiply v1 v2))
-    | Dot -> VFloat (Linalg.dot_product v1 v2)
+    | Add -> VVector (component_wise_add v1 v2)
+    | Sub -> VVector (component_wise_subtract v1 v2)
+    | Mul -> VVector (component_wise_multiply v1 v2)
+    | Dot -> VFloat (dot_product v1 v2)
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma)
 
-let eval_binop_on_matrices op m1 m2 sigma =
-  let open Linalg in
+let eval_binop_on_matrices op (m1 : Matrix.t) (m2 : Matrix.t) sigma =
+  let open Matrix in
+  let rvecs1 = map Vector.make_row_vec m1 in
+  let rvecs2 = map Vector.make_row_vec m2 in
   let result = match op with
-    | Add -> VArray (Matrix (List.map2 component_wise_add m1 m2))
-    | Sub -> VArray (Matrix (List.map2 component_wise_subtract m1 m2))
-    | Mul -> VArray (Matrix (Linalg.matrix_multiply m1 m2))
+    | Add -> VMatrix (of_vectors (List.map2 Vector.component_wise_add rvecs1 rvecs2))
+    | Sub -> VMatrix (of_vectors (List.map2 Vector.component_wise_subtract rvecs1 rvecs2))
+    | Mul -> VMatrix (multiply m1 m2)
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma)
 
 let eval_binop_btwn_scalar_and_array op k arr sigma =
-  let open List in
   let multiply = fun x -> k *. x in
   let exponentiate = fun x -> Float.pow x k in
+  let apply_scalar_op_to_matrix mat =
+    let rvecs = Matrix.map Vector.make_row_vec mat in
+    VMatrix (Matrix.of_vectors (List.map (Vector.map multiply) rvecs)) in
   let value = match arr, op with
-    | RowVector vec, Mul -> VArray (RowVector (map multiply vec))
-    | RowVector vec, Pow -> VArray (RowVector (map exponentiate vec))
-    | ColumnVector vec, Mul -> VArray (ColumnVector (map multiply vec))
-    | ColumnVector vec, Pow -> VArray (ColumnVector (map exponentiate vec))
-    | Matrix mat, Mul -> VArray (Matrix (map (map multiply) mat))
-    | Matrix mat, Pow -> VArray (Matrix (map (map exponentiate) mat))
+    | VVector vec, Mul -> VVector (Vector.map multiply vec)
+    | VVector vec, Pow -> VVector (Vector.map exponentiate vec)
+    | VMatrix mat, Mul -> apply_scalar_op_to_matrix mat
+    | VMatrix mat, Pow -> apply_scalar_op_to_matrix mat
     | _, _ ->
       raise (ComputationError.EvalError "Invalid operation between scalar and array")
   in
@@ -146,60 +131,58 @@ let eval_binop_btwn_scalar_and_array op k arr sigma =
 let eval_binop_btwn_matrix_and_vector op arr1 arr2 sigma =
   let open Linalg in
   let value = match arr1, arr2, op with
-    | VArray (RowVector vec), VArray (Matrix mat), Mul ->
-      RowVector (List.hd (matrix_multiply [vec] mat))
-    | VArray (Matrix mat), VArray (ColumnVector vec), Mul ->
-      let cvec = List.map (fun elem -> [elem]) vec in
-      ColumnVector (List.flatten (matrix_multiply mat cvec))
-    | VArray (ColumnVector vec), VArray (Matrix mat), Mul ->
+    | VVector (RowVector _ as vec), VMatrix mat, Mul ->
+      VMatrix (Matrix.(multiply (of_vectors [vec]) mat)) (* Row vector *)
+    | VMatrix mat, VVector (ColVector _ as vec), Mul ->
+      VMatrix (Matrix.(multiply mat (of_vectors [vec]))) (* Column vector *)
+    | VVector (ColVector vec), VMatrix mat, Mul ->
       raise (ComputationError.EvalError "Shape error: first argument should be a row vector")
-    | VArray (Matrix mat), VArray (RowVector vec), Mul ->
+    | VMatrix mat, VVector (RowVector vec), Mul ->
       raise (ComputationError.EvalError "Shape error: second argument should be a column vector")
     | _, _, _ ->
       raise (ComputationError.EvalError "Invalid operation between matrix and vector")
   in
-  (VArray value, sigma)
+  (value, sigma)
 
 let rec eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
   let (v2, sigma'') = eval_expr e2 sigma in
   match v1, v2 with
   | VFloat f1, VFloat f2 -> eval_binop_on_floats op f1 f2 sigma''
-  | VArray (Matrix m1), VArray (Matrix m2) ->
+  | VMatrix m1, VMatrix m2 ->
     eval_binop_on_matrices op m1 m2 sigma 
-  | VFloat f, VArray arr -> 
-    eval_binop_btwn_scalar_and_array op f arr sigma
-  | VArray arr, VFloat f -> 
-    eval_binop_btwn_scalar_and_array op f arr sigma
-  | VArray (Matrix _), VArray _ | VArray _, VArray (Matrix _) -> 
+  | VFloat f, (_ as arr) -> eval_binop_btwn_scalar_and_array op f arr sigma
+  | (_ as arr), VFloat f -> eval_binop_btwn_scalar_and_array op f arr sigma
+  | VMatrix _, VVector _ | VVector _, VMatrix _  -> 
     eval_binop_btwn_matrix_and_vector op v1 v2 sigma
-  | VArray vec1, VArray vec2 -> begin
-      let vec1' = float_list_from_vec vec1 in
-      let vec2' = float_list_from_vec vec2 in
-      eval_binop_on_vectors op vec1' vec2' sigma''
-    end
+  | VVector vec1, VVector vec2 -> eval_binop_on_vectors op vec1 vec2 sigma''
   | _ -> failwith "Error evaluating binop"
 
-and evaluate_command cmd e sigma = assert false
-(*   let open Linalg in
-     let (value, sigma') = if cmd <> "solve" then eval_expr e sigma
-     else
+and evaluate_command cmd e sigma = 
+  let open Linalg in
+  let (value, sigma') =
+    if cmd <> "solve" then eval_expr e sigma
+    else
       match e with
       | Binop(op, e1, e2) -> (VEquation (op, e1, e2)), sigma
-      | _ -> failwith "Invalid operation on a non-equation"
-     in
-     let result = match cmd, value with
-     | "rref", VArray (Matrix m) -> VArray (Matrix (Linalg.rref m))
-     | "rref", _ ->
-      raise (ComputationError.EvalError "Cannot row reduce a vector")
-     | "transpose", VArray arr -> VArray (Linalg.transpose arr)
-     | "pivots", VArray (Matrix m) -> VArray (RowVector (pivot_cols m))
-     | "pivots", _ ->
-      raise (ComputationError.EvalError "Cannot calculate pivots of a vector")
-     | "det", VArray (Matrix m) -> VFloat (Linalg.determinant m)
-     | "plu",  VArray (Matrix m) -> let (p, l, u) = Linalg.plu_decomposition m in
-      VList [VArray (Matrix p); VArray (Matrix l); VArray (Matrix u)]
-     | _, VList lst when String.(length cmd > 0 && get cmd 0 = '#')-> begin
+      | _ -> failwith "Invalid operation on a non-equation" in
+  let result = match cmd, value with
+    | "rref", VMatrix m -> VMatrix (Linalg.rref m)
+    | "rref", _ ->
+      raise (ComputationError.EvalError "Cannot row reduce a non-matrix")
+    | "transpose", VMatrix mat -> VMatrix (Matrix.transpose mat)
+    | "transpose", VVector vec -> VVector (Vector.transpose vec)
+    | "transpose", _ ->
+      raise (ComputationError.EvalError "Cannot transpose non-matrix / non-vector")
+    | "pivots", VMatrix m -> VList (pivot_cols m)
+    | "pivots", _ ->
+      raise (ComputationError.EvalError "Cannot calculate pivots of a non-matrix")
+    (* | "det", VMatrix m -> VFloat (Linalg.determinant m) *)
+    | "det", _ -> raise (ComputationError.EvalError "Cannot calculate determinant of non-matrix")
+    | "plu",  VMatrix m ->
+      let (p, l, u) = Linalg.plu_decomposition m in
+      VList [VMatrix p; VMatrix l; VMatrix u]
+    | _, VList lst when String.(length cmd > 0 && get cmd 0 = '#')-> begin
         match int_of_string_opt (String.(sub cmd 1 (length cmd - 1))) with
         | None -> raise (ComputationError.EvalError "Cannot index list with non-integer")
         | Some idx -> begin
@@ -208,7 +191,7 @@ and evaluate_command cmd e sigma = assert false
             | Some v -> v
           end
       end
-     | "solve", VEquation (op, e1, e2) -> begin
+    | "solve", VEquation (op, e1, e2) -> begin
         print_endline "What variable would you like to solve for? ";
         let input = read_line () in 
         let solve_output = solve input (Binop(op, e1, e2)) in
@@ -216,9 +199,9 @@ and evaluate_command cmd e sigma = assert false
         |Binop (op, e1, e2) -> VEquation (op, e1, e2)
         |_ -> failwith "Error solving equation"
       end
-     | _ -> failwith "TODO: Add more functionality"
-     in
-     (result, sigma') *)
+    | _ -> failwith "TODO: Add more functionality"
+  in
+  (result, sigma')
 
 and eval_expr e sigma =
   match e with
@@ -230,7 +213,7 @@ and eval_expr e sigma =
     eval_assign x v sigma'
   | Binop (op, e1, e2) -> eval_binop op e1 e2 sigma
   | Prob dist -> eval_prob dist sigma
-  | Matrix mat ->  VMatrix (list_of_float_lists_from_matrix mat), sigma
+  | Matrix mat ->  VMatrix mat, sigma
   | Vector vec -> VVector vec, sigma
   | Command (cmd, e) -> 
     let cmd' = String.lowercase_ascii cmd in

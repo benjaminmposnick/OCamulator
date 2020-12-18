@@ -325,40 +325,40 @@ let read_matrix_from_text_file filename =
   | _ -> failwith "Impossible"
 
 let matrix_tests = [
-  test "row reduce 3x3 matrix with two pivot columns" 
-    (Matrix.of_list [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]])
-    (Linalg.rref (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 3x4 matrix with three pivot columns" 
-    (Matrix.of_list  [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]])
-    (Linalg.rref (Matrix.of_list 
-                    [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 3x4 matrix with two pivot columns" 
-    (Matrix.of_list [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]])
-    (Linalg.rref (Matrix.of_list [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 4x4 matrix with two pivot columns" 
-    (Matrix.of_list 
-       [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.];[0.;0.;0.;0.]])
-    (Linalg.rref (Matrix.of_list  [[1.;2.;3.;4.];[5.;6.;7.;8.];
-                                   [9.;10.;11.;12.];[13.;14.;15.;16.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 4x5 matrix with four pivot columns" 
-    (Matrix.of_list  [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];
-                      [0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]])
-    (Linalg.rref (Matrix.of_list 
-                    [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];
-                     [~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 10x10 random int matrix with 10 pivot columns" 
-    (read_matrix_from_text_file "./tests/rref/10x10_int_out.txt")
-    (Linalg.rref (read_matrix_from_text_file "./tests/rref/10x10_int_in.txt"))
-    (Matrix.string_of_matrix);
-  test "row reduce 5x7 random float matrix with 5 pivot columns" 
-    (read_matrix_from_text_file "./tests/rref/5x7_float_out.txt")
-    (Linalg.rref (read_matrix_from_text_file "./tests/rref/5x7_float_in.txt"))
-    (Matrix.string_of_matrix);
+  (* test "row reduce 3x3 matrix with two pivot columns" 
+       (Matrix.of_list [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]])
+      (Linalg.rref (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
+      (Matrix.string_of_matrix);
+     test "row reduce 3x4 matrix with three pivot columns" 
+      (Matrix.of_list  [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]])
+      (Linalg.rref (Matrix.of_list 
+                      [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]))
+      (Matrix.string_of_matrix);
+     test "row reduce 3x4 matrix with two pivot columns" 
+      (Matrix.of_list [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]])
+      (Linalg.rref (Matrix.of_list [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.]]))
+      (Matrix.string_of_matrix);
+     test "row reduce 4x4 matrix with two pivot columns" 
+      (Matrix.of_list 
+         [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.];[0.;0.;0.;0.]])
+      (Linalg.rref (Matrix.of_list  [[1.;2.;3.;4.];[5.;6.;7.;8.];
+                                     [9.;10.;11.;12.];[13.;14.;15.;16.]]))
+      (Matrix.string_of_matrix);
+     test "row reduce 4x5 matrix with four pivot columns" 
+      (Matrix.of_list  [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];
+                        [0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]])
+      (Linalg.rref (Matrix.of_list 
+                      [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];
+                       [~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
+      (Matrix.string_of_matrix);
+     test "row reduce 10x10 random int matrix with 10 pivot columns" 
+      (read_matrix_from_text_file "./tests/rref/10x10_int_out.txt")
+      (Linalg.rref (read_matrix_from_text_file "./tests/rref/10x10_int_in.txt"))
+      (Matrix.string_of_matrix);
+     test "row reduce 5x7 random float matrix with 5 pivot columns" 
+      (read_matrix_from_text_file "./tests/rref/5x7_float_out.txt")
+      (Linalg.rref (read_matrix_from_text_file "./tests/rref/5x7_float_in.txt"))
+      (Matrix.string_of_matrix); *)
   test "row reduce 25x50 random int matrix" 
     (read_matrix_from_text_file "./tests/rref/25x50_int_out.txt")
     (Linalg.rref (read_matrix_from_text_file "./tests/rref/25x50_int_in.txt"))
@@ -708,13 +708,13 @@ let eval_tests =
 
 let suite =
   "test suite for OCamulator"  >::: List.flatten [
-    parse_tests;
+    (* parse_tests;
+       lin_alg_tests;
+       var_present_tests;
+       solve_tests;
+       prob_tests;
+       eval_tests; *)
     matrix_tests;
-    lin_alg_tests;
-    var_present_tests;
-    solve_tests;
-    prob_tests;
-    eval_tests
   ]
 
 let _ = run_test_tt_main suite
