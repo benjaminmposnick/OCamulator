@@ -147,7 +147,7 @@ let row_echelon_form matrix tolerance =
   let open List in
   let rec row_echelon_form_aux matrix next_pivot_idx acc pivot_col_idxs =
     let n_cols = Matrix.n_cols matrix in 
-    if n_cols = 0 then (Matrix.(transpose (of_list acc)), pivot_col_idxs)
+    if n_cols = 0 then (Matrix.(transpose (of_list (List.rev acc))), pivot_col_idxs)
     else
       let next_col = Matrix.get_col matrix 0 in
       if not (is_pivot_col next_col next_pivot_idx) then
