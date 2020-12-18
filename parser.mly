@@ -1,5 +1,7 @@
 %{
 open Ast
+open Vector
+open Matrix
 
 (** [vector_as_string_list str sep] is the list of strings generated from 
 		splitting [str] at [sep]. *)
@@ -30,7 +32,7 @@ let vector_as_float_list str sep =
 %token BINOM BERN UNIF POIS NORM GEO EXP PDF CDF
 
 // Miscellaenous
-%token LPAREN RPAREN CONST_PI EOF BEGIN_CMD
+%token LPAREN RPAREN CONST_PI EOF BEGIN_CMD PROJ
 
 %left ID
 %right EQUALS GT LT GTE LTE ASSIGN DOT MOD
@@ -53,6 +55,7 @@ expr :
 	| prob_expr { $1 }
 	| array_expr { $1 }
 	| BEGIN_CMD; cmd = ID; e = expr { Command (cmd, e) }
+	| PROJ; i = INT; e = expr { Command ("#" ^ string_of_int i, e)}
 	;
 
 num :
@@ -88,18 +91,18 @@ arith_expr :
 array_expr :
 	| v=ROW_VECTOR {
 			let vals = vector_as_float_list v ',' in
-			Array (RowVector (vals))
+			Vector (Vector.make_row_vec vals)
 		}
 	| v=COL_VECTOR {
 			let vals = vector_as_float_list v ';' in
-			Array (ColumnVector (vals))
+			Vector (Vector.make_col_vec vals)
 		}
 	| m=MATRIX {
 			let vals = vector_as_string_list m ';' in
 			let num_list = 
 				(fun lst -> String.split_on_char ',' lst |> List.map Float.of_string)
 				|> fun fn -> List.map fn vals in
-			Array (Matrix (num_list))
+			Matrix (Matrix.of_list num_list)
 		}
 
 prob_input :

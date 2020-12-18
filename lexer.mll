@@ -57,6 +57,7 @@ rule read =
   | "cdf" { CDF }
   | "pi" { CONST_PI }
   | "$" { BEGIN_CMD }
+  | "#" { PROJ }
   | row_vector { ROW_VECTOR (Lexing.lexeme lexbuf)}
   | col_vector { COL_VECTOR (Lexing.lexeme lexbuf)}
   | matrix { MATRIX (Lexing.lexeme lexbuf)}

@@ -1,4 +1,4 @@
-MODULES=linalg prob solve ast eval main parser lexer
+MODULES=linalg prob solve ast main parser lexer vector matrix eval
 OBJECTS=$(MODULES:=.cmo)
 MLS=$(MODULES:=.ml)
 MLIS=$(MODULES:=.mli)

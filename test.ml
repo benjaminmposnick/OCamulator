@@ -1,5 +1,6 @@
 open OUnit2
 open Ast
+open Vector
 
 (** [test name expected_output fn_output print_fn] is an OUnit test case named
     [name] that asserts equality between [expected_output] and [fn_output].
@@ -273,109 +274,114 @@ let parse_tests = [
     (Binop (LTE, Var "x", Float 1.)) "x <= 1.0";
 
   (* Vector tests *)
-  parse_test "Int RowVector in R1" (Array (RowVector [1.])) "[1]";
-  parse_test "Int RowVector in R2" (Array (RowVector [1.; 2.])) "[1, 2]";
-  parse_test "Int RowVector in R3" (Array (RowVector [1.; 2.; 3.])) "[1, 2, 3]";
-  parse_test "Float RowVector in R1" (Array (RowVector [1.])) "[1.0]";
-  parse_test "Float RowVector in R2" (Array (RowVector [1.; 2.])) "[1.0, 2.0]";
+  parse_test "Int RowVector in R1" (Vector (Vector.make_row_vec [1.])) "[1]";
+  parse_test "Int RowVector in R2" (Vector (Vector.make_row_vec [1.; 2.])) "[1, 2]";
+  parse_test "Int RowVector in R3" (Vector (Vector.make_row_vec [1.; 2.; 3.])) "[1, 2, 3]";
+  parse_test "Float RowVector in R1" (Vector (Vector.make_row_vec [1.])) "[1.0]";
+  parse_test "Float RowVector in R2" (Vector (Vector.make_row_vec [1.; 2.])) "[1.0, 2.0]";
   parse_test "Float RowVector in R3"
-    (Array (RowVector [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
+    (Vector (Vector.make_row_vec  [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
   parse_test "Mixed type RowVector in R2"
-    (Array (RowVector [0.5; 2.])) "[0.5, 2]";
+    (Vector (Vector.make_row_vec  [0.5; 2.])) "[0.5, 2]";
 
-  parse_test "Int ColumnVector in R2" (Array (ColumnVector [1.; 2.])) "[1; 2]";
+  parse_test "Int ColumnVector in R2" (Vector (Vector.make_col_vec [1.; 2.])) "[1; 2]";
   parse_test "Int ColumnVector in R3"
-    (Array (ColumnVector [1.; 2.; 3.])) "[1; 2; 3]";
+    (Vector (Vector.make_col_vec [1.; 2.; 3.])) "[1; 2; 3]";
   parse_test "Float ColumnVector in R2"
-    (Array (ColumnVector [1.; 2.])) "[1.0; 2.0]";
+    (Vector (Vector.make_col_vec [1.; 2.])) "[1.0; 2.0]";
   parse_test "Float ColumnVector in R3"
-    (Array (ColumnVector [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
+    (Vector (Vector.make_col_vec [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
   parse_test "Mixed type ColumnVector in R2"
-    (Array (ColumnVector [0.5; 2.])) "[0.5; 2]";
+    (Vector (Vector.make_col_vec [0.5; 2.])) "[0.5; 2]";
 
   (* Matrix tests *)
   parse_test "Int Matrix in R(2x2)"
-    (Array (Matrix [[1.;2.]; [3.;4.]])) "[1, 2; 3, 4]";
+    (Matrix (Matrix.of_list [[1.;2.]; [3.;4.]])) "[1, 2; 3, 4]";
   parse_test "Int Matrix in R(2x3)"
-    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1, 2, 3; 4, 5, 6]";
+    (Matrix (Matrix.of_list [[1.;2.;3.]; [4.;5.;6.]])) "[1, 2, 3; 4, 5, 6]";
   parse_test "Int Matrix in R(3x2)" 
-    (Array (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1, 2; 3, 4; 5, 6]";
+    (Matrix (Matrix.of_list[[1.;2.]; [3.;4.]; [5.;6.]])) "[1, 2; 3, 4; 5, 6]";
   parse_test "Int Matrix in R(2x3)" 
-    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]]))
     "[1, 2, 3; 4, 5, 6; 7, 8, 9]";
   parse_test "Float Matrix in R(2x2)" 
-    (Array (Matrix [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
+    (Matrix (Matrix.of_list [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
   parse_test "Float Matrix in R(2x3)" 
-    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
+    (Matrix (Matrix.of_list [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
   parse_test "Float Matrix in R(3x2)" 
-    (Array (Matrix [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
+    (Matrix (Matrix.of_list [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
   parse_test "Float Matrix in R(2x3)" 
-    (Array (Matrix [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]])) 
+    (Matrix (Matrix.of_list [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]]))
     "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
   parse_test "Mixed type Matrix in R(2x2)"
-    (Array (Matrix [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
+    (Matrix (Matrix.of_list [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
 ]
 
-let parse_text_file filename =
+let read_matrix_from_text_file filename =
   let ic = open_in filename in
   let line = input_line ic in
-  parse line
-
-let matrix_to_list = function
-  | Array (Matrix lst) -> lst
-  | _ -> failwith "Invalid input"
+  match parse line with
+  | Matrix m -> m
+  | _ -> failwith "Impossible"
 
 let matrix_tests = [
   test "row reduce 3x3 matrix with two pivot columns" 
-    (Matrix [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]])
-    (Matrix (Linalg.rref [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
-    (fun m -> string_of_expr (Array m));
+    (Matrix.of_list [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]])
+    (Linalg.rref (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
+    (Matrix.string_of_matrix);
   test "row reduce 3x4 matrix with three pivot columns" 
-    (Matrix [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]])
-    (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]))
-    (fun m -> string_of_expr (Array m));
+    (Matrix.of_list  [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]])
+    (Linalg.rref (Matrix.of_list 
+                    [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]))
+    (Matrix.string_of_matrix);
   test "row reduce 3x4 matrix with two pivot columns" 
-    (Matrix [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]])
-    (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.]]))
-    (fun m -> string_of_expr (Array m));
+    (Matrix.of_list [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]])
+    (Linalg.rref (Matrix.of_list [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.]]))
+    (Matrix.string_of_matrix);
   test "row reduce 4x4 matrix with two pivot columns" 
-    (Matrix [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.];[0.;0.;0.;0.]])
-    (Matrix (Linalg.rref [[1.;2.;3.;4.];[5.;6.;7.;8.];
-                          [9.;10.;11.;12.];[13.;14.;15.;16.]]))
-    (fun m -> string_of_expr (Array m));
+    (Matrix.of_list 
+       [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.];[0.;0.;0.;0.]])
+    (Linalg.rref (Matrix.of_list  [[1.;2.;3.;4.];[5.;6.;7.;8.];
+                                   [9.;10.;11.;12.];[13.;14.;15.;16.]]))
+    (Matrix.string_of_matrix);
   test "row reduce 4x5 matrix with four pivot columns" 
-    (Matrix [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];
-             [0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]])
-    (Matrix (Linalg.rref [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];
-                          [~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
-    (fun m -> string_of_expr (Array m));
+    (Matrix.of_list  [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];
+                      [0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]])
+    (Linalg.rref (Matrix.of_list 
+                    [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];
+                     [~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
+    (Matrix.string_of_matrix);
   test "row reduce 10x10 random int matrix with 10 pivot columns" 
-    (parse_text_file "./tests/rref/10x10_int_out.txt")
-    (Array (Matrix (Linalg.rref (
-         parse_text_file "./tests/rref/10x10_int_in.txt" |> matrix_to_list))))
-    (fun m -> string_of_expr m);
+    (read_matrix_from_text_file "./tests/rref/10x10_int_out.txt")
+    (Linalg.rref (read_matrix_from_text_file "./tests/rref/10x10_int_in.txt"))
+    (Matrix.string_of_matrix);
   test "row reduce 5x7 random float matrix with 5 pivot columns" 
-    (parse_text_file "./tests/rref/5x7_float_out.txt")
-    (Array (Matrix (Linalg.rref (
-         parse_text_file "./tests/rref/5x7_float_in.txt" |> matrix_to_list))))
-    (fun m -> string_of_expr m);
+    (read_matrix_from_text_file "./tests/rref/5x7_float_out.txt")
+    (Linalg.rref (read_matrix_from_text_file "./tests/rref/5x7_float_in.txt"))
+    (Matrix.string_of_matrix);
   test "row reduce 25x50 random int matrix" 
-    (parse_text_file "./tests/rref/25x50_int_out.txt")
-    (Array (Matrix (Linalg.rref (
-         parse_text_file "./tests/rref/25x50_int_in.txt" |> matrix_to_list))))
-    (fun m -> string_of_expr m);
+    (read_matrix_from_text_file "./tests/rref/25x50_int_out.txt")
+    (Linalg.rref (read_matrix_from_text_file "./tests/rref/25x50_int_in.txt"))
+    (Matrix.string_of_matrix);
 ]
 
 let lin_alg_tests =
   let open Linalg in [
     test "Symmetric matrix" true
-      (is_symmetric [[1.;7.;3.];[7.;4.;~-.5.];[3.;~-.5.;6.]])
+      Matrix.(is_symmetric (of_list [[1.;7.;3.];[7.;4.;~-.5.];[3.;~-.5.;6.]]))
       string_of_bool;
     test "Multiply two square matrices" 
-      (Matrix [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]])
-      (Matrix (matrix_multiply [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]]
-                 [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]]))
-      (fun m -> string_of_expr (Array m));
+      (Matrix.of_list [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]])
+      (Matrix.(multiply (of_list [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]])
+                 (of_list [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]])))
+      (Matrix.string_of_matrix);
+    test "PLU decomposition of 3x3 matrix"
+      (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]])
+      (let (p, l, u) = 
+         plu_decomposition (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]]) in
+       Matrix.(multiply (transpose p) (multiply l u))
+      )
+      (Matrix.string_of_matrix);
   ]
 
 let var_present_tests = let open Eval in [
@@ -418,19 +424,19 @@ let solve_tests = let open Solve in [
     test "has_var x: 4 - 3 + 4 * x = 5" 
       true 
       (Solve.has_var (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Int 3), 
-                                        Binop(Mul, Int 4, Var "x")), Int 5 ))
+                                      Binop(Mul, Int 4, Var "x")), Int 5 ))
          (Var "x"))
       string_of_bool;  
     test "has_var x: 4 - x + 4 * 3 = 5" 
       true 
       (Solve.has_var (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Var "x"), 
-                                        Binop(Mul, Int 4, Int 3)), Int 5 ))
+                                      Binop(Mul, Int 4, Int 3)), Int 5 ))
          (Var "x"))
       string_of_bool;  
     test "has_var x: 4 - 6 + 4 * 3 = 5" 
       false
       (Solve.has_var (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Int 6), 
-                                        Binop(Mul, Int 4, Int 3)), Int 5 ))
+                                      Binop(Mul, Int 4, Int 3)), Int 5 ))
          (Var "x"))
       string_of_bool;  
 
@@ -452,16 +458,16 @@ let solve_tests = let open Solve in [
       (Binop(Eq, Var "x", Binop (Sub, Binop (Sub, Binop (Add, Int 5, Int 2), 
                                              Int 4), Int 7)))
       (Solve.solve ("x") (Binop(Eq, Binop(Add, Int 4, 
-                                              Binop(Add, Var "x", Int 7)),
-                                    Binop(Add, Int 5, Int 2) )))
+                                          Binop(Add, Var "x", Int 7)),
+                                Binop(Add, Int 5, Int 2) )))
       Ast.string_of_expr;
     test "solve for addition equation 4 + 7 = 5 + x + 2" 
       (Binop (Eq, Var "x", Binop (Sub, Binop (Sub, 
                                               Binop (Add, Int 4, Int 7), 
                                               Int 5), Int 2)))
       (Solve.solve ("x") (Binop(Eq, Binop(Add, Int 4, Int 7), 
-                                    Binop(Add, Int 5, 
-                                          Binop(Add, Var "x", Int 2)) ))) 
+                                Binop(Add, Int 5, 
+                                      Binop(Add, Var "x", Int 2)) ))) 
       Ast.string_of_expr;
     test "basic solve for subtraction equation x - 4 = 5" 
       (Binop(Eq, Var "x", Binop(Add, Int 5, Int 4))) 
@@ -482,8 +488,8 @@ let solve_tests = let open Solve in [
     test "solve for subtraction equation 5 = x - 4 + 3" 
       (Binop(Eq, Var "x", Binop(Add, Int 5, Binop(Add, Int 4, Int 3)))) 
       (Solve.solve ("x") (Binop(Eq, Int 5, 
-                                    Binop(Sub, Var "x", 
-                                          Binop(Add, Int 4, Int 3)) )))
+                                Binop(Sub, Var "x", 
+                                      Binop(Add, Int 4, Int 3)) )))
       Ast.string_of_expr;
     test "basic solve for multiplication equation x * 4 = 5" 
       (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 
@@ -520,12 +526,12 @@ let solve_tests = let open Solve in [
     test "solve equation y / x = (5 + z)" 
       (Binop(Eq, Var "x", Binop(Div, Var "y", Binop (Add, Int 5, Var "z")))) 
       (Solve.solve ("x") (Binop(Eq, Binop(Div, Var "y", Var "x"), 
-                                    Binop (Add, Int 5, Var "z"))) )
+                                Binop (Add, Int 5, Var "z"))) )
       Ast.string_of_expr;
     test "basic solve for division equation 4y / x = 5" 
       (Binop(Eq,  Var "x", Binop(Div, Binop(Mul, Int 4, Var "y"), Int 5))) 
       (Solve.solve ("x") (Binop(Eq, Binop(Div, Binop(Mul, Int 4, Var "y"),
-                                              Var "x"), Int 5 )) )
+                                          Var "x"), Int 5 )) )
       Ast.string_of_expr;
 
   ]
@@ -703,12 +709,12 @@ let eval_tests =
 let suite =
   "test suite for OCamulator"  >::: List.flatten [
     parse_tests;
-    matrix_tests;
     lin_alg_tests;
     var_present_tests;
     solve_tests;
     prob_tests;
-    eval_tests
+    eval_tests;
+    matrix_tests;
   ]
 
 let _ = run_test_tt_main suite
