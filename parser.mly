@@ -113,20 +113,46 @@ prob_input :
 	;
 
 prob_expr :
-	| BINOM; fn = prob_func; n = prob_input; p = prob_input; k = prob_input
-		{ Prob (Binomial (fn, n, p, k)) } 
-	| BERN; fn = prob_func; p = prob_input; k = prob_input
-		{ Prob (Bernoulli (fn, p, k)) }
-	| UNIF; fn = prob_func; a = prob_input; b = prob_input; x = prob_input
-		{ Prob (Uniform (fn, a, b, x)) }
+	| BINOM; SAM; n = prob_input; p = prob_input;
+		{ Prob (Binomial (SAM, n, p, 0.)) } 
+	| BINOM; PDF; n = prob_input; p = prob_input; k = prob_input
+		{ Prob (Binomial (PDF, n, p, k)) } 
+	| BINOM; CDF; n = prob_input; p = prob_input; k = prob_input
+		{ Prob (Binomial (CDF, n, p, k)) } 
+	| BERN; SAM; p = prob_input;
+		{ Prob (Bernoulli (SAM, p, 0.1)) }
+	| BERN; PDF; p = prob_input; k = prob_input
+		{ Prob (Bernoulli (PDF, p, k)) }
+	| BERN; CDF; p = prob_input;  k = prob_input
+		{ Prob (Bernoulli (CDF, p, k)) } 
+	| UNIF; SAM; a = prob_input; b = prob_input;
+		{ Prob (Uniform (SAM, a, b, 0.)) }
+	| UNIF; PDF; a = prob_input; b = prob_input; x = prob_input
+		{ Prob (Uniform (PDF, a, b, x)) }
+	| UNIF; CDF; a = prob_input; b = prob_input; x = prob_input
+		{ Prob (Uniform (CDF, a, b, x)) }
+	| POIS; SAM; l = prob_input;
+	 	{ Prob (Poisson (SAM, l, 1.)) }
 	| POIS; fn = prob_func; l = prob_input; k = prob_input 
 	 	{ Prob (Poisson (fn, l, k)) }
-	| GEO; fn = prob_func; p = prob_input k = prob_input
-		{ Prob (Geometric (fn, p, k)) }
-	| EXP; fn = prob_func; l = prob_input; x = prob_input
-		{ Prob (Exponential (fn, l, x)) }
-	| NORM; fn = prob_func; m = prob_input; s = prob_input; x = prob_input
-		{ Prob (Normal (fn, m, s, x)) }
+	| GEO; SAM; p = prob_input;
+		{ Prob (Geometric (SAM, p, 0.)) }
+	| GEO; PDF; p = prob_input; k = prob_input
+		{ Prob (Geometric (PDF, p, k)) }
+	| GEO; CDF; p = prob_input; k = prob_input
+		{ Prob (Geometric (CDF, p, k)) }
+	| EXP; SAM; l = prob_input;
+		{ Prob (Exponential (SAM, l, 0.)) }
+	| EXP; PDF; l = prob_input; x = prob_input
+		{ Prob (Exponential (PDF, l, x)) }
+	| EXP; CDF; l = prob_input; x = prob_input
+		{ Prob (Exponential (CDF, l, x)) }
+	| NORM; SAM; m = prob_input; s = prob_input;
+		{ Prob (Normal (SAM, m, s, 0.)) }
+	| NORM; PDF; m = prob_input; s = prob_input; x = prob_input
+		{ Prob (Normal (PDF, m, s, x)) }
+	| NORM; CDF; m = prob_input; s = prob_input; x = prob_input
+		{ Prob (Normal (CDF, m, s, x)) }
 	;
 
 %inline prob_func :
