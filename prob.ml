@@ -88,10 +88,20 @@ let uniform_sam (a : float) (b : float) : float =
   (b -. a) *. (get_U ()) +. a
 
 let binomial_sam (n : int) (p : float) : float =
-  failwith "Unimplemented"
+  let rec binomial_helper n p curr = 
+    if n = 0 then curr
+    else
+      let b = bernoulli_sam p in 
+      if b = 1. then binomial_helper (n - 1) p (curr +. 1.)
+      else binomial_helper (n - 1) p curr
+  in binomial_helper n p 0.
 
 let poisson_sam (l : float) (t : float) : float =
-  failwith "Unimplemented"
+  let rec poisson_helper l t curr =
+    let e = exponential_sam l in
+    if  e > t then curr
+    else poisson_helper l (e -. t) (curr +. 1.)
+  in poisson_helper l t 0.
 
 let normal_sam (mu : float) (sigma : float) : float =
   failwith "Unimplemented"
