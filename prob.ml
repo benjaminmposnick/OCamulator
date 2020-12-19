@@ -1,3 +1,4 @@
+let pi = acos (-1.)
 
 let reduce_tr inc test op base f x =
   let rec apply_tr acc x =
@@ -63,13 +64,34 @@ let poisson_pmf (l : float) (k : int) : float =
 let poisson_cdf  (l : float) (k : int) : float =
   sigma_tr (fun k -> poisson_pmf l k) 0 k
 
-(** [normal_pmf mu sigma x] is the normal([mu],[sigma]) probability mass of [x]
-    Requires: [sigma] is a valid std, >= 0 *)
 let normal_pmf (mu : float) (sigma : float) (x : float) : float =
-  failwith "Unimplemented"
-(**exp (-0.5 *. ((x -. mu) /. sigma) ** (2.)) /. *)
+  exp (-0.5 *. ((x -. mu) /. sigma) ** (2.)) /. (sigma *. ((pi *. 2.) ** (0.5)))
 
-(**
-*)
 let normal_cdf (mu : float) (sigma : float) (x : float) : float =
+  failwith "Unimplemented"
+
+let get_U () = Random.float 1.
+
+let bernoulli_sam  (p : float) : float  =
+  if get_U () < p then 1.
+  else 0.
+
+let exponential_sam (l : float) : float =
+  -1. *. log (1. -. (get_U ())) /. l
+
+let geo_helper x = log (-1. *. (x -. 1.))
+
+let geometric_sam (p : float) : float =
+  ceil (geo_helper (get_U ()) /. geo_helper p)
+
+let uniform_sam (a : float) (b : float) : float =
+  (b -. a) *. (get_U ()) +. a
+
+let binomial_sam (n : int) (p : float) : float =
+  failwith "Unimplemented"
+
+let poisson_sam (l : float) (t : float) : float =
+  failwith "Unimplemented"
+
+let normal_sam (mu : float) (sigma : float) : float =
   failwith "Unimplemented"
