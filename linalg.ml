@@ -217,7 +217,7 @@ let pivot_cols matrix =
   let tolerance = determine_tolerance matrix in
   snd (row_echelon_form matrix tolerance)
   |> List.sort compare
-  |> List.map (fun i -> VInt i)
+  |> List.map (fun i -> VFloat (float_of_int i))
 
 let rref matrix =
   let tolerance = determine_tolerance matrix in
@@ -327,10 +327,10 @@ let inverse mat =
   let (p, l, u, _) = plu_decomposition ~no_round:true mat in
   let n = n_rows p in
   let b = Matrix.identity n in
-  let a_inv = ref (Matrix.(to_array (zeros (n, n)))) in
+  let a_inv = ref (Matrix.(to_array (zeros n))) in
   for i = 0 to n - 1 do
     let bi = Vector.make_col_vec (Matrix.get_row b i) in
-    let p_dot_bi_mat = Matrix.(multiply p (of_vectors [bi])) in
+    let p_dot_bi_mat = Matrix.(matrix_multiply p (of_vectors [bi])) in
     let p_dot_bi_vec = 
       Matrix.to_list p_dot_bi_mat
       |> List.flatten
@@ -345,7 +345,7 @@ let inverse mat =
 
 let solve_system a b =
   let (p, l, u, _) = plu_decomposition ~no_round:true a in (* Factor PA = LU *)
-  let p_dot_b_mat = Matrix.(multiply p (of_vectors [b])) in
+  let p_dot_b_mat = Matrix.(matrix_multiply p (of_vectors [b])) in
   let pb = 
     Matrix.to_list p_dot_b_mat
     |> List.flatten

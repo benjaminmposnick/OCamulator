@@ -1,19 +1,27 @@
 open Vector
 
-type t = float list list
+type t = Vector.t list
 
 let to_array mat =
-  List.map Array.of_list mat |> Array.of_list
+  List.map Vector.to_array mat |> Array.of_list
 
-let to_list mat = mat
+let to_list mat =
+  List.map Vector.to_list mat
+
+let of_list lst = 
+  List.map Vector.make_row_vec lst
 
 let of_array arr = 
-  Array.(map to_list arr) |> Array.to_list
+  Array.(map to_list arr)
+  |> Array.to_list
+  |> of_list
 
-let of_list lst : t = lst
+let make n m init : t =
+  Array.make_matrix n m init |> of_array
 
-let zeros (n, m) =
-  Array.make_matrix n m 0. |> of_array
+let zeros ?(n=(~-1)) m =
+  if n = ~-1 then make m m 0.
+  else make n m 0.
 
 let identity n =
   let arr = Array.make_matrix n n 0. in
@@ -27,7 +35,7 @@ let n_rows mat =
 
 let n_cols mat = 
   if List.length mat = 0 then 0
-  else List.hd mat |> List.length 
+  else List.hd mat |> Vector.size 
 
 let is_square mat =
   n_cols mat = n_rows mat
@@ -46,7 +54,7 @@ let string_of_matrix_row max_digits row =
 
 let string_of_matrix mat =
   let max_digits =
-    let string_list = List.(map (map string_of_float) mat) in
+    let string_list = List.map (fun row -> List.map string_of_float (Vector.to_list row)) mat in
     let length_max s1 s2 =
       if String.(length s1 >= length s2) then s1 else s2 in
     let max_string_by_row =
@@ -54,20 +62,20 @@ let string_of_matrix mat =
     let max_string = List.fold_left length_max "" max_string_by_row in
     String.length max_string
   in
-  List.map (fun vec -> "| " ^ string_of_matrix_row max_digits vec) mat
+  to_list mat
+  |> List.map (fun vec -> "| " ^ string_of_matrix_row max_digits vec)
   |> String.concat " |\n"
   |> fun str -> str ^ " |" 
 
-let transpose mat =
-  let open List in
-  let rec transpose_aux lst acc =
+let transpose mat : t =
+  let rec transpose_aux (lst : t) acc =
     match lst with
     | [] -> []
     | h :: t ->
-      if length h = 0 then rev acc
+      if Vector.size h = 0 then List.rev acc |> of_list
       else 
-        let next_row = map hd lst in
-        let submatrix = map tl lst in
+        let next_row = List.map Vector.head lst in
+        let submatrix = List.map Vector.tail lst in
         transpose_aux submatrix (next_row :: acc)
   in
   transpose_aux mat []
@@ -76,16 +84,16 @@ let is_symmetric mat =
   assert (is_square mat);
   mat = (transpose mat)
 
-let multiply m1 m2 = 
+let matrix_multiply (m1 : t) (m2 : t) = 
   assert (n_cols m1 = n_rows m2);
   let open List in
-  let m2_t = transpose m2 |> map (fun row -> Vector.make_row_vec row) in
-  let row_fn row = 
-    let row_vec = Vector.make_row_vec row in
-    List.map (Vector.dot_product row_vec) m2_t in
+  let m2_t = transpose m2 in
+  let row_fn row = List.map (Vector.dot_product row) m2_t in
   List.map row_fn m1
+  |> of_list
 
-let get_row = List.nth
+let get_row (mat : t) i =
+  List.nth mat i |> Vector.to_list
 
 let get_col mat j = 
   transpose mat
@@ -105,12 +113,10 @@ let drop_col mat j =
   |> (fun mat_t -> drop_row mat_t j)
   |> transpose
 
-let row_sums matrix =
-  List.map (fun rvec -> Vector.RowVector rvec) matrix
-  |> List.map Vector.sum 
+let row_sums = List.map Vector.sum 
 
 let apply_to_all f matrix = 
-  List.(map (map f) matrix)
+  List.map (fun row -> Vector.(map f row)) matrix
 
 let is_upper_triangular matrix =
   assert (is_square matrix);
@@ -142,3 +148,19 @@ let of_vectors vec_lst =
 
 let map = List.map
 
+let map2 (fn : Vector.t -> Vector.t -> Vector.t) (m1 : t) (m2 : t) : t =
+  List.map2 fn m1 m2
+
+let matrix_vector_product mat vec swap_order =
+  match vec, swap_order with
+  | Vector.RowVector _, true -> 
+    List.hd (matrix_multiply [vec] mat) (* Outputs a row vector *)
+  | ColVector _, false ->
+    matrix_multiply mat [vec] (* Outputs a column vector *)
+    |> List.map Vector.to_list
+    |> List.flatten
+    |> Vector.make_col_vec
+  | ColVector _, true ->
+    failwith "Shape error: first argument should be a row vector"
+  | RowVector _, false ->
+    failwith "Shape error: second argument should be a column vector"

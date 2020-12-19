@@ -2,59 +2,105 @@ open Ast
 open Prob
 open Solve
 open Vector
+open Matrix
+open Linalg
+
+(** [store] is the type of the variable store, which maps variable identifiers
+    to their most recently bound value. *)
+type store = (string * value) list
+
+(** [result] is the type of the result from evaluation, which contains both
+    the value resulting from evaluation under the big-step relation as well
+    as the store. *)
+type result = value * store
 
 module ComputationError = struct
   exception EvalError of string
-  exception TypeError of string
 end
 
+(** [modulo p q] is [p] mod [q] if [p] and [q] are both floats representing
+    integers (e.g. 1.0 for 1) and raises [EvalError] otherwise. *)
 let modulo p q =
-  if not (Float.(is_integer p && is_integer q)) then
+  if not (Float.is_integer p && Float.is_integer q) then
     let error_msg = "Cannot apply modulo operator to non-integer values" in
-    raise (ComputationError.(TypeError error_msg))
+    raise (ComputationError.(EvalError error_msg))
   else
     let p' = int_of_float p in
     let q' = int_of_float q in
-    p' mod q' |> float_of_int 
+    p' mod q' |> float_of_int
 
 let rec var_present = function
   | Binop (op, e1, e2) -> var_present e1 || var_present e2
   | Var x -> true
   | _ -> false
 
+(** [eval_var x sigma] is the value that is bound to [x] in store [sigma] if
+    [x] is in [sigma]; otherwise, [EvalError] is raised. *)
 let eval_var x sigma =
   match List.assoc_opt x sigma with
   | None -> 
-    let error_msg = "Variable is undefined in current context: " ^ x in
+    let error_msg = "Variable " ^ x ^ " is undefined in current context" in
     raise (ComputationError.(EvalError error_msg))
   | Some value -> value, sigma
 
+(** [eval_binomial func n p k] is result of [binomial_cdf n p k] if [func]
+    = [CDF] and is the result of [binomial_pmf n p k] if [func] = [PDF], so long
+    as [n] and [k] are floats representing integers; otherwise, [EvalError]
+    is raised. *)
+let eval_binomial func n p k =
+  let open Prob in
+  if Float.is_integer n && Float.is_integer k then
+    if func = PDF then binomial_pmf (int_of_float n) p (int_of_float k)
+    else binomial_cdf (int_of_float n) p (int_of_float k)
+  else    
+    let error_msg = "n and k values of Binomial distribution must be ints" in
+    raise (ComputationError.EvalError error_msg)
+
+(** [eval_bernoulli func p k] is result of [bernoulli_cdf p k] if [func] = [CDF]
+    and is the result of [bernoulli_pmf p k] if [func] = [PDF], so long as [k]
+    is a float representing an integer; otherwise, [EvalError] is raised. *)
+let eval_bernoulli func p k =
+  if Float.is_integer k then
+    if func = PDF then bernoulli_pmf p (int_of_float k)
+    else bernoulli_cdf p (int_of_float k)
+  else
+    let error_msg = "k value of Bernoulli distribution must be an integer" in
+    raise (ComputationError.EvalError error_msg)
+
+(** [eval_poisson func l x] is result of [poisson_cdf l x] if [func] = [CDF]
+    and is the result of [poisson_pmf l x] if [func] = [PDF], so long as [x]
+    is a float representing an integer; otherwise, [EvalError] is raised. *)
+let eval_poisson func l x =
+  if Float.is_integer x then
+    if func = PDF then poisson_pmf l (int_of_float x)
+    else poisson_cdf l (int_of_float x)
+  else
+    let error_msg = "x value of Poisson distribution must be an integer" in
+    raise (ComputationError.EvalError error_msg)
+
+(** [eval_geometric func p k] is result of [geometric_cdf p k] if [func] = [CDF]
+    and is the result of [geometric_pmf p k] if [func] = [PDF], so long as [k]
+    is a float representing an integer; otherwise, [EvalError] is raised. *)
+let eval_geometric func p k =
+  if Float.is_integer k then
+    if func = PDF then geometric_pmf p (int_of_float k)
+    else geometric_cdf p (int_of_float k)
+  else
+    let error_msg = "k value of Geometric distribution must be an integer" in
+    raise (ComputationError.EvalError error_msg)
+
+(** [eval_prob dist sigma] is the result of evaluating the probability
+    distribution [dist] in store [sigma]. *)
 let eval_prob dist sigma = 
+  let open Prob in
   let value = 
-    let open Prob in
-    let open Float in
-    let open ComputationError in
     match dist with
-    | Binomial (PDF, n, p, k) when is_integer n && is_integer k ->
-      binomial_pmf (int_of_float n) p (int_of_float k)
-    | Binomial (CDF, n, p, k) when is_integer n && is_integer k ->
-      binomial_cdf (int_of_float n) p (int_of_float k)
-    | Binomial (PDF, n, p, k) | Binomial (CDF, n, p, k) ->
-      raise (EvalError "n and k values of Binomial distribution must be integers")
-    | Bernoulli (PDF, p, k) when is_integer k -> bernoulli_pmf p (int_of_float k)
-    | Bernoulli (CDF, p, k) when is_integer k -> bernoulli_cdf p (int_of_float k)
-    | Bernoulli (PDF, p, k) | Bernoulli (CDF, p, k) ->
-      raise (EvalError "k value of Bernoulli distribution must be an integer")
+    | Binomial (func, n, p, k) -> eval_binomial func n p k
+    | Bernoulli (func, p, k) -> eval_bernoulli func p k
     | Uniform (PDF, a, b, x) -> uniform_pmf a b x
     | Uniform (CDF, a, b, x) -> uniform_cdf a b x
-    | Poisson (PDF, l, x) when is_integer x -> poisson_pmf l (int_of_float x)
-    | Poisson (CDF, l, x) when is_integer x -> poisson_cdf l (int_of_float x)
-    | Poisson (PDF, l, x) | Poisson (CDF, l, x) -> 
-      raise (EvalError "x value of Poisson distribution must be an integer")
-    | Geometric (PDF, p, k) when is_integer k -> geometric_pmf p (int_of_float k)
-    | Geometric (CDF, p, k) when is_integer k -> geometric_cdf p (int_of_float k)
-    | Geometric (PDF, p, k) | Geometric (CDF, p, k) ->
-      raise (EvalError "k value of Geometric distribution must be an integer")
+    | Poisson (func, l, x) -> eval_poisson func l x
+    | Geometric (func, p, k) -> eval_geometric func p k
     | Exponential (PDF, l, x) -> exponential_pmf l x
     | Exponential (CDF, l, x) -> exponential_cdf l x
     | Normal (PDF, m, s, x) -> normal_pmf m s x
@@ -62,90 +108,109 @@ let eval_prob dist sigma =
   in 
   VFloat value, sigma
 
+(** [eval_assign x v sigma] is the result of binding [v] to [x] in store
+    [sigma]. *)
 let eval_assign x v sigma =
   List.remove_assoc x sigma
   |> List.cons (x, v) 
   |> fun sigma' -> v, sigma'
 
-let eval_binop_on_floats op f1 f2 sigma =
-  let result = match op with
-    | Add -> f1 +. f2
-    | Sub -> f1 -. f2
-    | Mul -> f1 *. f2
-    | Div -> f1 /. f2
-    | Mod -> modulo f1 f2
-    | Pow -> Float.pow f1 f2
-    | Eq -> Bool.to_float (f1 = f2)
-    | LT -> Bool.to_float (f1 < f2)
-    | GT -> Bool.to_float (f1 > f2)
-    | LTE -> Bool.to_float (f1 <= f2)
-    | GTE -> Bool.to_float (f1 >= f2)
-    | Assign ->
-      let error_msg = "Cannot assign to non-variable: " ^ string_of_float f1 in
-      raise (ComputationError.(TypeError error_msg))
-    | Dot ->
-      let error_msg = "Cannot use non-vector values in vector operation" in
-      raise (ComputationError.(TypeError error_msg))
-    | SolveSys -> 
-      let error_msg = "Left arg must be a matrix and right arg must be a vector" in
-      raise (ComputationError.(TypeError error_msg))
-  in
-  (VFloat result, sigma)
+let raise_exn error_msg = raise (ComputationError.(EvalError error_msg))
 
-let eval_binop_on_vectors op (v1 : Vector.t) (v2 : Vector.t) sigma =
+(** [eval_binop_on_floats op f1 f2 sigma] is the result of evaluating 
+    [f1 op f2], where [op] is some binary operator and both [f1] and [f2] are
+    floats, in store [sigma]. If [op] is [Assign], [Dot], or [SolveSys], then
+    [EvalError] is raised. *)
+let eval_binop_on_floats op f1 f2 sigma =
+  let value = match op with
+    | Add -> VFloat (f1 +. f2)
+    | Sub -> VFloat (f1 -. f2)
+    | Mul -> VFloat (f1 *. f2)
+    | Div -> VFloat (f1 /. f2)
+    | Mod -> VFloat (modulo f1 f2)
+    | Pow -> VFloat(f1 ** f2)
+    | Eq -> VFloat (Bool.to_float (f1 = f2))
+    | LT -> VFloat (Bool.to_float (f1 < f2))
+    | GT -> VFloat (Bool.to_float (f1 > f2))
+    | LTE -> VFloat (Bool.to_float (f1 <= f2))
+    | GTE -> VFloat (Bool.to_float (f1 >= f2))
+    | Assign -> raise_exn ("Cannot assign to a float")
+    | Dot -> raise_exn ("Cannot apply dot product to non-vectors")
+    | SolveSys ->
+      raise_exn ("Left arg must be a matrix and right arg must be a vector")
+  in
+  (value, sigma)
+
+(** [eval_binop_on_vectors op v1 v2 sigma] is the result of evaluating 
+    [v1 op v2], where [op] is some binary operator and both [v1] and [v2] are
+    vectors, in store [sigma]. If [op] is [Assign], [Mod], or [SolveSys], then
+    [EvalError] is raised. *)
+let eval_binop_on_vectors op v1 v2 sigma =
   let open Vector in
   let result = match op with
     | Add -> VVector (component_wise_add v1 v2)
     | Sub -> VVector (component_wise_subtract v1 v2)
     | Mul -> VVector (component_wise_multiply v1 v2)
     | Dot -> VFloat (dot_product v1 v2)
-    | _ -> failwith "TODO: Add more functionality"
+    | Div -> VVector (RowVector (component_wise v1 v2 ( /. )))
+    | Pow -> VVector (RowVector (component_wise v1 v2 ( ** )))
+    | Eq -> VFloat (Bool.to_float (v1 = v2))
+    | SolveSys -> raise_exn "Left arg must be a matrix"
+    | _ -> raise_exn "Invalid operation between two vectors"
   in
   (result, sigma)
 
-let eval_binop_on_matrices op (m1 : Matrix.t) (m2 : Matrix.t) sigma =
-  let open Matrix in
-  let rvecs1 = map Vector.make_row_vec m1 in
-  let rvecs2 = map Vector.make_row_vec m2 in
+(** [eval_binop_on_matrices op m1 m2 sigma] is the result of evaluating 
+    [m1 op m2], where [op] is some binary operator and both [m1] and [m2] are
+    matrices, in store [sigma]. If [op] is not [Add], [Sub], [Mul], or [Eq],
+    then [EvalError] is raised. *)
+let eval_binop_on_matrices op m1 m2 sigma =
+  let open Vector in
   let result = match op with
-    | Add -> VMatrix (of_vectors (List.map2 Vector.component_wise_add rvecs1 rvecs2))
-    | Sub -> VMatrix (of_vectors (List.map2 Vector.component_wise_subtract rvecs1 rvecs2))
-    | Mul -> VMatrix (multiply m1 m2)
-    | _ -> failwith "TODO: Add more functionality"
+    | Add -> VMatrix (map2 component_wise_add m1 m2)
+    | Sub -> VMatrix (map2 component_wise_subtract m1 m2)
+    | Mul -> VMatrix (matrix_multiply m1 m2)
+    | Eq -> VFloat (Bool.to_float (m1 = m2))
+    | SolveSys -> raise_exn "Right arg must be a vector"
+    | _ -> raise_exn "Invalid operation between two matrices"
   in
   (result, sigma)
 
+(** [eval_binop_btwn_scalar_and_array op k arr sigma] is the result of evaluating 
+    [k op arr], where [op] is some binary operator, [k] is a scalar, and [arr]
+    is either a matrix or a vector, in store [sigma]. If [op] is not [Mul] or
+    [Pow], then [EvalError] is raised. *)
 let eval_binop_btwn_scalar_and_array op k arr sigma =
+  let open Matrix in
+  let open Vector in
   let multiply = fun x -> k *. x in
   let exponentiate = fun x -> Float.pow x k in
-  let apply_scalar_op_to_matrix mat =
-    let rvecs = Matrix.map Vector.make_row_vec mat in
-    VMatrix (Matrix.of_vectors (List.map (Vector.map multiply) rvecs)) in
   let value = match arr, op with
-    | VVector vec, Mul -> VVector (Vector.map multiply vec)
-    | VVector vec, Pow -> VVector (Vector.map exponentiate vec)
-    | VMatrix mat, Mul -> apply_scalar_op_to_matrix mat
-    | VMatrix mat, Pow -> apply_scalar_op_to_matrix mat
-    | _, _ ->
-      raise (ComputationError.EvalError "Invalid operation between scalar and array")
+    | VVector vec, Mul -> VVector (map multiply vec)
+    | VVector vec, Pow -> VVector (map exponentiate vec)
+    | VMatrix mat, Mul -> VMatrix (apply_to_all multiply mat)
+    | VMatrix mat, Pow -> VMatrix (apply_to_all exponentiate mat)
+    | _, _ -> raise_exn "Invalid operation between scalar and array"
   in
   (value, sigma)
 
+(** [eval_binop_btwn_matrix_and_vector op arr1 arr2 sigma] is the result of
+    evaluating [arr1 op arr2], where [op] is some binary operator and exactly
+    one of [arr1] and [arr2] is a vector and exactly one is a matrix, in store
+    [sigma]. If [op] is not [Mul] or [SolveSys], then [EvalError] is raised. *)
 let eval_binop_btwn_matrix_and_vector op arr1 arr2 sigma =
+  let open Matrix in
   let open Linalg in
   let value = match arr1, arr2, op with
-    | VVector (RowVector _ as vec), VMatrix mat, Mul ->
-      VMatrix (Matrix.(multiply (of_vectors [vec]) mat)) (* Row vector *)
-    | VMatrix mat, VVector (ColVector _ as vec), Mul ->
-      VMatrix (Matrix.(multiply mat (of_vectors [vec]))) (* Column vector *)
+    | VVector vec, VMatrix mat, Mul ->
+      VVector (matrix_vector_product mat vec true)
+    | VMatrix mat, VVector vec, Mul ->
+      VVector (matrix_vector_product mat vec false)
     | VMatrix mat, VVector (ColVector _ as vec), SolveSys ->
-      VVector (Linalg.(solve_system mat vec)) (* Column vector *)
-    | VVector (ColVector vec), VMatrix mat, Mul ->
-      raise (ComputationError.EvalError "Shape error: first argument should be a row vector")
-    | VMatrix mat, VVector (RowVector vec), Mul ->
-      raise (ComputationError.EvalError "Shape error: second argument should be a column vector")
-    | _, _, _ ->
-      raise (ComputationError.EvalError "Invalid operation between matrix and vector")
+      VVector (solve_system mat vec)
+    | VMatrix mat, VVector (RowVector _), SolveSys ->
+      raise_exn "Shape error: second argument should be a column vector"
+    | _ -> raise_exn "Invalid operation between matrix and vector"
   in
   (value, sigma)
 
@@ -154,14 +219,13 @@ let rec eval_binop op e1 e2 sigma  =
   let (v2, sigma'') = eval_expr e2 sigma in
   match v1, v2 with
   | VFloat f1, VFloat f2 -> eval_binop_on_floats op f1 f2 sigma''
-  | VMatrix m1, VMatrix m2 ->
-    eval_binop_on_matrices op m1 m2 sigma 
-  | VFloat f, (_ as arr) -> eval_binop_btwn_scalar_and_array op f arr sigma
-  | (_ as arr), VFloat f -> eval_binop_btwn_scalar_and_array op f arr sigma
+  | VMatrix m1, VMatrix m2 -> eval_binop_on_matrices op m1 m2 sigma 
+  | VFloat f, (_ as arr)| (_ as arr), VFloat f ->
+    eval_binop_btwn_scalar_and_array op f arr sigma
   | VMatrix _, VVector _ | VVector _, VMatrix _  -> 
     eval_binop_btwn_matrix_and_vector op v1 v2 sigma
   | VVector vec1, VVector vec2 -> eval_binop_on_vectors op vec1 vec2 sigma''
-  | _ -> failwith "Error evaluating binop"
+  | _ -> raise_exn "Invalid binary operation"
 
 and evaluate_command cmd e sigma = 
   let open Linalg in

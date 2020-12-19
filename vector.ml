@@ -31,26 +31,26 @@ module Vector = struct
       component-wise to the elements of vectors [v1] and [v2].
       Requires: [v1] and [v2] are the same length. *)
   let component_wise v1 v2 op =
-    try RowVector (List.map2 op (to_list v1) (to_list v2)) with
+    try List.map2 op (to_list v1) (to_list v2) with
     | Invalid_argument _ -> failwith "Vectors must be the same length"
 
   (** [component_wise_add v1 v2] is the result of adding the elements of vectors
       [v1] and [v2] component-wise.
       Requires: [v1] and [v2] are the same length. *)
   let component_wise_add v1 v2 =
-    component_wise v1 v2 ( +. )
+    RowVector (component_wise v1 v2 ( +. ))
 
   (** [component_wise_subtract v1 v2] is the result of subtracting [v2] from
       [v1] component-wise.
       Requires: [v1] and [v2] are the same length. *)
   let component_wise_subtract v1 v2 =
-    component_wise v1 v2 ( -. )
+    RowVector (component_wise v1 v2 ( -. ))
 
   (** [component_wise_multiply v1 v2] is the result of multiplying the elements
       of vectors [v1] and [v2] component-wise.
       Requires: [v1] and [v2] are the same length. *)
   let component_wise_multiply v1 v2 =
-    component_wise v1 v2 ( *. )
+    RowVector (component_wise v1 v2 ( *. ))
 
   (** [dot_product v1 v2] is the dot-product of [v1] and [v2], i.e. if [v1]
       =def= [[v_11, v_12, ..., v_1n]] and [v2] =def= [[v_21, v_22, ..., v_2n]],
@@ -86,9 +86,16 @@ module Vector = struct
   let of_array arr =
     ColVector (Array.to_list arr)
 
+
   let zeros n =
     Array.make n 0.
     |> of_array
+
+  let head vec =
+    to_list vec |> List.hd
+
+  let tail vec =
+    to_list vec |> List.tl |> make_row_vec
 
 
 end

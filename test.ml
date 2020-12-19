@@ -376,7 +376,7 @@ let lin_alg_tests =
       string_of_bool;
     test "Multiply two square matrices" 
       (Matrix.of_list [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]])
-      (Matrix.(multiply (of_list [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]])
+      (Matrix.(matrix_multiply (of_list [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]])
                  (of_list [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]])))
       (Matrix.string_of_matrix);
     test "PLU decomposition of 3x3 matrix with a zero in a non-pivot position"
@@ -384,21 +384,21 @@ let lin_alg_tests =
       (let (p, l, u, _) = 
          plu_decomposition (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]]) in
        check_lu_decomp l u;
-       Matrix.(multiply (transpose p) (multiply l u)))
+       Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
       (Matrix.string_of_matrix);
     test "PLU decomposition of 3x3 matrix with no zeros"
       (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
       (let (p, l, u, _) = 
          plu_decomposition (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]) in
        check_lu_decomp l u;
-       Matrix.(multiply (transpose p) (multiply l u)))
+       Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
       (Matrix.string_of_matrix);
     test "PLU decomposition of 3x3 matrix with all zeros"
       (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]])
       (let (p, l, u, _) = 
          plu_decomposition (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]) in
        check_lu_decomp l u;
-       Matrix.(multiply (transpose p) (multiply l u)))
+       Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
       (Matrix.string_of_matrix);
     test "Determinant of 4x4 matrix" ~-.6. 
       (Linalg.determinant 

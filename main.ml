@@ -76,7 +76,6 @@ let rec event_loop sigma =
       | Some ast -> 
         let result = try Some (Eval.eval_input ast sigma) with
           | Eval.ComputationError.EvalError msg -> cprint_newline [red] msg; None
-          | Eval.ComputationError.TypeError msg -> cprint_newline [red] msg; None 
           | Failure msg -> cprint_newline [red] msg; None in
         match result with
         | None -> event_loop sigma

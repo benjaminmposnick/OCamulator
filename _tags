@@ -1,3 +1,3 @@
-<{linalg,prob,solve,eval,ast,matrix,vector,test}.ml>: coverage, debug
+<{linalg,prob,solve,eval,ast,matrix,vector,test,stat}.ml>: coverage, debug
 <test_sorts.{byte,native}>: coverage
 true: package(ounit2),package(ANSITerminal),use_menhir,explain,package(bisect_ppx)

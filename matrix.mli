@@ -18,7 +18,7 @@ val of_list : float list list -> t
 
 (** [zeros (n, m)] is a [Matrix] with [n] rows and [m] columns such
     that each entry is initialized to the float zero. *)
-val zeros : int * int -> t
+val zeros : ?n:int -> int -> t
 
 (** [identity n] is a [Matrix] with [n] rows and [n] columns such that the
     entries along the main diagonal are ones and all other entries are zero.
@@ -53,7 +53,7 @@ val is_symmetric : t -> bool
     [matrix_multiply m1 m2] is [AB], where [AB] is is [m X p].
     Requires: The number of columns of [m1] must be equal to the number of row
     of [m2]. *)
-val multiply : t -> t -> t
+val matrix_multiply : t -> t -> t
 
 (** [get_row mat i] is the [i]th row of [mat]. *)
 val get_row : t -> int -> float list
@@ -79,8 +79,12 @@ val string_of_matrix : t -> string
 
 val of_vectors : Vector.t list -> t
 
-val map : (float list -> 'a) -> t -> 'a list
+val map : (Vector.t -> 'a) -> t -> 'a list
+
+val map2 : (Vector.t -> Vector.t -> Vector.t) -> t -> t -> t
 
 val is_lower_triangular : t -> bool
 
 val is_upper_triangular : t -> bool
+
+val matrix_vector_product : t -> Vector.t -> bool -> Vector.t
