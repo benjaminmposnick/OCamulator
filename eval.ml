@@ -39,26 +39,33 @@ let eval_prob dist sigma =
       binomial_pmf (int_of_float n) p (int_of_float k)
     | Binomial (CDF, n, p, k) when is_integer n && is_integer k ->
       binomial_cdf (int_of_float n) p (int_of_float k)
-    | Binomial (PDF, n, p, k) | Binomial (CDF, n, p, k) ->
+    | Binomial (SAM, n, p, k) when is_integer n -> binomial_sam (int_of_float n) p
+    | Binomial (f, n, p, k) ->
       raise (EvalError "n and k values of Binomial distribution must be integers")
     | Bernoulli (PDF, p, k) when is_integer k -> bernoulli_pmf p (int_of_float k)
     | Bernoulli (CDF, p, k) when is_integer k -> bernoulli_cdf p (int_of_float k)
-    | Bernoulli (PDF, p, k) | Bernoulli (CDF, p, k) ->
+    | Bernoulli (SAM, p, k) -> bernoulli_sam p
+    | Bernoulli (f, p, k) ->
       raise (EvalError "k value of Bernoulli distribution must be an integer")
     | Uniform (PDF, a, b, x) -> uniform_pmf a b x
     | Uniform (CDF, a, b, x) -> uniform_cdf a b x
+    | Uniform (SAM, a, b, x) -> uniform_sam a b
     | Poisson (PDF, l, x) when is_integer x -> poisson_pmf l (int_of_float x)
     | Poisson (CDF, l, x) when is_integer x -> poisson_cdf l (int_of_float x)
-    | Poisson (PDF, l, x) | Poisson (CDF, l, x) -> 
+    | Poisson (SAM, l, t) -> poisson_sam l t
+    | Poisson (f, l, x) -> 
       raise (EvalError "x value of Poisson distribution must be an integer")
     | Geometric (PDF, p, k) when is_integer k -> geometric_pmf p (int_of_float k)
     | Geometric (CDF, p, k) when is_integer k -> geometric_cdf p (int_of_float k)
-    | Geometric (PDF, p, k) | Geometric (CDF, p, k) ->
+    | Geometric (SAM, p, k) -> geometric_sam p
+    | Geometric (f, p, k) ->
       raise (EvalError "k value of Geometric distribution must be an integer")
     | Exponential (PDF, l, x) -> exponential_pmf l x
     | Exponential (CDF, l, x) -> exponential_cdf l x
+    | Exponential (SAM, l, x) -> exponential_sam l
     | Normal (PDF, m, s, x) -> normal_pmf m s x
     | Normal (CDF, m, s, x) -> normal_cdf m s x
+    | Normal (SAM, m, s, x) -> normal_sam m s 
   in 
   VFloat value, sigma
 

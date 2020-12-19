@@ -25,6 +25,7 @@ type binop =
 type prob_func =
   | PDF
   | CDF
+  | SAM
 
 (** [distribution] is the type of probability distributions. *)
 type distribution =
@@ -66,6 +67,7 @@ type value =
 let string_of_prob_func = function
   | PDF -> "PDF"
   | CDF -> "CDF"
+  | SAM -> "SAM"
 
 (** [string_of_binop binop] is the string respresentation of [binop]. *)
 let string_of_binop = function
