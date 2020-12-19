@@ -20,6 +20,9 @@ let factorial : int -> int = fun num ->
 let choose n k = 
   float_of_int(factorial(n)) /. float_of_int((factorial(k) * factorial(n - k)))
 
+let perm n k =
+  failwith "Unimplemented"
+
 (** [uniform_pmf a b x] is the probability mass of the uniform
     distribution for interval [a] to [b] at [x]
     Requires: [b] >= [a]*)

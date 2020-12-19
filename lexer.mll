@@ -39,7 +39,7 @@ rule read =
   | "Binomial" { BINOM }
   | "Bern" { BERN }
   | "Bernoulli" { BERN }
-  | "Unif" { UNIF }
+  | "Unif" { UNIF }s
   | "Uniform" { UNIF }
   | "Pois" { POIS }
   | "Poisson" { POIS }
