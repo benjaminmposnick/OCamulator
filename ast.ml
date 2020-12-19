@@ -19,6 +19,7 @@ type binop =
   | GTE
   | Assign
   | Dot
+  | SolveSys
 
 (** [prob_func] is the type of density functions for distributions. *)
 type prob_func =
@@ -81,6 +82,7 @@ let string_of_binop = function
   | GTE -> "GTE"
   | Assign -> "Assign"
   | Dot -> "Dot"
+  | SolveSys -> "SolveSys"
 
 (** [string_of_distribution dis] is the string respresentation of the
     probability distribution [dist]. *)

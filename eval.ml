@@ -86,6 +86,9 @@ let eval_binop_on_floats op f1 f2 sigma =
     | Dot ->
       let error_msg = "Cannot use non-vector values in vector operation" in
       raise (ComputationError.(TypeError error_msg))
+    | SolveSys -> 
+      let error_msg = "Left arg must be a matrix and right arg must be a vector" in
+      raise (ComputationError.(TypeError error_msg))
   in
   (VFloat result, sigma)
 
@@ -135,6 +138,8 @@ let eval_binop_btwn_matrix_and_vector op arr1 arr2 sigma =
       VMatrix (Matrix.(multiply (of_vectors [vec]) mat)) (* Row vector *)
     | VMatrix mat, VVector (ColVector _ as vec), Mul ->
       VMatrix (Matrix.(multiply mat (of_vectors [vec]))) (* Column vector *)
+    | VMatrix mat, VVector (ColVector _ as vec), SolveSys ->
+      VVector (Linalg.(solve_system mat vec)) (* Column vector *)
     | VVector (ColVector vec), VMatrix mat, Mul ->
       raise (ComputationError.EvalError "Shape error: first argument should be a row vector")
     | VMatrix mat, VVector (RowVector vec), Mul ->

@@ -26,7 +26,7 @@ let vector_as_float_list str sep =
 %token <string> MATRIX
 
 // Binary operators
-%token PLUS MINUS TIMES OVER MOD TOTHEPOWER EQUALS GT LT GTE LTE ASSIGN DOT
+%token PLUS MINUS TIMES OVER MOD TOTHEPOWER EQUALS GT LT GTE LTE ASSIGN DOT SOLVE
 
 // Probability
 %token BINOM BERN UNIF POIS NORM GEO EXP PDF CDF
@@ -80,6 +80,7 @@ num :
 	| LTE { LTE }
 	| ASSIGN { Assign }
 	| DOT { Dot }
+	| SOLVE { SolveSys }
 	;
 
 arith_expr :

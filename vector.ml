@@ -77,18 +77,18 @@ module Vector = struct
       |> String.concat sep
       |> (fun str -> "[" ^ str ^ "]") in
     match vec with
-    | RowVector vec -> string_of_vector_aux "," vec
-    | ColVector vec -> string_of_vector_aux ";" vec
+    | RowVector vec -> string_of_vector_aux ", " vec
+    | ColVector vec -> string_of_vector_aux "; " vec
 
   let size vec =
     to_list vec |> List.length
 
-  let of_array = Array.to_list
+  let of_array arr =
+    ColVector (Array.to_list arr)
 
-  let zeros ?row_vec:(arg1=false) n =
+  let zeros n =
     Array.make n 0.
     |> of_array
-    |> (fun arr -> if arg1 then make_row_vec arr else make_col_vec arr)
 
 
 end

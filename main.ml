@@ -89,6 +89,4 @@ let main () =
   cprint_newline [blue] "Welcome to the OCamulator!";
   event_loop [("ans", VFloat 0.)]
 
-let () = 
-  Printexc.record_backtrace true;
-  main ()
+let () = main ()

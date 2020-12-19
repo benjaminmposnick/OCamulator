@@ -307,7 +307,6 @@ let forward_substitution l b =
     !y.(i) <- (1. /. !l.(i).(i)) *. (!b.(i) -. !sum)
   done; 
   Vector.of_array !y
-  |> Vector.make_col_vec
 
 let back_substitution u y =
   let n = Vector.size y in
@@ -343,3 +342,23 @@ let inverse mat =
   |> Matrix.of_array
   |> Matrix.transpose
   |> purify tolerance
+
+let solve_system a b =
+  let (p, l, u, _) = plu_decomposition ~no_round:true a in (* Factor PA = LU *)
+  let p_dot_b_mat = Matrix.(multiply p (of_vectors [b])) in
+  let pb = 
+    Matrix.to_list p_dot_b_mat
+    |> List.flatten
+    |> Vector.make_col_vec in
+  let y = forward_substitution l pb in (* Solve L(Ux) = L(c) = Pb for c *)
+  let is_invalid_result vec =
+    Vector.to_list vec
+    |> List.map (fun f -> Float.is_nan f || Float.is_infinite f)
+    |> List.fold_left (fun acc b -> acc || b) false
+  in
+  back_substitution u y (* Solve Ux = c for x *)
+  |> Vector.of_array
+  |> (fun vec ->
+      if is_invalid_result vec then
+        failwith "Matrix is not singular -- cannot solve numerically"
+      else vec)

@@ -4,3 +4,5 @@ _coverage/
 bisect*.coverage
 .pyc
 Search.code-search
+__pycache__
+.vscode

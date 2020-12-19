@@ -58,6 +58,7 @@ rule read =
   | "pi" { CONST_PI }
   | "$" { BEGIN_CMD }
   | "#" { PROJ }
+  | "\\" { SOLVE }
   | row_vector { ROW_VECTOR (Lexing.lexeme lexbuf)}
   | col_vector { COL_VECTOR (Lexing.lexeme lexbuf)}
   | matrix { MATRIX (Lexing.lexeme lexbuf)}

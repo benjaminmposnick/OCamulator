@@ -1,4 +1,5 @@
 open Matrix
+open Vector
 
 (** [rref matrix] is the row-reduced echelon form of [matrix]. *)
 val rref : Matrix.t -> Matrix.t 
@@ -12,3 +13,5 @@ val plu_decomposition : ?no_round:bool -> Matrix.t  -> (Matrix.t * Matrix.t * Ma
 val determinant : Matrix.t -> float
 
 val inverse : Matrix.t -> Matrix.t
+
+val solve_system : Matrix.t -> Vector.t -> Vector.t
