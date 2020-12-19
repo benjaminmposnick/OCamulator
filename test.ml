@@ -1,6 +1,15 @@
 open OUnit2
 open Ast
 open Vector
+open Stat
+
+(** [string_of_list lst] is a printer funtion for float lists *)
+let string_of_list vec = 
+  let string_of_list_aux sep vec =
+    List.map string_of_float vec 
+    |> String.concat sep
+    |> (fun str -> "[" ^ str ^ "]") in
+  string_of_list_aux "; " vec
 
 (** [test name expected_output fn_output print_fn] is an OUnit test case named
     [name] that asserts equality between [expected_output] and [fn_output].
@@ -588,12 +597,12 @@ let prob_tests = let open Prob in [
     test "Choose 0 is 1" 1. (choose 10 0) string_of_float; 
     test "Choose n is 1" 1. (choose 10 10) string_of_float; 
     test "Choose 1 is n" 10. (choose 10 1) string_of_float; 
-    test "10 Choose 5" 252. (choose 10 5) string_of_float; 
+    test "10 Choose 5" 252. (choose 10 5) string_of_float;
 
     test "Perm 0 is 1" 1. (perm 10 0) string_of_float; 
-    test "Choose n is 1" 6. (perm 3 3) string_of_float; 
-    test "Choose 1 is n" 3. (perm 3 1) string_of_float; 
-    test "10 Choose 5" 12. (perm 4 2) string_of_float; 
+    test "Perm n n" 6. (perm 3 3) string_of_float; 
+    test "Perm 1 is n" 3. (perm 3 1) string_of_float; 
+    test "4 Perm 2" 12. (perm 4 2) string_of_float; 
 
     test "Unif p in range" 1. (uniform_pmf 0. 1. 0.5) string_of_float;
     test "Unif p out of range ge" 0. (uniform_pmf 0. 1. 2.) string_of_float;
@@ -635,10 +644,84 @@ let prob_tests = let open Prob in [
     test "Binom c n" (1.) (binomial_cdf 10 0.5 10) string_of_float;
   ]
 
-let stat_tests = [
+let stat_tests = let open Stat in
+  [
+    test "sort asc empty" [] (sort_asc []) string_of_list;
+    test "sort asc 1" [1.] (sort_asc [1.]) string_of_list;
+    test "sort asc nothing" [1.;2.;3.] (sort_asc [1.;2.;3.]) string_of_list;
+    test "sort asc" [1.;2.;3.] (sort_asc [3.;2.;1.]) string_of_list;
 
+    test "sort desc empty" [] (sort_desc[]) string_of_list;
+    test "sort desc 1" [1.] (sort_desc [1.]) string_of_list;
+    test "sort desc" [3.;2.;1.] (sort_desc [1.;2.;3.]) string_of_list;
+    test "sort desc nothing" [3.;2.;1.] (sort_desc [3.;2.;1.]) string_of_list;
 
-] 
+    test "sum empty" 0. (cum_sum []) string_of_float;
+    test "sum 1" 1. (cum_sum [1.]) string_of_float;
+    test "sum many" 6. (cum_sum [1.;2.;3.]) string_of_float;
+    test "sum neg" 2. (cum_sum [1.;-2.;3.]) string_of_float;
+
+    test "prod empty" 1. (cum_prod []) string_of_float;
+    test "prod 1" 1. (cum_prod [1.]) string_of_float;
+    test "prod many" 6. (cum_prod [1.;2.;3.]) string_of_float;
+    test "prod neg" (-6.) (cum_prod [1.;-2.;3.]) string_of_float;
+
+    test "mean empty" 0. (mean []) string_of_float;
+    test "mean 1" 1. (mean [1.]) string_of_float;
+    test "mean same" 2. (mean [2.;2.;2.;2.]) string_of_float;
+    test "mean neg" 0. (mean [-1.;1.;-1.;1.]) string_of_float;
+
+    test "median empty" 0. (median []) string_of_float;
+    test "median 1" 1. (median [1.]) string_of_float;
+    test "median same" 2. (median [2.;2.;2.;2.]) string_of_float;
+    test "median even" 0. (median [-1.;1.;-1.;1.]) string_of_float;
+    test "median odd" 2. (median [1.;2.;3.]) string_of_float;
+
+    test "mode empty" 0. (mode []) string_of_float;
+    test "mode 1" 1. (mode [1.]) string_of_float;
+    test "mode tie" 2. (mode [2.;2.;3.;3.]) string_of_float;
+    test "mode many" 1. (mode [1.;1.;1.;2.;2.]) string_of_float;
+    test "mode rev" 2. (mode [1.;2.;2.;2.;2.]) string_of_float;
+
+    test "max empty" 0. (max []) string_of_float;
+    test "max empty" 1. (max [1.]) string_of_float;
+    test "max many" 3. (max [1.;2.;3.]) string_of_float;
+    test "max neg" 2. (max [1.;2.;-3.]) string_of_float;
+
+    test "min empty" 0. (min []) string_of_float;
+    test "min empty" 1. (min [1.]) string_of_float;
+    test "min many" 1. (min [1.;2.;3.]) string_of_float;
+    test "min neg" (-3.) (min [1.;2.;-3.]) string_of_float;
+
+    test "range empty" 0. (range []) string_of_float;
+    test "range none" 0. (range [1.;1.]) string_of_float;
+    test "range pos" 7. (range [8.;1.]) string_of_float;
+
+    test "var empty" 0. (smpl_var []) string_of_float;
+    test "var same" 0. (smpl_var [1.;1.;1.]) string_of_float;
+    test "var many" 2.5 (smpl_var [1.;2.;3.;4.;5.]) string_of_float;
+
+    test "std empty" 0. (smpl_std []) string_of_float;
+    test "std same" 0. (smpl_std [1.;1.;1.]) string_of_float;
+    test "std many" (2.5 ** 0.5) (smpl_std [1.;2.;3.;4.;5.]) string_of_float;
+
+    test "count empty" 0. (count 0. []) string_of_float;
+    test "count 1" 1. (count 1. [1.]) string_of_float;
+    test "count only" 3. (count 1. [1.;1.;1.]) string_of_float;
+    test "count many" 3. (count 1. [1.;1.;1.;2.;2.]) string_of_float;
+
+    test "unique empty" [] (unique []) string_of_list;
+    test "unique 1" [1.] (unique [1.]) string_of_list;
+    test "unique many" [1.;2.] (unique [1.;1.;1.;2.;2.]) string_of_list;
+
+    test "quantile empty" 0. (quantile [] 0.5) string_of_float;
+    test "quantile single" 1. (quantile [1.] 0.5) string_of_float;
+    test "quantile 0.5" 4. (quantile [1.;2.;3.;4.;5.] 0.5) string_of_float;
+    test "quantile 0.4" 3. (quantile [1.;2.;3.;4.;5.] 0.4) string_of_float;
+    test "quantile 0.75" 5. (quantile [1.;2.;3.;4.;5.] 0.75) string_of_float;
+    test "quantile 0.2" 2. (quantile [1.;2.;3.;4.;5.] 0.2) string_of_float;
+    test "quantile 0.25" 2. (quantile [1.;2.;3.;4.;5.] 0.25) string_of_float;
+  ]
 
 let eval_tests = 
   let eval_expr e sigma = fst (Eval.eval_expr e sigma) in

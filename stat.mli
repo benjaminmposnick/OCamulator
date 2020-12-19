@@ -17,7 +17,13 @@ val mean : float list -> float
 val median : float list -> float
 
 (** [mode d] is mode of the values in [d]*)
-val mode : float list -> float list
+val mode : float list -> float
+
+(** [range d] is the range of the values in [d]. max [d] - min [d]*)
+val range : float list -> float
+
+(** [rms d] is the root mean squared of [d]*)
+val rms : float list -> float
 
 (** [linear_regression d] is the line of best fit for the points (x,y)
     in [d] using a cartesian coordinate system*)
