@@ -31,6 +31,9 @@ let vector_as_float_list str sep =
 // Probability
 %token BINOM BERN UNIF POIS NORM GEO EXP PDF CDF SAM
 
+// Stats
+%token SORT_ASC SORT_DESC UNIQUE
+
 // Miscellaenous
 %token LPAREN RPAREN CONST_PI EOF BEGIN_CMD PROJ
 

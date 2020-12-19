@@ -142,6 +142,25 @@ let eval_prob dist sigma =
   in 
   VFloat value, sigma
 
+let stats_noargs_vec f vec = 
+  let open Vector in
+  let open Stat in
+  let value = 
+    vec
+    |> to_list
+    |> f
+    |> make_row_vec
+  in VVector value
+
+let stats_noargs_float f vec = 
+  let open Vector in
+  let open Stat in
+  let value =
+    vec 
+    |> to_list
+    |> f
+  in VFloat value
+
 let eval_assign x v sigma =
   List.remove_assoc x sigma
   |> List.cons (x, v) 
@@ -245,6 +264,7 @@ let rec eval_binop op e1 e2 sigma  =
 
 and evaluate_command cmd e sigma = 
   let open Linalg in
+  let open Stat in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
@@ -286,6 +306,16 @@ and evaluate_command cmd e sigma =
         |Binop (op, e1, e2) -> VEquation (op, e1, e2)
         |_ -> failwith "Error solving equation"
       end
+    | "mean", VVector vec -> stats_noargs_float mean vec
+    | "median", VVector vec -> stats_noargs_float median vec
+    | "sort_asc", VVector vec -> stats_noargs_vec sort_asc vec
+    | "sort_desc", VVector vec -> stats_noargs_vec sort_desc vec
+    | "min", VVector vec -> stats_noargs_float min vec
+    | "max", VVector vec -> stats_noargs_float max vec
+    | "variance", VVector vec -> stats_noargs_float smpl_var vec
+    | "std", VVector vec -> stats_noargs_float smpl_std vec
+    | "sum", VVector vec -> stats_noargs_float cum_sum vec
+    | "product", VVector vec -> stats_noargs_float cum_prod vec
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma')

@@ -116,10 +116,10 @@ let count (v : float) (data : float list) =
     | h::t ->
       begin 
         if h = v
-        then count_helper v (acc + 1) t
+        then count_helper v (acc +. 1.) t
         else count_helper v acc t
       end
-  in count_helper v 0 data
+  in count_helper v 0. data
 
 let unique (data : float list) =
   let rec unique_helper acc  = function
@@ -130,5 +130,5 @@ let unique (data : float list) =
         then unique_helper acc t
         else unique_helper (h::acc) t
       end
-  in unique_helper [] data
+  in List.rev (unique_helper [] data)
 

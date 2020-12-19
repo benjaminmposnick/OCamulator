@@ -56,6 +56,7 @@ rule read =
   | "pdf" { PDF }
   | "cdf" { CDF }
   | "smpl" { SAM }
+  | "unique" { UNIQUE }
   | "pi" { CONST_PI }
   | "$" { BEGIN_CMD }
   | "#" { PROJ }

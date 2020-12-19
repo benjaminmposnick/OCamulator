@@ -27,6 +27,17 @@ type prob_func =
   | CDF
   | SAM
 
+(** [stat_func] is the type of the stat function to be executed*)
+type stat_func =
+  | SORT_ASC
+  | SORT_DESC
+  | UNIQUE
+  | QUANTILE
+
+type stat_equ = 
+  | NoArg of stat_func
+  | OneArg of stat_func * float
+
 (** [distribution] is the type of probability distributions. *)
 type distribution =
   | Binomial of prob_func * float * float * float
