@@ -177,10 +177,12 @@ and evaluate_command cmd e sigma =
     | "pivots", VMatrix m -> VList (pivot_cols m)
     | "pivots", _ ->
       raise (ComputationError.EvalError "Cannot calculate pivots of a non-matrix")
-    (* | "det", VMatrix m -> VFloat (Linalg.determinant m) *)
+    | "det", VMatrix mat -> VFloat (Linalg.determinant mat)
     | "det", _ -> raise (ComputationError.EvalError "Cannot calculate determinant of non-matrix")
-    | "plu",  VMatrix m ->
-      let (p, l, u) = Linalg.plu_decomposition m in
+    | "inv", VMatrix mat -> VMatrix (Linalg.inverse mat)
+    | "inv", _ -> raise (ComputationError.EvalError "Cannot calculate inverse of non-matrix")
+    | "plu",  VMatrix mat ->
+      let (p, l, u, _) = Linalg.plu_decomposition mat in
       VList [VMatrix p; VMatrix l; VMatrix u]
     | _, VList lst when String.(length cmd > 0 && get cmd 0 = '#')-> begin
         match int_of_string_opt (String.(sub cmd 1 (length cmd - 1))) with

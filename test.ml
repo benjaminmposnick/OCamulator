@@ -365,6 +365,10 @@ let matrix_tests = [
     (Matrix.string_of_matrix);
 ]
 
+let check_lu_decomp l u =
+  assert_bool ("L: " ^ Matrix.string_of_matrix l) (Matrix.is_lower_triangular l);
+  assert_bool ("U: " ^ Matrix.string_of_matrix u) (Matrix.is_upper_triangular u)
+
 let lin_alg_tests =
   let open Linalg in [
     test "Symmetric matrix" true
@@ -375,13 +379,53 @@ let lin_alg_tests =
       (Matrix.(multiply (of_list [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]])
                  (of_list [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]])))
       (Matrix.string_of_matrix);
-    test "PLU decomposition of 3x3 matrix"
+    test "PLU decomposition of 3x3 matrix with a zero in a non-pivot position"
       (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]])
-      (let (p, l, u) = 
+      (let (p, l, u, _) = 
          plu_decomposition (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]]) in
-       Matrix.(multiply (transpose p) (multiply l u))
-      )
+       check_lu_decomp l u;
+       Matrix.(multiply (transpose p) (multiply l u)))
       (Matrix.string_of_matrix);
+    test "PLU decomposition of 3x3 matrix with no zeros"
+      (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
+      (let (p, l, u, _) = 
+         plu_decomposition (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]) in
+       check_lu_decomp l u;
+       Matrix.(multiply (transpose p) (multiply l u)))
+      (Matrix.string_of_matrix);
+    test "PLU decomposition of 3x3 matrix with all zeros"
+      (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]])
+      (let (p, l, u, _) = 
+         plu_decomposition (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]) in
+       check_lu_decomp l u;
+       Matrix.(multiply (transpose p) (multiply l u)))
+      (Matrix.string_of_matrix);
+    test "Determinant of 4x4 matrix" ~-.6. 
+      (Linalg.determinant 
+         (Matrix.of_list [[2.;4.;1.;1.];[2.;1.;3.;4.];[2.;1.;2.;3.];[4.;2.;1.;2.]]))
+      string_of_float;
+    test "Determinant of 3x3 zeros matrix" ~-.0. 
+      (Linalg.determinant 
+         (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]))
+      string_of_float;
+    test "Determinant of 3x3 non-zero matrix" ~-.0. 
+      (Linalg.determinant 
+         (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
+      string_of_float;
+    test "Determinant of 5x5 random float matrix" ~-.0.0293
+      (Linalg.determinant (read_matrix_from_text_file "./tests/det/5x5_float_in.txt"))
+      string_of_float;
+    test "Inverse of 4x4 int matrix"
+      (Matrix.of_list 
+         [[~-.0.7857;0.3929;0.1071;0.4643];[1.1429;~-.1.0714;0.0714;~-.0.3571];
+          [~-.0.5000;0.7500;~-.0.2500;0.2500];[0.5714;~-.0.2857; 0.2857;~-.0.4286]])
+      (Linalg.inverse
+         (Matrix.of_list [[2.;3.;4.;2.];[1.;1.;3.;2.];[3.;1.;1.;3.];[4.;4.;4.;1.]]))
+      Matrix.string_of_matrix;
+    test "Inverse of 3x3 float matrix"
+      (Matrix.of_list ([[0.75;0.5;0.25];[0.5;1.;0.5 ];[0.25;0.5;0.75]]))
+      (Linalg.inverse (Matrix.of_list [[2.;~-.1.;0.];[~-.1.;2.;~-.1.];[0.;~-.1.;2.]]))
+      Matrix.string_of_matrix;
   ]
 
 let var_present_tests = let open Eval in [

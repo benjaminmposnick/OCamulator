@@ -5,6 +5,8 @@ type t = float list list
 let to_array mat =
   List.map Array.of_list mat |> Array.of_list
 
+let to_list mat = mat
+
 let of_array arr = 
   Array.(map to_list arr) |> Array.to_list
 
@@ -52,9 +54,8 @@ let string_of_matrix mat =
     let max_string = List.fold_left length_max "" max_string_by_row in
     String.length max_string
   in
-  List.map (fun vec -> string_of_matrix_row max_digits vec) mat
+  List.map (fun vec -> "| " ^ string_of_matrix_row max_digits vec) mat
   |> String.concat " |\n"
-  |> ( ^ ) "| "
   |> fun str -> str ^ " |" 
 
 let transpose mat =
@@ -111,7 +112,7 @@ let row_sums matrix =
 let apply_to_all f matrix = 
   List.(map (map f) matrix)
 
-let is_lower_triangular matrix =
+let is_upper_triangular matrix =
   assert (is_square matrix);
   let n = n_rows matrix in
   let a = to_array matrix in
@@ -123,8 +124,8 @@ let is_lower_triangular matrix =
   done;
   List.fold_left (fun acc x -> if x = 0. then acc else false) true !elems
 
-let is_upper_triangular matrix =
-  transpose matrix |> is_lower_triangular
+let is_lower_triangular matrix =
+  transpose matrix |> is_upper_triangular
 
 let of_vectors vec_lst =
   let rec vectors_to_lists lst acc =

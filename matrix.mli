@@ -3,7 +3,10 @@ open Vector
 (** [t] is the type of [Matrix]. *)
 type t
 
-(** [to_array mat] reutrns a fresh array containing the elements of [Matrix]
+(** [to_list mat] reutrns a list containing the elements of [Matrix] [mat]. *)
+val to_list : t -> float list list
+
+(** [to_array mat] returns a fresh array containing the elements of [Matrix]
     [mat]. *)
 val to_array : t -> float array array
     
@@ -77,3 +80,7 @@ val string_of_matrix : t -> string
 val of_vectors : Vector.t list -> t
 
 val map : (float list -> 'a) -> t -> 'a list
+
+val is_lower_triangular : t -> bool
+
+val is_upper_triangular : t -> bool

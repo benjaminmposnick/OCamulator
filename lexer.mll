@@ -7,7 +7,7 @@ let print_error str =
 
 let white = [' ' '\t' '\n']+
 let digit = ['0'-'9']
-let float = '-'? digit* '.' digit+
+let float = '-'? digit* '.' digit+ | '-'? digit+ '.' digit*
 let int = '-'? digit+
 let letter = ['a'-'z' 'A'-'Z']
 let id = letter+

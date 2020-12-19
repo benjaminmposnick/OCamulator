@@ -7,4 +7,8 @@ val rref : Matrix.t -> Matrix.t
     via Gaussian elimination. *)
 val pivot_cols : Matrix.t  -> Ast.value list
 
-val plu_decomposition : Matrix.t  -> (Matrix.t * Matrix.t * Matrix.t)
+val plu_decomposition : ?no_round:bool -> Matrix.t  -> (Matrix.t * Matrix.t * Matrix.t * int)
+
+val determinant : Matrix.t -> float
+
+val inverse : Matrix.t -> Matrix.t

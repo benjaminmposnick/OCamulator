@@ -6,19 +6,22 @@ open Vector
     UTILITY FUNCTIONS
    ===========================================================================*)
 
-(** [round n] rounds [n] to four decimal places.  *)
+(** [round n] rounds [n] to 4 decimal places.  *)
 let round n =
-  Printf.sprintf "%.4f" n |> float_of_string
+  Printf.sprintf ("%.4f") n
+  |> float_of_string
+  |> (fun x -> if x = ~-.0. then 0. else x)
 
 (** [purify tolerance matrix] is [matrix] except all negative zero entries are
     converted to zero (i.e. without the negative sign), any values in the
     matrix less than or equal to [tolerance] are zeroed out, and all values are
     expressed with up to four decimal places of precision. *)
-let purify tolerance matrix = 
+let purify ?no_round:(no_round=false) tolerance matrix = 
   let open List in
   let purify_aux x = 
     if Float.abs x <= tolerance then 0.
-    else round x |> (fun x -> if x = ~-.0. then 0. else x)
+    else if no_round then x
+    else round x
   in
   Matrix.apply_to_all purify_aux matrix
 
@@ -222,7 +225,6 @@ let rref matrix =
   reduced_row_echelon_form echelon_form pivot_col_idxs
   |> purify tolerance
 
-
 (* ===========================================================================
    MATRIX FACTORIZATIONS
    ===========================================================================*)
@@ -233,7 +235,7 @@ let rref matrix =
     triangular. Similar to the LU decomposition, except the permutation matrix
     keeps track of row interchanges which are required for numerical stability.
     Requires: [matrix] is square. *)
-let plu_decomposition matrix =
+let plu_decomposition ?no_round:(no_round=false) matrix =
   assert (Matrix.is_square matrix);
   let tolerance = determine_tolerance matrix in
   let n = n_rows matrix in
@@ -241,24 +243,30 @@ let plu_decomposition matrix =
   let u = ref (Array.copy a) in (* upper triangular *)
   let l = ref (Matrix.(to_array (identity n))) in (* lower triangular *)
   let p = ref (Matrix.(to_array (identity n))) in (* permutation matrix *)
+  let n_swaps = ref 0 in
   for i = 0 to n - 1 do
     let rec swap k =
       if !u.(i).(i) = 0. then
-        if k = n then ()
+        if k = n - 1 then false
         else
           let tmp_u = !u.(i) in
           !u.(i) <- !u.(k + 1); !u.(k + 1) <- tmp_u;
           let tmp_p = !p.(i) in
           !p.(i) <- !p.(k + 1); !p.(k + 1) <- tmp_p;
+          n_swaps := !n_swaps + 1;
           swap (k + 1)
-      else () in swap i;
-    for j = i + 1 to n - 1 do
-      !l.(j).(i) <- !u.(j).(i) /. !u.(i).(i) ;
-      !u.(j) <- Array.(map2 ( -. ) !u.(j) (map (fun x -> x *. !l.(j).(i)) !u.(i)));
-    done;
+      else true in
+    if swap i then
+      for j = i + 1 to n - 1 do
+        !l.(j).(i) <- !u.(j).(i) /. !u.(i).(i) ;
+        !u.(j) <- Array.(map2 ( -. ) !u.(j) (map (fun x -> x *. !l.(j).(i)) !u.(i)));
+      done
+    else ()
   done;
-  let format arr = Matrix.of_array arr |> purify tolerance in
-  (format !p, format !l, format !u)
+  let format arr =
+    Matrix.of_array arr
+    |> (fun m -> purify ~no_round:no_round tolerance m)in
+  (format !p, format !l, format !u, !n_swaps)
 
 (** [diagonal_product matrix] is the product of the entries on the main
     diagonal of [matrix].
@@ -272,3 +280,66 @@ let diagonal_product matrix =
     diag := a.(i).(i) :: !diag
   done;
   List.fold_left ( *. ) 1. !diag |> round
+
+let determinant mat = 
+  let (p, l, u, n_swaps) = plu_decomposition mat in
+  let det_p = if n_swaps mod 2 = 0 then 1. else -1. in
+  let det_l = diagonal_product l in
+  let det_u = diagonal_product u in
+  det_p *. det_l *. det_u |> round
+
+let range lo hi =
+  let rec range_aux idx acc =
+    if idx = lo - 1 then acc 
+    else range_aux (idx - 1) (idx :: acc) in
+  range_aux hi []
+
+let forward_substitution l b =
+  let n = Vector.size b in
+  let y = ref (Vector.(to_array (zeros n))) in
+  let b = ref (Vector.(to_array b)) in
+  let l = ref (Matrix.(to_array l)) in
+  !y.(0) <- !b.(0) /. !l.(0).(0);
+  for i = 1 to n - 1 do
+    let sum = ref 0. in
+    List.iter (fun j ->
+        sum := !sum +. (!l.(i).(j) *. !y.(j))) (range 0 (i - 1));
+    !y.(i) <- (1. /. !l.(i).(i)) *. (!b.(i) -. !sum)
+  done; 
+  Vector.of_array !y
+  |> Vector.make_col_vec
+
+let back_substitution u y =
+  let n = Vector.size y in
+  let x = ref (Vector.(to_array (zeros n))) in
+  let u = ref (Matrix.(to_array u)) in
+  let y = ref (Vector.(to_array y)) in
+  !x.(n - 1) <- !y.(n - 1) /. !u.(n - 1).(n - 1);
+  for i' = 0 to n - 2 do
+    let i = (n - 2) - i' in
+    let sum = ref 0. in
+    List.iter (fun j ->
+        sum := !sum +. (!u.(i).(j) *. !x.(j))) (range (i + 1) (n - 1));
+    !x.(i) <- (1. /. !u.(i).(i)) *. (!y.(i) -. !sum)
+  done; !x
+
+let inverse mat =
+  let tolerance = determine_tolerance mat in
+  let (p, l, u, _) = plu_decomposition ~no_round:true mat in
+  let n = n_rows p in
+  let b = Matrix.identity n in
+  let a_inv = ref (Matrix.(to_array (zeros (n, n)))) in
+  for i = 0 to n - 1 do
+    let bi = Vector.make_col_vec (Matrix.get_row b i) in
+    let p_dot_bi_mat = Matrix.(multiply p (of_vectors [bi])) in
+    let p_dot_bi_vec = 
+      Matrix.to_list p_dot_bi_mat
+      |> List.flatten
+      |> Vector.make_col_vec in
+    let y = forward_substitution l p_dot_bi_vec in
+    !a_inv.(i) <- back_substitution u y
+  done;
+  !a_inv
+  |> Matrix.of_array
+  |> Matrix.transpose
+  |> purify tolerance
