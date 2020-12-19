@@ -31,9 +31,6 @@ let vector_as_float_list str sep =
 // Probability
 %token BINOM BERN UNIF POIS NORM GEO EXP PDF CDF SAM
 
-// Stats
-%token SORT_ASC SORT_DESC UNIQUE
-
 // Miscellaenous
 %token LPAREN RPAREN CONST_PI EOF BEGIN_CMD PROJ
 
@@ -118,10 +115,8 @@ prob_input :
 prob_expr :
 	| BINOM; SAM; n = prob_input; p = prob_input;
 		{ Prob (Binomial (SAM, n, p, 0.)) } 
-	| BINOM; PDF; n = prob_input; p = prob_input; k = prob_input
-		{ Prob (Binomial (PDF, n, p, k)) } 
-	| BINOM; CDF; n = prob_input; p = prob_input; k = prob_input
-		{ Prob (Binomial (CDF, n, p, k)) } 
+	| BINOM; fn = prob_func; n = prob_input; p = prob_input; k = prob_input
+		{ Prob (Binomial (fn, n, p, k)) } 
 	| BERN; SAM; p = prob_input;
 		{ Prob (Bernoulli (SAM, p, 0.1)) }
 	| BERN; PDF; p = prob_input; k = prob_input

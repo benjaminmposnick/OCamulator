@@ -581,56 +581,64 @@ let solve_tests = let open Solve in [
   ]
 
 let prob_tests = let open Prob in [
-    test "Factorial Base 0" 1 (Prob.factorial 0) string_of_int;
-    test "Factorial Base 1" 1 (Prob.factorial 1) string_of_int;
-    test "Factorial Rec 5" 120 (Prob.factorial 5) string_of_int;
+    test "Factorial Base 0" 1 (factorial 0) string_of_int;
+    test "Factorial Base 1" 1 (factorial 1) string_of_int;
+    test "Factorial Rec 5" 120 (factorial 5) string_of_int;
 
-    test "Choose 0 is 1" 1. (Prob.choose 10 0) string_of_float; 
-    test "Choose n is 1" 1. (Prob.choose 10 10) string_of_float; 
-    test "Choose 1 is n" 10. (Prob.choose 10 1) string_of_float; 
-    test "10 Choose 5" 252. (Prob.choose 10 5) string_of_float; 
+    test "Choose 0 is 1" 1. (choose 10 0) string_of_float; 
+    test "Choose n is 1" 1. (choose 10 10) string_of_float; 
+    test "Choose 1 is n" 10. (choose 10 1) string_of_float; 
+    test "10 Choose 5" 252. (choose 10 5) string_of_float; 
 
-    test "Unif p in range" 1. (Prob.uniform_pmf 0. 1. 0.5) string_of_float;
-    test "Unif p out of range ge" 0. (Prob.uniform_pmf 0. 1. 2.) string_of_float;
+    test "Perm 0 is 1" 1. (perm 10 0) string_of_float; 
+    test "Choose n is 1" 6. (perm 3 3) string_of_float; 
+    test "Choose 1 is n" 3. (perm 3 1) string_of_float; 
+    test "10 Choose 5" 12. (perm 4 2) string_of_float; 
+
+    test "Unif p in range" 1. (uniform_pmf 0. 1. 0.5) string_of_float;
+    test "Unif p out of range ge" 0. (uniform_pmf 0. 1. 2.) string_of_float;
     test "Unif p out of range le" 0.
-      (Prob.uniform_pmf 0. 1. (-1.)) string_of_float;
-    test "Unif p on range ip" 1. (Prob.uniform_pmf 0. 1. 1.) string_of_float;
-    test "Unif p on range low" 1. (Prob.uniform_pmf 0. 1. 0.) string_of_float;
-    test "Unif c 0" 0. (Prob.uniform_cdf 0. 1. (-1.)) string_of_float;
-    test "Unif c 1" 1. (Prob.uniform_cdf 0. 1. 2.) string_of_float;
-    test "Unif c middle" 0.5 (Prob.uniform_cdf 0. 1. 0.5) string_of_float;
+      (uniform_pmf 0. 1. (-1.)) string_of_float;
+    test "Unif p on range ip" 1. (uniform_pmf 0. 1. 1.) string_of_float;
+    test "Unif p on range low" 1. (uniform_pmf 0. 1. 0.) string_of_float;
+    test "Unif c 0" 0. (uniform_cdf 0. 1. (-1.)) string_of_float;
+    test "Unif c 1" 1. (uniform_cdf 0. 1. 2.) string_of_float;
+    test "Unif c middle" 0.5 (uniform_cdf 0. 1. 0.5) string_of_float;
 
-    test "Bern p 1" 0.8 (Prob.bernoulli_pmf 0.8 1) string_of_float;
-    test "Bern p 0" (1. -. 0.8) (Prob.bernoulli_pmf 0.8 0) string_of_float;
-    test "Bern c 0" 0. (Prob.bernoulli_cdf 0.8 (-1)) string_of_float;
-    test "Bern c 1" 1. (Prob.bernoulli_cdf 0.8 (1)) string_of_float;
+    test "Bern p 1" 0.8 (bernoulli_pmf 0.8 1) string_of_float;
+    test "Bern p 0" (1. -. 0.8) (bernoulli_pmf 0.8 0) string_of_float;
+    test "Bern c 0" 0. (bernoulli_cdf 0.8 (-1)) string_of_float;
+    test "Bern c 1" 1. (bernoulli_cdf 0.8 (1)) string_of_float;
 
-    test "Geo p 1" 0.5 (Prob.geometric_pmf 0.5 1) string_of_float;
-    test "Geo p 3" 0.125 (Prob.geometric_pmf 0.5 3) string_of_float;
-    test "Geo c 1" 0.8 (Prob.geometric_cdf 0.8 1) string_of_float;
-    test "Geo c 1" 0.992 (Prob.geometric_cdf 0.8 3) string_of_float;
+    test "Geo p 1" 0.5 (geometric_pmf 0.5 1) string_of_float;
+    test "Geo p 3" 0.125 (geometric_pmf 0.5 3) string_of_float;
+    test "Geo c 1" 0.8 (geometric_cdf 0.8 1) string_of_float;
+    test "Geo c 1" 0.992 (geometric_cdf 0.8 3) string_of_float;
 
-    test "Exp p 0" 0.5 (Prob.exponential_pmf 0.5 0.) string_of_float;
-    test "Exp p 1" (exp (-1.)) (Prob.exponential_pmf 1. 1.) string_of_float;
-    test "Exp c 0" 0. (Prob.exponential_cdf 1. 0.) string_of_float;
+    test "Exp p 0" 0.5 (exponential_pmf 0.5 0.) string_of_float;
+    test "Exp p 1" (exp (-1.)) (exponential_pmf 1. 1.) string_of_float;
+    test "Exp c 0" 0. (exponential_cdf 1. 0.) string_of_float;
     test "Exp c 1" (1. -. exp (-1.))
-      (Prob.exponential_cdf 1. 1.) string_of_float;
+      (exponential_cdf 1. 1.) string_of_float;
 
-    test "Pois p 0" (exp (-1.)) (Prob.poisson_pmf 1. 0) string_of_float;
-    test "Pois p 2" (exp (-1.) /. 2.) (Prob.poisson_pmf 1. 2) string_of_float;
+    test "Pois p 0" (exp (-1.)) (poisson_pmf 1. 0) string_of_float;
+    test "Pois p 2" (exp (-1.) /. 2.) (poisson_pmf 1. 2) string_of_float;
 
-    test "Pois c 0" (exp (-1.)) (Prob.poisson_cdf 1. 0) string_of_float;
+    test "Pois c 0" (exp (-1.)) (poisson_cdf 1. 0) string_of_float;
     test "Pois c 2" (5. *. exp (-1.) /. 2.)
-      (Prob.poisson_cdf 1. 2) string_of_float;
+      (poisson_cdf 1. 2) string_of_float;
 
-    test "Binom p 0" (0.5 ** 10.) (Prob.binomial_pmf 10 0.5 0) string_of_float;
-    test "Binom p n" (0.5 ** 10.) (Prob.binomial_pmf 10 0.5 10) string_of_float;
+    test "Binom p 0" (0.5 ** 10.) (binomial_pmf 10 0.5 0) string_of_float;
+    test "Binom p n" (0.5 ** 10.) (binomial_pmf 10 0.5 10) string_of_float;
 
-    test "Binom c 0" (0.5 ** 10.) (Prob.binomial_cdf 10 0.5 0) string_of_float;
-    test "Binom c n" (1.) (Prob.binomial_cdf 10 0.5 10) string_of_float;
-
-
+    test "Binom c 0" (0.5 ** 10.) (binomial_cdf 10 0.5 0) string_of_float;
+    test "Binom c n" (1.) (binomial_cdf 10 0.5 10) string_of_float;
   ]
+
+let stat_tests = [
+
+
+] 
 
 let eval_tests = 
   let eval_expr e sigma = fst (Eval.eval_expr e sigma) in
@@ -757,6 +765,7 @@ let suite =
     var_present_tests;
     solve_tests;
     prob_tests;
+    stat_tests;
     eval_tests;
     matrix_tests;
   ]

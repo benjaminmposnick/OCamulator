@@ -142,6 +142,14 @@ let eval_prob dist sigma =
   in 
   VFloat value, sigma
 
+let rand_vector dist i = 
+  let open Prob in
+  let open Vector in
+  let rec rand_helper acc_list acc_i i f =
+    if acc_i > i then acc_i
+    else rand_helper (f:: acc_list) (acc_i + 1) i f
+  in rand_helper [] 0 i dist
+
 let stats_noargs_vec f vec = 
   let open Vector in
   let open Stat in
