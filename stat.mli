@@ -40,8 +40,7 @@ val smpl_var : float list -> float
 val smpl_std : float list -> float
 
 (** [count v d] is the number of occurences of [v] in [d]*)
-val count : float -> float list -> float
-
+val count : float -> float list -> int
 (** [unique d] is the set of [d]. All duplicated removed*)
 val unique : float list -> float list
 

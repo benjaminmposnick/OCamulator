@@ -29,6 +29,26 @@ let eval_var x sigma =
     raise (ComputationError.(EvalError error_msg))
   | Some value -> value, sigma
 
+let prob_check p = 
+  if p >= 0. && p <= 1. then ()
+  else raise (ComputationError.EvalError "p is not a valid probability")
+
+let nk_check n k = 
+  if k <= n then ()
+  else raise (ComputationError.EvalError "k > n (Binomial) or a > b (Uniform)")
+
+let lmbda_check l = 
+  if l > 0. then ()
+  else raise (ComputationError.EvalError "Lambda must be > 0")
+
+let neg_check x =
+  if x >= 0. then ()
+  else raise (ComputationError.EvalError "Input value must be >= 0")
+
+let bern_check x = 
+  if x = 0. || x = 1. then ()
+  else raise (ComputationError.EvalError "Bernoulli RV's can only be 0 or 1")
+
 let eval_prob dist sigma = 
   let value = 
     let open Prob in
@@ -36,29 +56,89 @@ let eval_prob dist sigma =
     let open ComputationError in
     match dist with
     | Binomial (PDF, n, p, k) when is_integer n && is_integer k ->
+      prob_check p;
+      neg_check k;
+      nk_check n k;
       binomial_pmf (int_of_float n) p (int_of_float k)
     | Binomial (CDF, n, p, k) when is_integer n && is_integer k ->
+      prob_check p;
+      neg_check k;
+      nk_check n k;
       binomial_cdf (int_of_float n) p (int_of_float k)
-    | Binomial (PDF, n, p, k) | Binomial (CDF, n, p, k) ->
+    | Binomial (SAM, n, p, k) when is_integer n -> 
+      prob_check p;
+      binomial_sam (int_of_float n) p
+    | Binomial (f, n, p, k) ->
       raise (EvalError "n and k values of Binomial distribution must be integers")
-    | Bernoulli (PDF, p, k) when is_integer k -> bernoulli_pmf p (int_of_float k)
-    | Bernoulli (CDF, p, k) when is_integer k -> bernoulli_cdf p (int_of_float k)
-    | Bernoulli (PDF, p, k) | Bernoulli (CDF, p, k) ->
+    | Bernoulli (PDF, p, k) when is_integer k -> 
+      prob_check p;
+      bern_check k;
+      bernoulli_pmf p (int_of_float k)
+    | Bernoulli (CDF, p, k) when is_integer k -> 
+      prob_check p;
+      bernoulli_cdf p (int_of_float k)
+    | Bernoulli (SAM, p, k) -> 
+      prob_check p;
+      bernoulli_sam p
+    | Bernoulli (f, p, k) ->
       raise (EvalError "k value of Bernoulli distribution must be an integer")
-    | Uniform (PDF, a, b, x) -> uniform_pmf a b x
-    | Uniform (CDF, a, b, x) -> uniform_cdf a b x
-    | Poisson (PDF, l, x) when is_integer x -> poisson_pmf l (int_of_float x)
-    | Poisson (CDF, l, x) when is_integer x -> poisson_cdf l (int_of_float x)
-    | Poisson (PDF, l, x) | Poisson (CDF, l, x) -> 
+    | Uniform (PDF, a, b, x) -> 
+      nk_check b a;
+      uniform_pmf a b x
+    | Uniform (CDF, a, b, x) -> 
+      nk_check b a;
+      uniform_cdf a b x
+    | Uniform (SAM, a, b, x) ->
+      nk_check b a;
+      uniform_sam a b
+    | Poisson (PDF, l, x) when is_integer x ->
+      lmbda_check l;
+      neg_check x;
+      poisson_pmf l (int_of_float x)
+    | Poisson (CDF, l, x) when is_integer x -> 
+      lmbda_check l;
+      neg_check x;
+      poisson_cdf l (int_of_float x)
+    | Poisson (SAM, l, t) -> 
+      lmbda_check l;
+      neg_check t;
+      poisson_sam l t
+    | Poisson (f, l, x) -> 
       raise (EvalError "x value of Poisson distribution must be an integer")
-    | Geometric (PDF, p, k) when is_integer k -> geometric_pmf p (int_of_float k)
-    | Geometric (CDF, p, k) when is_integer k -> geometric_cdf p (int_of_float k)
-    | Geometric (PDF, p, k) | Geometric (CDF, p, k) ->
+    | Geometric (PDF, p, k) when is_integer k -> 
+      neg_check k;
+      prob_check p;
+      geometric_pmf p (int_of_float k)
+    | Geometric (CDF, p, k) when is_integer k ->
+      neg_check k;
+      prob_check p;
+      geometric_cdf p (int_of_float k)
+    | Geometric (SAM, p, k) -> 
+      neg_check k;
+      prob_check p;
+      geometric_sam p
+    | Geometric (f, p, k) ->
       raise (EvalError "k value of Geometric distribution must be an integer")
-    | Exponential (PDF, l, x) -> exponential_pmf l x
-    | Exponential (CDF, l, x) -> exponential_cdf l x
-    | Normal (PDF, m, s, x) -> normal_pmf m s x
-    | Normal (CDF, m, s, x) -> normal_cdf m s x
+    | Exponential (PDF, l, x) -> 
+      neg_check x;
+      lmbda_check l;
+      exponential_pmf l x
+    | Exponential (CDF, l, x) -> 
+      neg_check x;
+      lmbda_check l;
+      exponential_cdf l x
+    | Exponential (SAM, l, x) -> 
+      lmbda_check l;
+      exponential_sam l
+    | Normal (PDF, m, s, x) -> 
+      neg_check s;
+      normal_pmf m s x
+    | Normal (CDF, m, s, x) -> 
+      neg_check s;
+      normal_cdf m s x
+    | Normal (SAM, m, s, x) -> 
+      neg_check s;
+      normal_sam m s 
   in 
   VFloat value, sigma
 
