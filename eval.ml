@@ -43,15 +43,39 @@ let eval_var x sigma =
     raise (ComputationError.(EvalError error_msg))
   | Some value -> value, sigma
 
+let prob_check p = 
+  if p >= 0. && p <= 1. then ()
+  else raise (ComputationError.EvalError "p is not a valid probability")
+
+let nk_check n k = 
+  if k <= n then ()
+  else raise (ComputationError.EvalError "k > n (Binomial) or a > b (Uniform)")
+
+let lmbda_check l = 
+  if l > 0. then ()
+  else raise (ComputationError.EvalError "Lambda must be > 0")
+
+let neg_check x =
+  if x >= 0. then ()
+  else raise (ComputationError.EvalError "Input value must be >= 0")
+
+let bern_check x = 
+  if x = 0. || x = 1. then ()
+  else raise (ComputationError.EvalError "Bernoulli RV's can only be 0 or 1")
+
 (** [eval_binomial func n p k] is result of [binomial_cdf n p k] if [func]
     = [CDF] and is the result of [binomial_pmf n p k] if [func] = [PDF], so long
     as [n] and [k] are floats representing integers; otherwise, [EvalError]
     is raised. *)
 let eval_binomial func n p k =
   let open Prob in
+  prob_check p;
+  neg_check k;
+  nk_check n k;
   if Float.is_integer n && Float.is_integer k then
-    if func = PDF then binomial_pmf (int_of_float n) p (int_of_float k)
-    else binomial_cdf (int_of_float n) p (int_of_float k)
+    if func = SAM then binomial_sam (int_of_float n) p
+    else if func = PDF then binomial_pmf (int_of_float n) p (int_of_float k)
+    else (* func = CDF *) binomial_cdf (int_of_float n) p (int_of_float k)
   else    
     let error_msg = "n and k values of Binomial distribution must be ints" in
     raise (ComputationError.EvalError error_msg)
@@ -60,20 +84,32 @@ let eval_binomial func n p k =
     and is the result of [bernoulli_pmf p k] if [func] = [PDF], so long as [k]
     is a float representing an integer; otherwise, [EvalError] is raised. *)
 let eval_bernoulli func p k =
+  prob_check p;
+  bern_check k;
   if Float.is_integer k then
-    if func = PDF then bernoulli_pmf p (int_of_float k)
-    else bernoulli_cdf p (int_of_float k)
+    if func = SAM then bernoulli_sam p
+    else if func = PDF then bernoulli_pmf p (int_of_float k)
+    else (* func = CDF *) bernoulli_cdf p (int_of_float k)
   else
     let error_msg = "k value of Bernoulli distribution must be an integer" in
     raise (ComputationError.EvalError error_msg)
+
+let eval_uniform func a b x =
+  nk_check b a;
+  if func = SAM then uniform_sam a b
+  else if func = PDF then uniform_pmf a b x
+  else (* func = CDF *) uniform_cdf a b x
 
 (** [eval_poisson func l x] is result of [poisson_cdf l x] if [func] = [CDF]
     and is the result of [poisson_pmf l x] if [func] = [PDF], so long as [x]
     is a float representing an integer; otherwise, [EvalError] is raised. *)
 let eval_poisson func l x =
-  if Float.is_integer x then
+  lmbda_check l;
+  neg_check x;
+  if func = SAM then poisson_sam l x
+  else if Float.is_integer x then
     if func = PDF then poisson_pmf l (int_of_float x)
-    else poisson_cdf l (int_of_float x)
+    else (* func = CDF *) poisson_cdf l (int_of_float x)
   else
     let error_msg = "x value of Poisson distribution must be an integer" in
     raise (ComputationError.EvalError error_msg)
@@ -82,12 +118,28 @@ let eval_poisson func l x =
     and is the result of [geometric_pmf p k] if [func] = [PDF], so long as [k]
     is a float representing an integer; otherwise, [EvalError] is raised. *)
 let eval_geometric func p k =
-  if Float.is_integer k then
+  neg_check k;
+  prob_check p;
+  if func = SAM then geometric_sam p
+  else if Float.is_integer k then
     if func = PDF then geometric_pmf p (int_of_float k)
     else geometric_cdf p (int_of_float k)
   else
     let error_msg = "k value of Geometric distribution must be an integer" in
     raise (ComputationError.EvalError error_msg)
+
+let eval_exponential func l x =
+  neg_check x;
+  lmbda_check l;
+  if func = SAM then exponential_sam l
+  else if func = PDF then exponential_pmf l x
+  else (* func = CDF *) exponential_cdf l x
+
+let eval_normal func m s x = 
+  neg_check s;
+  if func = SAM then normal_pmf m s x
+  else if func = PDF then normal_sam m s
+  else (* func = CDF *) normal_cdf m s x
 
 (** [eval_prob dist sigma] is the result of evaluating the probability
     distribution [dist] in store [sigma]. *)
@@ -97,16 +149,40 @@ let eval_prob dist sigma =
     match dist with
     | Binomial (func, n, p, k) -> eval_binomial func n p k
     | Bernoulli (func, p, k) -> eval_bernoulli func p k
-    | Uniform (PDF, a, b, x) -> uniform_pmf a b x
-    | Uniform (CDF, a, b, x) -> uniform_cdf a b x
+    | Uniform (func, a, b, x) -> eval_uniform func a b x
     | Poisson (func, l, x) -> eval_poisson func l x
     | Geometric (func, p, k) -> eval_geometric func p k
-    | Exponential (PDF, l, x) -> exponential_pmf l x
-    | Exponential (CDF, l, x) -> exponential_cdf l x
-    | Normal (PDF, m, s, x) -> normal_pmf m s x
-    | Normal (CDF, m, s, x) -> normal_cdf m s x
+    | Exponential (func, l, x) -> eval_exponential func l x
+    | Normal (func, m, s, x) -> eval_normal func m s x
   in 
   VFloat value, sigma
+
+let rand_vector dist i = 
+  let open Prob in
+  let open Vector in
+  let rec rand_helper acc_list acc_i i f =
+    if acc_i > i then acc_i
+    else rand_helper (f:: acc_list) (acc_i + 1) i f
+  in rand_helper [] 0 i dist
+
+let stats_noargs_vec f vec = 
+  let open Vector in
+  let open Stat in
+  let value = 
+    vec
+    |> to_list
+    |> f
+    |> make_row_vec
+  in VVector value
+
+let stats_noargs_float f vec = 
+  let open Vector in
+  let open Stat in
+  let value =
+    vec 
+    |> to_list
+    |> f
+  in VFloat value
 
 (** [eval_assign x v sigma] is the result of binding [v] to [x] in store
     [sigma]. *)
@@ -229,6 +305,7 @@ let rec eval_binop op e1 e2 sigma  =
 
 and evaluate_command cmd e sigma = 
   let open Linalg in
+  let open Stat in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
@@ -270,6 +347,16 @@ and evaluate_command cmd e sigma =
         |Binop (op, e1, e2) -> VEquation (op, e1, e2)
         |_ -> failwith "Error solving equation"
       end
+    | "mean", VVector vec -> stats_noargs_float mean vec
+    | "median", VVector vec -> stats_noargs_float median vec
+    | "sort_asc", VVector vec -> stats_noargs_vec sort_asc vec
+    | "sort_desc", VVector vec -> stats_noargs_vec sort_desc vec
+    | "min", VVector vec -> stats_noargs_float min vec
+    | "max", VVector vec -> stats_noargs_float max vec
+    | "variance", VVector vec -> stats_noargs_float smpl_var vec
+    | "std", VVector vec -> stats_noargs_float smpl_std vec
+    | "sum", VVector vec -> stats_noargs_float cum_sum vec
+    | "product", VVector vec -> stats_noargs_float cum_prod vec
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma')

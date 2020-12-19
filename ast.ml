@@ -25,6 +25,18 @@ type binop =
 type prob_func =
   | PDF
   | CDF
+  | SAM
+
+(** [stat_func] is the type of the stat function to be executed*)
+type stat_func =
+  | SORT_ASC
+  | SORT_DESC
+  | UNIQUE
+  | QUANTILE
+
+type stat_equ = 
+  | NoArg of stat_func
+  | OneArg of stat_func * float
 
 (** [distribution] is the type of probability distributions. *)
 type distribution =
@@ -65,6 +77,7 @@ type value =
 let string_of_prob_func = function
   | PDF -> "PDF"
   | CDF -> "CDF"
+  | SAM -> "SAM"
 
 (** [string_of_binop binop] is the string respresentation of [binop]. *)
 let string_of_binop = function

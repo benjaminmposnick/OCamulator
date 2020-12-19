@@ -17,7 +17,7 @@ val mean : float list -> float
 val median : float list -> float
 
 (** [mode d] is mode of the values in [d]*)
-val mode : float list -> float
+val mode : float list -> float list
 
 (** [linear_regression d] is the line of best fit for the points (x,y)
     in [d] using a cartesian coordinate system*)
@@ -37,4 +37,11 @@ val min : float list -> float
 val smpl_var : float list -> float
 
 (** [smpl_std d] is the sample standard deviation of the values in [d]*)
-val smpl_std : float list -> float 
+val smpl_std : float list -> float
+
+(** [count v d] is the number of occurences of [v] in [d]*)
+val count : float -> float list -> float
+
+(** [unique d] is the set of [d]. All duplicated removed*)
+val unique : float list -> float list
+
