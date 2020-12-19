@@ -111,9 +111,24 @@ let smpl_std (data : float list) =
   smpl_var data ** (0.5)
 
 let count (v : float) (data : float list) =
-  failwith "unimpl"
+  let rec count_helper v acc = function
+    | [] -> acc
+    | h::t ->
+      begin 
+        if h = v
+        then count_helper v (acc + 1) t
+        else count_helper v acc t
+      end
+  in count_helper v 0 data
 
 let unique (data : float list) =
-  failwith "unimpl"
-
+  let rec unique_helper acc  = function
+    | [] -> acc
+    | h::t -> 
+      begin
+        if List.mem h acc 
+        then unique_helper acc t
+        else unique_helper (h::acc) t
+      end
+  in unique_helper [] data
 
