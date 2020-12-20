@@ -494,11 +494,25 @@ let rec eval_solve op e1 e2 sigma =
 [@@ coverage off]
 (* Cannot systematically test because result depends on user input *)
 
+(** [eval_negate s sigma] is the negation of the value stored in Var s. 
+    Requires: Var s is bound *)
 and eval_negate s sigma = 
   let var_val = fst (eval_var s sigma) in 
   match var_val with
   | VFloat v -> VFloat (0. -. v), sigma
   | _ -> failwith "Cannot negate non-numeric value"
+
+(** [eval_trig f v sigma] is the value of the trig function [f] applied to [v]. 
+    Requires: f is a string representing a trig function *)
+and eval_trig f v sigma = 
+  match f, v with
+  | "sin", i -> VFloat(sin i)
+  | "cos", i -> VFloat(cos i)
+  | "tan", i -> VFloat(tan i)
+  | "arcsin", i -> VFloat(asin i)
+  | "arccos", i -> VFloat(acos i)  
+  | "arctan", i -> VFloat(atan i)
+  | _, _ -> failwith "Invalid trig entry"
 
 and eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
@@ -524,6 +538,7 @@ and eval_command cmd e sigma =
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
   let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
                          "linreg";"lcm"; "gcd"] in
+  let trig_commands = ["sin"; "cos"; "tan";"arcsin";"arccos";"arctan"] in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
@@ -540,6 +555,8 @@ and eval_command cmd e sigma =
       eval_linalg_command linalg_cmd value
     | dbl_cmd, VTuple (v1,v2) when List.mem dbl_cmd double_commands ->
       eval_double_command dbl_cmd v1 v2
+    | trig_cmd, VFloat i when List.mem trig_cmd trig_commands -> 
+      eval_trig trig_cmd i sigma
     | "fac", VFloat i -> 
       if Float.is_integer i then
         VFloat(i |> int_of_float |> Prob.factorial |> float_of_int )
