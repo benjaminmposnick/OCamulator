@@ -430,7 +430,11 @@ and eval_command cmd e sigma =
     | _ -> raise_exn ("No such command: " ^ cmd)
   in
   (result, sigma')
-
+and
+  eval_tup e1 e2 sigma =
+  let val1 = eval_expr e1 sigma in
+  let val2 = eval_expr e2 (snd val1)in
+  VTuple (fst val1, fst val2), snd val2
 and eval_expr e sigma =
   match e with
   | Var x -> eval_var x sigma
@@ -441,7 +445,8 @@ and eval_expr e sigma =
   | Vector vec -> VVector vec, sigma
   | Command (cmd, e) -> 
     let cmd' = String.lowercase_ascii cmd in
-    eval_command cmd' e sigma 
+    eval_command cmd' e sigma
+  | Tuple (e1,e2) -> eval_tup e1 e2 sigma
   | Binop (Assign, Var x, e) -> 
     let (v, sigma') = eval_expr e sigma in 
     eval_assign x v sigma'

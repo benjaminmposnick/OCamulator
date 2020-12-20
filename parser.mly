@@ -32,7 +32,7 @@
 %token BINOM BERN UNIF POIS NORM GEO EXP PDF CDF SAM
 
 // Miscellaenous
-%token LPAREN RPAREN CONST_PI EOF BEGIN_CMD PROJ
+%token LPAREN RPAREN CONST_PI EOF BEGIN_CMD PROJ TILDE
 
 %left ID
 %right EQUALS GT LT GTE LTE ASSIGN DOT MOD
@@ -54,6 +54,7 @@ expr :
 	| arith_expr { $1 }
 	| prob_expr { $1 }
 	| array_expr { $1 }
+	| LPAREN; e1 = expr; TILDE; e2 = expr; RPAREN { Tuple (e1, e2)}
 	| BEGIN_CMD; cmd = ID; e = expr { Command (cmd, e) }
 	| PROJ; i = INT; e = expr { Command ("#" ^ string_of_int i, e)}
 	;

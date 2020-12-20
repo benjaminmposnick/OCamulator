@@ -39,6 +39,7 @@ rule read =
   | ">=" { GTE }
   | "<=" { LTE }
   | ":=" { ASSIGN }
+  | "~" { TILDE }
   | "dot" { DOT }
   | "binom" { BINOM }
   | "binomial" { BINOM }
