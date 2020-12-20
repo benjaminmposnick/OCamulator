@@ -663,7 +663,7 @@ let prob_tests = let open Prob in [
     test_rand_2 "Bin sam 10 .8" 7. binomial_sam 10 0.8 string_of_float;
 
     test_rand_2 "Pois sam 1 5" 0. poisson_sam 1. 0.5 string_of_float;
-    test_rand_2 "Pois sam 1 5" 4. poisson_sam 1. 5.0 string_of_float;
+    test_rand_2 "Pois sam 1 5" 3. poisson_sam 1. 5.0 string_of_float;
     test_rand_2 "Pois sam 1 20" 25. poisson_sam 1. 20.0 string_of_float;
   ]
 
