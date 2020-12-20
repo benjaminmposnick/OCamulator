@@ -6,14 +6,14 @@ let rec has_var e1 var =
   if e1 = var then true
   else
     match e1 with
-    | Binop (op', e1', e2') -> has_var e1' var or has_var e2' var
+    | Binop (op', e1', e2') -> has_var e1' var || has_var e2' var
     | _ -> false
 
 (** [match_inner_ast ast] is the tuple of contents of the Ast expression if it
     is a Binop expression and contains a variable.
     Otherwise, [match_ast ast] is the input ast *)
 let match_inner_ast ast var = match ast with
-  | Binop (op, e1, e2) -> if has_var e1 var or has_var e2 var
+  | Binop (op, e1, e2) -> if has_var e1 var || has_var e2 var
     then (op, e1, e2) else raise InvalidBinop
   | _ -> raise InvalidBinop
 
@@ -58,7 +58,7 @@ let step_solve var e =
 
 let rec solve var e = 
   let (op, e1, e2) = match_ast e (Var var) in
-  if e1 = Var var or e2 = Var var then e
-  else if (has_var e1 (Var var) or  has_var e2 (Var var)) = false
+  if e1 = Var var || e2 = Var var then e
+  else if (has_var e1 (Var var) ||  has_var e2 (Var var)) = false
   then failwith "No variable given"
   else e |> step_solve (Var var) |> solve var

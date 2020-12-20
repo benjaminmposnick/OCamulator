@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="next" href="Prob.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Linalg" rel="Chapter" href="Linalg.html">
+<link title="Prob" rel="Chapter" href="Prob.html">
+<link title="Solve" rel="Chapter" href="Solve.html">
+<link title="Vector" rel="Chapter" href="Vector.html">
+<link title="Matrix" rel="Chapter" href="Matrix.html">
+<link title="Eval" rel="Chapter" href="Eval.html">
+<link title="Stat" rel="Chapter" href="Stat.html">
+<link title="Ast" rel="Chapter" href="Ast.html">
+<link title="Main" rel="Chapter" href="Main.html"><title>Linalg</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Prob.html" title="Prob">Next</a>
+</div>
+<h1>Module <a href="type_Linalg.html">Linalg</a></h1>
+
+<pre><span id="MODULELinalg"><span class="keyword">module</span> Linalg</span>: <code class="code">sig</code> <a href="Linalg.html">..</a> <code class="code">end</code></pre><hr width="100%">
+
+<pre><span id="VALround"><span class="keyword">val</span> round</span> : <code class="type">float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">round n</code> rounds <code class="code">n</code> to 4 decimal places.</p>
+</div>
+</div>
+
+<pre><span id="VALpurify"><span class="keyword">val</span> purify</span> : <code class="type">?no_round:bool -> float -> <a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">purify tolerance matrix</code> is <code class="code">matrix</code> except all negative zero entries are
+    converted to zero (i.e. without the negative sign), any values in the
+    matrix less than or equal to <code class="code">tolerance</code> are zeroed out, and all values are
+    expressed with up to four decimal places of precision.</p>
+</div>
+</div>
+
+<pre><span id="VALdetermine_tolerance"><span class="keyword">val</span> determine_tolerance</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">determine_tolerance matrix</code> is the tolerance for <code class="code">matrix</code> that is used
+    to determine negligible column elements which can be zeroed-out to reduce
+    roundoff errors. More specifically, if <code class="code">A</code> = <code class="code">matrix</code> and <code class="code">A</code> is <code class="code">m X n</code>,
+    then the tolerance is defined as:
+    <code class="code">max(m, n) * eps * l_inf_norm(A)</code>
+    where <code class="code">eps</code> is machine epsilon and <code class="code">l_inf_norm</code> is the L-infinity norm.</p>
+</div>
+</div>
+
+<pre><span id="VALelementary_row_addition"><span class="keyword">val</span> elementary_row_addition</span> : <code class="type">float list -> float list -> float -> float list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">elementary_row_addition pivot_row next_row tolerance</code> is the result of 
+    using the pivot in <code class="code">pivot_row</code> to zero out the first entry of <code class="code">next_row</code> via
+    elementary row addition. 
+    Requires: The head element of the <code class="code">pivot_row</code> is a pivot.</p>
+</div>
+</div>
+
+<pre><span id="VALzero_out_entries_below_pivot"><span class="keyword">val</span> zero_out_entries_below_pivot</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> int -> float -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">zero_out_entries_below_pivot matrix next_pivot_idx tolerance</code> is <code class="code">matrix</code>
+    with all entries below the pivot zeroed out, i.e. any row with index greater
+    than <code class="code">next_pivot_idx</code>. Any entry less than <code class="code">tolerance</code> is zeroed out to
+    ensure that round-off errors do not lead to more pivots being declared than
+    are truly present.</p>
+</div>
+</div>
+
+<pre><span id="VALswap_partial_pivot"><span class="keyword">val</span> swap_partial_pivot</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> int -> int -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">swap_partial_pivot matrix next_pivot_idx partial_pivot_idx</code> is <code class="code">matrix</code>
+    except for the row with index <code class="code">next_pivot_idx</code> is swapped with the row with 
+    index <code class="code">partial_pivot_idx</code>.
+    Requires: <code class="code">partial_pivot_idx</code> is the index of a valid pivot</p>
+</div>
+</div>
+
+<pre><span id="VALpartial_pivot_idx"><span class="keyword">val</span> partial_pivot_idx</span> : <code class="type">float list -> int -> int</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">partial_pivot_idx col next_pivot_min</code> is the index of the largest entry in
+    absolute value in <code class="code">col</code> in a row greater than or equal to <code class="code">next_pivot_min</code>
+    Requires: <code class="code">col</code> is a pivot column.</p>
+</div>
+</div>
+
+<pre><span id="VALis_pivot_col"><span class="keyword">val</span> is_pivot_col</span> : <code class="type">float list -> int -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">is_pivot_col col next_pivot_idx</code> is true iff <code class="code">col</code> is a pivot column,
+    i.e. there exists at least one nonzero entry in <code class="code">col</code> in a row greater
+    than or equal to <code class="code">next_pivot_idx</code>.
+    Note: Ignoring nonzero entries less than <code class="code">next_pivot_col</code> is equivalent
+    to ignoring/covering up previous pivots, as described in the Gaussian
+    elimination algorithm.</p>
+</div>
+</div>
+
+<pre><span id="VALrow_echelon_form"><span class="keyword">val</span> row_echelon_form</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> float -> <a href="Matrix.html#TYPEt">Matrix.t</a> * int Stdlib.List.t</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">row_echelon_form matrix</code> is <code class="code">matrix</code> in echelon form, i.e. the result of
+    the forward phase of Gaussian elimination. The result of this algorithm is
+    deterministic but not unique -- that is, there are infinitely many valid
+    echelon forms of <code class="code">matrix</code> but this algorithm will yield the same echelon
+    form if given the same input repeatedly. This implementation uses partial
+    pivoting to reduce round-off errors as well as zeros out any entries that
+    are smaller than <code class="code">tolerance</code>.
+    Requires: <code class="code">matrix</code> is no smaller than a 2x2 matrix and <code class="code">tolerance</code> is
+    computed by the function <code class="code">determine_tolerance</code> applied to <code class="code">matrix</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALzero_out_entries_above_pivot"><span class="keyword">val</span> zero_out_entries_above_pivot</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> int -> int -> int -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">zero_out_entries_above_pivot matrix i j n_cols</code> uses the pivot located in
+    row <code class="code">i</code> and column <code class="code">j</code> of <code class="code">matrix</code> to zero-out all entries above the 
+    pivot, i.e. any row with index less than <code class="code">i</code>, as part of the backward phase
+    of Gaussian elimination.
+    Requires: If <code class="code">A</code> =def= <code class="code">matrix</code>, then <code class="code">A</code><code class="code">[i][j]</code> is one of the pivots of
+    matrix <code class="code">A</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALreduced_row_echelon_form"><span class="keyword">val</span> reduced_row_echelon_form</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> int list -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">reduced_row_echelon_form matrix pivot_col_idxs</code> is <code class="code">matrix</code> in reduced 
+    row echelon form, i.e. the result of the backward phase of Gaussian
+    elimination.
+    Requires: <code class="code">matrix</code> is no smaller than a 2x2 matrix and <code class="code">matrix</code> is already
+    in row echelon form; <code class="code">pivot_col_idxs</code> are the indexs of the columns of
+    <code class="code">matrix</code> that are pivot columns.</p>
+</div>
+</div>
+
+<pre><span id="VALpivot_cols"><span class="keyword">val</span> pivot_cols</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Ast.html#TYPEvalue">Ast.value</a> list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">pivot_cols matrix</code> is a list of the pivot columns of <code class="code">matrix</code>, found
+    via Gaussian elimination.</p>
+</div>
+</div>
+
+<pre><span id="VALrref"><span class="keyword">val</span> rref</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">rref matrix</code> is the row-reduced echelon form of <code class="code">matrix</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALplu_decomposition"><span class="keyword">val</span> plu_decomposition</span> : <code class="type">?no_round:bool -> <a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a> * <a href="Matrix.html#TYPEt">Matrix.t</a> * <a href="Matrix.html#TYPEt">Matrix.t</a> * int</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">plu_decomposition matrix</code> is the PLU decomposition of <code class="code">matrix</code>, i.e. the
+    triple of matrices P, L, and U such that if A = <code class="code">matrix</code>, then A = PLU, 
+    where P is the permutation matrix, L is lower triangular, and U is upper
+    triangular. Similar to the LU decomposition, except the permutation matrix
+    keeps track of row interchanges which are required for numerical stability.
+    Requires: <code class="code">matrix</code> is square.</p>
+</div>
+</div>
+
+<pre><span id="VALdiagonal_product"><span class="keyword">val</span> diagonal_product</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">diagonal_product matrix</code> is the product of the entries on the main
+    diagonal of <code class="code">matrix</code>.
+    Requires: <code class="code">matrix</code> is square.</p>
+</div>
+</div>
+
+<pre><span id="VALdeterminant"><span class="keyword">val</span> determinant</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> float</code></pre>
+<pre><span id="VALrange"><span class="keyword">val</span> range</span> : <code class="type">int -> int -> int list</code></pre>
+<pre><span id="VALforward_substitution"><span class="keyword">val</span> forward_substitution</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Vector.html#TYPEt">Vector.t</a> -> <a href="Vector.html#TYPEt">Vector.t</a></code></pre>
+<pre><span id="VALback_substitution"><span class="keyword">val</span> back_substitution</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Vector.html#TYPEt">Vector.t</a> -> float array</code></pre>
+<pre><span id="VALinverse"><span class="keyword">val</span> inverse</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre>
+<pre><span id="VALsolve_system"><span class="keyword">val</span> solve_system</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Vector.html#TYPEt">Vector.t</a> -> <a href="Vector.html#TYPEt">Vector.t</a></code></pre></body></html>

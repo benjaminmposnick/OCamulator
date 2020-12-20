@@ -21,19 +21,20 @@ type binop =
   | Dot
   | SolveSys
 
-(** [prob_func] is the type of density functions for distributions. *)
+(** [prob_func] is the type of operators on distributions. *)
 type prob_func =
   | PDF
   | CDF
   | SAM
 
-(** [stat_func] is the type of the stat function to be executed*)
+(** [stat_func] is the type of the statistical function to be executed. *)
 type stat_func =
   | SORT_ASC
   | SORT_DESC
   | UNIQUE
   | QUANTILE
 
+(** [stat_equ] is the type of the statistical equation. *)
 type stat_equ = 
   | NoArg of stat_func
   | OneArg of stat_func * float

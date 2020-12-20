@@ -23,7 +23,7 @@ let cprint_newline styles str =
 let print_store sigma =
   let rec print_store_aux = function
     | [] -> ()
-    | (x, v)::t ->
+    | (x, v) :: t ->
       cprint [blue] (x ^ " -> ");
       cprint_newline [magenta] (string_of_value v);
       print_store_aux t
@@ -39,10 +39,7 @@ let handle_syntax_error lexbuf input =
   let invalid_token_idx = ref (pos.Lexing.pos_cnum - 1) in
   let invalid_token =
     try Char.escaped (input.[!invalid_token_idx]) with 
-    (* Token was not even recognized by lexer *)
-    | Invalid_argument _ -> failwith "Handled by lexer"
-    (* invalid_token_idx := !invalid_token_idx - 1; Char.escaped (input.[!invalid_token_idx]) *)
-  in
+    | Invalid_argument _ -> failwith "Token not even recognized by lexer" in
   let valid_tokens = 
     try String.sub input 0 !invalid_token_idx with
     | Invalid_argument _ -> "" in 

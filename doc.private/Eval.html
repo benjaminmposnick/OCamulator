@@ -1,0 +1,303 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Matrix.html">
+<link rel="next" href="Stat.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Linalg" rel="Chapter" href="Linalg.html">
+<link title="Prob" rel="Chapter" href="Prob.html">
+<link title="Solve" rel="Chapter" href="Solve.html">
+<link title="Vector" rel="Chapter" href="Vector.html">
+<link title="Matrix" rel="Chapter" href="Matrix.html">
+<link title="Eval" rel="Chapter" href="Eval.html">
+<link title="Stat" rel="Chapter" href="Stat.html">
+<link title="Ast" rel="Chapter" href="Ast.html">
+<link title="Main" rel="Chapter" href="Main.html"><title>Eval</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Matrix.html" title="Matrix">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Stat.html" title="Stat">Next</a>
+</div>
+<h1>Module <a href="type_Eval.html">Eval</a></h1>
+
+<pre><span id="MODULEEval"><span class="keyword">module</span> Eval</span>: <code class="code">sig</code> <a href="Eval.html">..</a> <code class="code">end</code></pre><hr width="100%">
+
+<pre><span id="TYPEstore"><span class="keyword">type</span> <code class="type"></code>store</span> = <code class="type">(string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list</code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p><code class="code">store</code> is the type of the variable store, which maps variable identifiers
+    to their most recently bound value.</p>
+</div>
+</div>
+
+
+<pre><span id="TYPEresult"><span class="keyword">type</span> <code class="type"></code>result</span> = <code class="type"><a href="Ast.html#TYPEvalue">Ast.value</a> * <a href="Eval.html#TYPEstore">store</a></code> </pre>
+<div class="info ">
+<div class="info-desc">
+<p><code class="code">result</code> is the type of the result from evaluation, which contains both
+    the value resulting from evaluation under the big-step relation as well
+    as the store.</p>
+</div>
+</div>
+
+
+<pre><span id="MODULEComputationError"><span class="keyword">module</span> <a href="Eval.ComputationError.html">ComputationError</a></span>: <code class="code">sig</code> <a href="Eval.ComputationError.html">..</a> <code class="code">end</code></pre><div class="info">
+<p><code class="code">ComputationError</code> is the module for interpreter errors.</p>
+
+</div>
+
+<pre><span id="VALraise_exn"><span class="keyword">val</span> raise_exn</span> : <code class="type">string -> 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">raise_exn msg</code> raises <code class="code">ComputationError.EvalError</code> with <code class="code">msg</code> as the
+    error message.</p>
+</div>
+</div>
+
+<pre><span id="VALmodulo"><span class="keyword">val</span> modulo</span> : <code class="type">float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">modulo p q</code> is <code class="code">p</code> mod <code class="code">q</code> if <code class="code">p</code> and <code class="code">q</code> are both floats representing
+    integers (e.g. 1.0 for 1); otherwise, <code class="code">ComputationError.EvalError</code> is
+    raised.</p>
+</div>
+</div>
+
+<pre><span id="VALvar_present"><span class="keyword">val</span> var_present</span> : <code class="type"><a href="Ast.html#TYPEexpr">Ast.expr</a> -> bool</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">var_present ast</code> is <code class="code">true</code> if <code class="code">ast</code> contains a non-numeric character to be
+    treated as a variable in an equation and is <code class="code">false</code> otherwise.</p>
+</div>
+</div>
+
+<pre><span id="VALprob_check"><span class="keyword">val</span> prob_check</span> : <code class="type">float -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">prob_check p</code> is <code class="code">unit</code> if <code class="code">p</code> is a valid probability, i.e. <code class="code">p</code> is between
+    0 and 1, inclusive; otherwise, <code class="code">ComputationError.EvalError</code> is
+    raised.</p>
+</div>
+</div>
+
+<pre><span id="VALnk_check"><span class="keyword">val</span> nk_check</span> : <code class="type">'a -> 'a -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">nk_check n k</code> is <code class="code">unit</code> if <code class="code">k &lt;= n</code>; otherwise,
+    <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALlmbda_check"><span class="keyword">val</span> lmbda_check</span> : <code class="type">float -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">lmbda_check l</code> is <code class="code">unit</code> if <code class="code">l &gt; 0</code>; otherwise,
+    <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALneg_check"><span class="keyword">val</span> neg_check</span> : <code class="type">float -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">neg_check x</code> is <code class="code">unit</code> if <code class="code">x &gt;= 0</code>; otherwise, <code class="code">ComputationError.EvalError</code>
+    is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALbern_check"><span class="keyword">val</span> bern_check</span> : <code class="type">float -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">bern_check x</code> is <code class="code">unit</code> if <code class="code">x</code> is either 0 or 1; otherwise,
+    <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALrand_vector"><span class="keyword">val</span> rand_vector</span> : <code class="type">'a -> int -> int</code></pre>
+<pre><span id="VALstats_noargs_vec"><span class="keyword">val</span> stats_noargs_vec</span> : <code class="type">(float list -> float list) -> <a href="Vector.html#TYPEt">Vector.t</a> -> <a href="Ast.html#TYPEvalue">Ast.value</a></code></pre>
+<pre><span id="VALstats_noargs_float"><span class="keyword">val</span> stats_noargs_float</span> : <code class="type">(float list -> float) -> <a href="Vector.html#TYPEt">Vector.t</a> -> <a href="Ast.html#TYPEvalue">Ast.value</a></code></pre>
+<pre><span id="VALeval_binomial"><span class="keyword">val</span> eval_binomial</span> : <code class="type"><a href="Ast.html#TYPEprob_func">Ast.prob_func</a> -> float -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_binomial func n p k</code> is result of evaluating <code class="code">func</code> for the Binomial
+    distribution with parameters <code class="code">n</code>, <code class="code">p</code>, and <code class="code">k</code>. If the parameters are 
+    invalid, then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_bernoulli"><span class="keyword">val</span> eval_bernoulli</span> : <code class="type"><a href="Ast.html#TYPEprob_func">Ast.prob_func</a> -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_bernoulli func p k</code> is result of evaluating <code class="code">func</code> for the Bernoulli
+    distribution with parameters <code class="code">p</code> and <code class="code">k</code>. If the parameters are invalid,
+    then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_uniform"><span class="keyword">val</span> eval_uniform</span> : <code class="type"><a href="Ast.html#TYPEprob_func">Ast.prob_func</a> -> float -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_uniform func a b x</code> is result of evaluating <code class="code">func</code> for the Uniform
+    distribution with parameters <code class="code">a</code>, <code class="code">b</code>, and <code class="code">x</code>. If the parameters are 
+    invalid, then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_poisson"><span class="keyword">val</span> eval_poisson</span> : <code class="type"><a href="Ast.html#TYPEprob_func">Ast.prob_func</a> -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_poisson func l x</code> is result of evaluating <code class="code">func</code> for the Poisson
+    distribution with parameters <code class="code">l</code> and <code class="code">x</code>. If the parameters are invalid,
+    then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_geometric"><span class="keyword">val</span> eval_geometric</span> : <code class="type"><a href="Ast.html#TYPEprob_func">Ast.prob_func</a> -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_geometric func p k</code> is result of evaluating <code class="code">func</code> for the Geometric
+    distribution with parameters <code class="code">p</code> and <code class="code">k</code>. If the parameters are invalid,
+    then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_exponential"><span class="keyword">val</span> eval_exponential</span> : <code class="type"><a href="Ast.html#TYPEprob_func">Ast.prob_func</a> -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_exponential func l x</code> is result of evaluating <code class="code">func</code> for the
+    Exponential distribution with parameters <code class="code">l</code> and <code class="code">x</code>. If the parameters are
+    invalid, then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_normal"><span class="keyword">val</span> eval_normal</span> : <code class="type"><a href="Ast.html#TYPEprob_func">Ast.prob_func</a> -> float -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_normal func m s x</code> is result of evaluating <code class="code">func</code> for the Normal
+    distribution with parameters <code class="code">m</code>, <code class="code">s</code>, and <code class="code">x</code>. If the parameters are
+    invalid, then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_prob"><span class="keyword">val</span> eval_prob</span> : <code class="type"><a href="Ast.html#TYPEdistribution">Ast.distribution</a> -> 'a -> <a href="Ast.html#TYPEvalue">Ast.value</a> * 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_prob dist sigma</code> is the result of evaluating the probability
+distribution <code class="code">dist</code> in store <code class="code">sigma</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_var"><span class="keyword">val</span> eval_var</span> : <code class="type">string -> (string * 'a) list -> 'a * (string * 'a) list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_var x sigma</code> is the value that is bound to <code class="code">x</code> in store <code class="code">sigma</code> if
+    <code class="code">x</code> is in <code class="code">sigma</code>; otherwise, <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_assign"><span class="keyword">val</span> eval_assign</span> : <code class="type">'a -> 'b -> ('a * 'b) list -> 'b * ('a * 'b) list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_assign x v sigma</code> is the result of binding <code class="code">v</code> to <code class="code">x</code> in store
+    <code class="code">sigma</code>. If <code class="code">x</code> is already in <code class="code">sigma</code>, its previous binding is removed
+    before binding <code class="code">v</code> to <code class="code">x</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_binop_on_floats"><span class="keyword">val</span> eval_binop_on_floats</span> : <code class="type"><a href="Ast.html#TYPEbinop">Ast.binop</a> -> float -> float -> 'a -> <a href="Ast.html#TYPEvalue">Ast.value</a> * 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_binop_on_floats op f1 f2 sigma</code> is the result of evaluating 
+    <code class="code">f1 op f2</code> in store <code class="code">sigma</code>, where <code class="code">op</code> is some binary operator and both
+    <code class="code">f1</code> and <code class="code">f2</code> are floats. If <code class="code">op</code> is <code class="code">Assign</code>, <code class="code">Dot</code>, or <code class="code">SolveSys</code>, then
+    <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_binop_on_vectors"><span class="keyword">val</span> eval_binop_on_vectors</span> : <code class="type"><a href="Ast.html#TYPEbinop">Ast.binop</a> -> <a href="Vector.html#TYPEt">Vector.t</a> -> <a href="Vector.html#TYPEt">Vector.t</a> -> 'a -> <a href="Ast.html#TYPEvalue">Ast.value</a> * 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_binop_on_vectors op v1 v2 sigma</code> is the result of evaluating 
+    <code class="code">v1 op v2</code> in store <code class="code">sigma</code>, where <code class="code">op</code> is some binary operator and both
+    <code class="code">v1</code> and <code class="code">v2</code> are vectors. If <code class="code">op</code> is <code class="code">Assign</code>, <code class="code">Mod</code>, or <code class="code">SolveSys</code>, then
+    <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_binop_on_matrices"><span class="keyword">val</span> eval_binop_on_matrices</span> : <code class="type"><a href="Ast.html#TYPEbinop">Ast.binop</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a> -> 'a -> <a href="Ast.html#TYPEvalue">Ast.value</a> * 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_binop_on_matrices op m1 m2 sigma</code> is the result of evaluating 
+    <code class="code">m1 op m2</code> in store <code class="code">sigma</code>, where <code class="code">op</code> is some binary operator and both
+    <code class="code">m1</code> and <code class="code">m2</code> are matrices. If <code class="code">op</code> is not <code class="code">Add</code>, <code class="code">Sub</code>, <code class="code">Mul</code>, or <code class="code">Eq</code>,
+    then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_binop_on_scalar_and_array"><span class="keyword">val</span> eval_binop_on_scalar_and_array</span> : <code class="type"><a href="Ast.html#TYPEbinop">Ast.binop</a> -> float -> <a href="Ast.html#TYPEvalue">Ast.value</a> -> 'a -> <a href="Ast.html#TYPEvalue">Ast.value</a> * 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_binop_on_scalar_and_array op k arr sigma</code> is the result of
+    evaluating <code class="code">k op arr</code> in store <code class="code">sigma</code>, where <code class="code">op</code> is some binary operator,
+    <code class="code">k</code> is a scalar, and <code class="code">arr</code> is either a matrix or a vector. If <code class="code">op</code> is not
+    <code class="code">Mul</code> or <code class="code">Pow</code>, then <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_binop_on_matrix_and_vector"><span class="keyword">val</span> eval_binop_on_matrix_and_vector</span> : <code class="type"><a href="Ast.html#TYPEbinop">Ast.binop</a> -> <a href="Ast.html#TYPEvalue">Ast.value</a> -> <a href="Ast.html#TYPEvalue">Ast.value</a> -> 'a -> <a href="Ast.html#TYPEvalue">Ast.value</a> * 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_binop_on_matrix_and_vector op arr1 arr2 sigma</code> is the result of
+    evaluating <code class="code">arr1 op arr2</code> in store <code class="code">sigma</code>, where <code class="code">op</code> is some binary
+    operator and exactly one of <code class="code">arr1</code> and <code class="code">arr2</code> is a vector and exactly one
+    is a matrix. If <code class="code">op</code> is not <code class="code">Mul</code> or <code class="code">SolveSys</code>, then
+    <code class="code">ComputationError.EvalError</code> is raised.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_linalg_command"><span class="keyword">val</span> eval_linalg_command</span> : <code class="type">string -> <a href="Ast.html#TYPEvalue">Ast.value</a> -> <a href="Ast.html#TYPEvalue">Ast.value</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_linalg_command cmd value</code> is the result of applying the linear
+    algebra command <code class="code">cmd</code> to <code class="code">value</code>. If an error occurs during evaluation,
+    <code class="code">ComputationError.EvalError</code> is raised instead.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_projection"><span class="keyword">val</span> eval_projection</span> : <code class="type">string -> 'a list -> 'a</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_projection cmd lst</code> is the <code class="code">i</code>th element (where one-indexing is
+    employed) in <code class="code">lst</code>, where <code class="code">i</code> is the integer represented by substring of
+    <code class="code">cmd</code> that excludes the first character. If an error occurs during
+    evaluation, <code class="code">ComputationError.EvalError</code> is raised instead.
+    Requires: <code class="code">cmd</code> is a string whose first character is '#'</p>
+</div>
+</div>
+
+<pre><span id="VALeval_solve"><span class="keyword">val</span> eval_solve</span> : <code class="type"><a href="Ast.html#TYPEbinop">Ast.binop</a> -> <a href="Ast.html#TYPEexpr">Ast.expr</a> -> <a href="Ast.html#TYPEexpr">Ast.expr</a> -> <a href="Ast.html#TYPEvalue">Ast.value</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_solve op e1 e2</code> is the result of solving the equation given by
+    Binop (op, e1 ,e2) for some variable that is input by the user. If an error
+    occurs during evaluation, <code class="code">ComputationError.EvalError</code> is raised instead.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_stat_command"><span class="keyword">val</span> eval_stat_command</span> : <code class="type">string -> <a href="Vector.html#TYPEt">Vector.t</a> -> <a href="Ast.html#TYPEvalue">Ast.value</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_stat_command cmd value</code> is the result of applying the statistical
+    command <code class="code">cmd</code> to vector <code class="code">vec</code>. If an error occurs during evaluation,
+    <code class="code">ComputationError.EvalError</code> is raised instead.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_binop"><span class="keyword">val</span> eval_binop</span> : <code class="type"><a href="Ast.html#TYPEbinop">Ast.binop</a> -><br>       <a href="Ast.html#TYPEexpr">Ast.expr</a> -><br>       <a href="Ast.html#TYPEexpr">Ast.expr</a> -><br>       (string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list -> <a href="Ast.html#TYPEvalue">Ast.value</a> * (string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list</code></pre>
+<pre><span id="VALeval_command"><span class="keyword">val</span> eval_command</span> : <code class="type">string -><br>       <a href="Ast.html#TYPEexpr">Ast.expr</a> -><br>       (string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list -> <a href="Ast.html#TYPEvalue">Ast.value</a> * (string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_command cmd e sigma</code> is the result of applying command <code class="code">cmd</code> to
+    the result of evaluating <code class="code">e</code> in store <code class="code">sigma</code>. If an error occurs during
+    evaluation, <code class="code">ComputationError.EvalError</code> is raised instead.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_expr"><span class="keyword">val</span> eval_expr</span> : <code class="type"><a href="Ast.html#TYPEexpr">Ast.expr</a> -><br>       (string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list -> <a href="Ast.html#TYPEvalue">Ast.value</a> * (string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_expr e sigma</code> is the result of evaluating expression <code class="code">e</code> in
+    store <code class="code">sigma</code>. If an error occurs during evaluation,
+    <code class="code">ComputationError.EvalError</code> is raised instead.</p>
+</div>
+</div>
+
+<pre><span id="VALeval_input"><span class="keyword">val</span> eval_input</span> : <code class="type"><a href="Ast.html#TYPEexpr">Ast.expr</a> -><br>       (string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list -> <a href="Ast.html#TYPEvalue">Ast.value</a> * (string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">eval_input e sigma</code> is the result of evaluating expression <code class="code">e</code> in
+    store <code class="code">sigma</code>. The store that results from the evaluation of <code class="code">e</code> is also 
+    updated such that the value to which <code class="code">e</code> evaluates is bound to variable
+    <code class="code">ans</code>. If an error occurs during evaluation, <code class="code">ComputationError.EvalError</code>
+    is raised instead.</p>
+</div>
+</div>
+</body></html>

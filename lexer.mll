@@ -1,8 +1,8 @@
 {
-open Parser
+  open Parser
 
-let print_error str =
-  ANSITerminal.print_string [ANSITerminal.red] (str ^ "\n")
+  let print_error str =
+    ANSITerminal.print_string [ANSITerminal.red] (str ^ "\n")
 }
 
 let white = [' ' '\t' '\n']+
@@ -17,7 +17,8 @@ let entry = int | float
 let row_vector = '[' entry (comma_sep entry)* ']'
 let col_vector = '[' entry (semicolon_sep entry)* ']'
 let at_least_2d_row_vector = entry (comma_sep entry)+
-let matrix = '[' at_least_2d_row_vector (semicolon_sep at_least_2d_row_vector)+ ']'
+let matrix =
+  '[' at_least_2d_row_vector (semicolon_sep at_least_2d_row_vector)+ ']'
 
 rule read = 
   parse

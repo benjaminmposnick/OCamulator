@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Ast.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Linalg" rel="Chapter" href="Linalg.html">
+<link title="Prob" rel="Chapter" href="Prob.html">
+<link title="Solve" rel="Chapter" href="Solve.html">
+<link title="Vector" rel="Chapter" href="Vector.html">
+<link title="Matrix" rel="Chapter" href="Matrix.html">
+<link title="Eval" rel="Chapter" href="Eval.html">
+<link title="Stat" rel="Chapter" href="Stat.html">
+<link title="Ast" rel="Chapter" href="Ast.html">
+<link title="Main" rel="Chapter" href="Main.html"><title>Main</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Ast.html" title="Ast">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Main.html">Main</a></h1>
+
+<pre><span id="MODULEMain"><span class="keyword">module</span> Main</span>: <code class="code">sig</code> <a href="Main.html">..</a> <code class="code">end</code></pre><hr width="100%">
+
+<pre><span id="VALyellow"><span class="keyword">val</span> yellow</span> : <code class="type">ANSITerminal.style</code></pre>
+<pre><span id="VALred"><span class="keyword">val</span> red</span> : <code class="type">ANSITerminal.style</code></pre>
+<pre><span id="VALblue"><span class="keyword">val</span> blue</span> : <code class="type">ANSITerminal.style</code></pre>
+<pre><span id="VALgreen"><span class="keyword">val</span> green</span> : <code class="type">ANSITerminal.style</code></pre>
+<pre><span id="VALmagenta"><span class="keyword">val</span> magenta</span> : <code class="type">ANSITerminal.style</code></pre>
+<pre><span id="VALwhite"><span class="keyword">val</span> white</span> : <code class="type">ANSITerminal.style</code></pre>
+<pre><span id="VALunderline"><span class="keyword">val</span> underline</span> : <code class="type">ANSITerminal.style</code></pre>
+<pre><span id="VALcprint"><span class="keyword">val</span> cprint</span> : <code class="type">ANSITerminal.style list -> string -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">cprint styles str</code> prints <code class="code">str</code> to the terminal using <code class="code">styles</code> to format
+    and color the output.</p>
+</div>
+</div>
+
+<pre><span id="VALcprint_newline"><span class="keyword">val</span> cprint_newline</span> : <code class="type">ANSITerminal.style list -> string -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">cprint_newline styles str</code> prints <code class="code">str</code> followed by a newline character to
+    the terminal using <code class="code">styles</code> to format and color the output.</p>
+</div>
+</div>
+
+<pre><span id="VALprint_store"><span class="keyword">val</span> print_store</span> : <code class="type">(string * <a href="Ast.html#TYPEvalue">Ast.value</a>) list -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">print_store sigma</code> prints the contents of store <code class="code">sigma</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALhandle_syntax_error"><span class="keyword">val</span> handle_syntax_error</span> : <code class="type">Stdlib.Lexing.lexbuf -> string -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">handle_syntax_error lexbuf input</code> determines the token in <code class="code">input</code> where
+    the syntax error occurred during lexing and prints a helpful error message
+    using the information in <code class="code">lexbuf</code> to the terminal indicating the location
+    of the error.</p>
+</div>
+</div>
+
+<pre><span id="VALevent_loop"><span class="keyword">val</span> event_loop</span> : <code class="type"><a href="Eval.html#TYPEstore">Eval.store</a> -> unit</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">event_loop sigma</code> runs the calculator session, where <code class="code">sigma</code> is the
+    current store, which maps variable names to their current value in this
+    session.</p>
+</div>
+</div>
+
+<pre><span id="VALmain"><span class="keyword">val</span> main</span> : <code class="type">unit -> unit</code></pre></body></html>

@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="next" href="Prob.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Linalg" rel="Chapter" href="Linalg.html">
+<link title="Prob" rel="Chapter" href="Prob.html">
+<link title="Solve" rel="Chapter" href="Solve.html">
+<link title="Vector" rel="Chapter" href="Vector.html">
+<link title="Matrix" rel="Chapter" href="Matrix.html">
+<link title="Eval" rel="Chapter" href="Eval.html">
+<link title="Stat" rel="Chapter" href="Stat.html"><title>Linalg</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Prob.html" title="Prob">Next</a>
+</div>
+<h1>Module <a href="type_Linalg.html">Linalg</a></h1>
+
+<pre><span id="MODULELinalg"><span class="keyword">module</span> Linalg</span>: <code class="code">sig</code> <a href="Linalg.html">..</a> <code class="code">end</code></pre><hr width="100%">
+
+<pre><span id="VALrref"><span class="keyword">val</span> rref</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">rref matrix</code> is the row-reduced echelon form of <code class="code">matrix</code>.</p>
+</div>
+</div>
+
+<pre><span id="VALpivot_cols"><span class="keyword">val</span> pivot_cols</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> Ast.value list</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">pivot_cols matrix</code> is a list of the pivot columns of <code class="code">matrix</code>, found
+    via Gaussian elimination.</p>
+</div>
+</div>
+
+<pre><span id="VALplu_decomposition"><span class="keyword">val</span> plu_decomposition</span> : <code class="type">?no_round:bool -> <a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a> * <a href="Matrix.html#TYPEt">Matrix.t</a> * <a href="Matrix.html#TYPEt">Matrix.t</a> * int</code></pre>
+<pre><span id="VALdeterminant"><span class="keyword">val</span> determinant</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> float</code></pre>
+<pre><span id="VALinverse"><span class="keyword">val</span> inverse</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Matrix.html#TYPEt">Matrix.t</a></code></pre>
+<pre><span id="VALsolve_system"><span class="keyword">val</span> solve_system</span> : <code class="type"><a href="Matrix.html#TYPEt">Matrix.t</a> -> <a href="Vector.html#TYPEt">Vector.t</a> -> <a href="Vector.html#TYPEt">Vector.t</a></code></pre></body></html>

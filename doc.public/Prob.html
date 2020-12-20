@@ -1,0 +1,214 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Linalg.html">
+<link rel="next" href="Solve.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Linalg" rel="Chapter" href="Linalg.html">
+<link title="Prob" rel="Chapter" href="Prob.html">
+<link title="Solve" rel="Chapter" href="Solve.html">
+<link title="Vector" rel="Chapter" href="Vector.html">
+<link title="Matrix" rel="Chapter" href="Matrix.html">
+<link title="Eval" rel="Chapter" href="Eval.html">
+<link title="Stat" rel="Chapter" href="Stat.html"><title>Prob</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Linalg.html" title="Linalg">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Solve.html" title="Solve">Next</a>
+</div>
+<h1>Module <a href="type_Prob.html">Prob</a></h1>
+
+<pre><span id="MODULEProb"><span class="keyword">module</span> Prob</span>: <code class="code">sig</code> <a href="Prob.html">..</a> <code class="code">end</code></pre><div class="info module top">
+<div class="info-desc">
+<p><code class="code">factorial n</code> is the factorial of <code class="code">n</code></p>
+</div>
+</div>
+<hr width="100%">
+
+<pre><span id="VALfactorial"><span class="keyword">val</span> factorial</span> : <code class="type">int -> int</code></pre>
+<pre><span id="VALchoose"><span class="keyword">val</span> choose</span> : <code class="type">int -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">choose n k</code> is <code class="code">n</code> choose <code class="code">k</code></p>
+</div>
+</div>
+
+<pre><span id="VALperm"><span class="keyword">val</span> perm</span> : <code class="type">int -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">perm n r</code> is the nubmer of permuations <code class="code">n</code> <code class="code">r</code></p>
+</div>
+</div>
+
+<pre><span id="VALuniform_pmf"><span class="keyword">val</span> uniform_pmf</span> : <code class="type">float -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">uniform_pmf a b x</code> is the probability mass of the uniform
+    distribution for interval <code class="code">a</code> to <code class="code">b</code> at <code class="code">x</code>
+    Requires: <code class="code">b</code> &gt;= <code class="code">a</code></p>
+</div>
+</div>
+
+<pre><span id="VALuniform_cdf"><span class="keyword">val</span> uniform_cdf</span> : <code class="type">float -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">uniform_cdf a m</code> is the probability mass of the uniform
+    distribution from interval <code class="code">a</code> to <code class="code">b</code></p>
+</div>
+</div>
+
+<pre><span id="VALuniform_sam"><span class="keyword">val</span> uniform_sam</span> : <code class="type">float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">uniform_sam a b</code> is a random variable sampled from Uniform <code class="code">a</code> <code class="code">b</code>
+    Requires: a &lt; b</p>
+</div>
+</div>
+
+<pre><span id="VALbernoulli_pmf"><span class="keyword">val</span> bernoulli_pmf</span> : <code class="type">float -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">bernoulli_pmf k p</code> is the bernoulli(<code class="code">p</code>) probability mass of k
+    Requires: <code class="code">k</code> is a valid bernoulli rv, 0 or 1
+    <code class="code">p</code> is a valid bernolli p, <code class="code">0,1</code></p>
+</div>
+</div>
+<p><code class="code">bernoulli_cdf k p</code> is the bernoulli(<code class="code">p</code>) cumulative density of k
+    Requires: <code class="code">p</code> is a valid bernolli p, <code class="code">0.1</code></p>
+
+<pre><span id="VALbernoulli_cdf"><span class="keyword">val</span> bernoulli_cdf</span> : <code class="type">float -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p>else if k &lt; 1 then 1. -. p</p>
+</div>
+</div>
+
+<pre><span id="VALbernoulli_sam"><span class="keyword">val</span> bernoulli_sam</span> : <code class="type">float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">bernoulli_sam p</code> is a random variable drawn from Bernoulli <code class="code">p</code>
+    Requires: <code class="code">p</code> is a valid probability, <code class="code">0,1</code></p>
+</div>
+</div>
+
+<pre><span id="VALgeometric_pmf"><span class="keyword">val</span> geometric_pmf</span> : <code class="type">float -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">geometric_pmf k p</code> is the geometric(<code class="code">p</code>) probability mass of k
+    Requires: <code class="code">k</code> is a valid geometric rv, rational number
+    <code class="code">p</code> is a valid geometric p, <code class="code">0.1</code></p>
+</div>
+</div>
+
+<pre><span id="VALgeometric_cdf"><span class="keyword">val</span> geometric_cdf</span> : <code class="type">float -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">geometric_cdf k p</code> is the geometric(<code class="code">p</code>) cumulative density of k
+    Requires: <code class="code">k</code> is a valid geometric rv, rational number
+    <code class="code">p</code> is a valid geometric p, <code class="code">0,1</code></p>
+</div>
+</div>
+
+<pre><span id="VALgeometric_sam"><span class="keyword">val</span> geometric_sam</span> : <code class="type">float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">geometric_sam p</code> is a random variable drawn from Geometric <code class="code">p</code>
+    Requires: <code class="code">p</code> is a valid probability, <code class="code">0,1</code></p>
+</div>
+</div>
+
+<pre><span id="VALexponential_pmf"><span class="keyword">val</span> exponential_pmf</span> : <code class="type">float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">exponential_pmf x l</code> is the exponential(<code class="code">l</code>) probability mass of x
+    Requires: <code class="code">x</code> is a valid exponential rv, &gt; 0
+    <code class="code">p</code> is a valid exponential l, &gt; 0</p>
+</div>
+</div>
+
+<pre><span id="VALexponential_cdf"><span class="keyword">val</span> exponential_cdf</span> : <code class="type">float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">exponential_cdf x l</code> is the exponential(<code class="code">l</code>) cumulative density of x
+    Requires: <code class="code">x</code> is a valid exponential rv, &gt; 0
+    <code class="code">p</code> is a valid exponential l, &gt; 0</p>
+</div>
+</div>
+
+<pre><span id="VALexponential_sam"><span class="keyword">val</span> exponential_sam</span> : <code class="type">float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">exponential_sam l</code> is a random variable sampled from an Exponetial <code class="code">l</code>
+    Requires: l is a valid exponential lambda, l &gt; 0</p>
+</div>
+</div>
+
+<pre><span id="VALbinomial_pmf"><span class="keyword">val</span> binomial_pmf</span> : <code class="type">int -> float -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">binomial_pmf k n p</code> is the binomial(<code class="code">n</code>,<code class="code">p</code>) probability mass of k
+    successes of <code class="code">n</code> trials with prob <code class="code">p</code>
+    Requires: k &lt;= n,
+    <code class="code">p</code> is a valid binomial p, <code class="code">0.1</code></p>
+</div>
+</div>
+
+<pre><span id="VALbinomial_cdf"><span class="keyword">val</span> binomial_cdf</span> : <code class="type">int -> float -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">binomial_cdf k n p</code> is the binomial(<code class="code">n</code>,<code class="code">p</code>) cumulative denisty of k
+    successed of <code class="code">n</code> trials with prob <code class="code">p</code>
+    Requires: k &gt;= 0
+    <code class="code">p</code> is a valid binomial p, <code class="code">0.1</code></p>
+</div>
+</div>
+
+<pre><span id="VALbinomial_sam"><span class="keyword">val</span> binomial_sam</span> : <code class="type">int -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">binomial n p</code> is a random variable that is sampled from a Binomial
+    <code class="code">n</code> <code class="code">p</code>.
+    Requires: n &gt; 0
+              p is a valid prob, <code class="code">0,1</code></p>
+</div>
+</div>
+
+<pre><span id="VALpoisson_pmf"><span class="keyword">val</span> poisson_pmf</span> : <code class="type">float -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">poisson_pmf k l</code> is the poisson(<code class="code">l</code>) probability mass of <code class="code">k</code>
+    Requires: <code class="code">k</code> is a valid poisson rv, rational number
+    <code class="code">l</code> is a valid exponential l, &gt; 0</p>
+</div>
+</div>
+
+<pre><span id="VALpoisson_cdf"><span class="keyword">val</span> poisson_cdf</span> : <code class="type">float -> int -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">poisson_cdf k l</code> is the poisson(<code class="code">l</code>) probability mass of <code class="code">k</code>
+    Requires: <code class="code">k</code> is a valid poisson rv, rational number
+    <code class="code">l</code> is a valid exponential l, &gt; 0</p>
+</div>
+</div>
+
+<pre><span id="VALpoisson_sam"><span class="keyword">val</span> poisson_sam</span> : <code class="type">float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">poisson_sam l t</code> is a random vraible sampled from a Poisson of
+    rate <code class="code">l</code> over time <code class="code">t</code>
+    Requires: l &gt; 0
+              t &gt; 0</p>
+</div>
+</div>
+
+<pre><span id="VALnormal_pmf"><span class="keyword">val</span> normal_pmf</span> : <code class="type">float -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">normal_pmf mu sigma x</code> is the normal(<code class="code">mu</code>,<code class="code">sigma</code>) probability mass of <code class="code">x</code>
+    Requires: <code class="code">sigma</code> is a valid std, &gt;= 0</p>
+</div>
+</div>
+
+<pre><span id="VALnormal_cdf"><span class="keyword">val</span> normal_cdf</span> : <code class="type">float -> float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">normal_cdf mu sigma x</code> is the normal(<code class="code">mu</code>,<code class="code">sigma</code>) cumulative density
+     of <code class="code">x</code>
+    Requires: <code class="code">sigma</code> is a valid std, &gt;= 0</p>
+</div>
+</div>
+
+<pre><span id="VALnormal_sam"><span class="keyword">val</span> normal_sam</span> : <code class="type">float -> float -> float</code></pre><div class="info ">
+<div class="info-desc">
+<p><code class="code">normal_sam mu sigma</code> random variable sampled from Normal <code class="code">mu</code> <code class="code">sigma</code>
+    Requires: <code class="code">sigma</code> is a valid std, &gt;= 0</p>
+</div>
+</div>
+</body></html>

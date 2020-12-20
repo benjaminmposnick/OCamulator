@@ -12,10 +12,11 @@ let round n =
   |> float_of_string
   |> (fun x -> if x = ~-.0. then 0. else x)
 
-(** [purify tolerance matrix] is [matrix] except all negative zero entries are
-    converted to zero (i.e. without the negative sign), any values in the
-    matrix less than or equal to [tolerance] are zeroed out, and all values are
-    expressed with up to four decimal places of precision. *)
+(** [purify no_round tolerance matrix] is [matrix] except all negative zero
+    entries are converted to zero (i.e. without the negative sign), any values
+    in the matrix less than or equal to [tolerance] are zeroed out, and all
+    values are rounded to four decimal places of precision if [no_round] is
+    false and they are left alone if [no_round] is true. *)
 let purify ?no_round:(no_round=false) tolerance matrix = 
   let open List in
   let purify_aux x = 
@@ -229,12 +230,6 @@ let rref matrix =
    MATRIX FACTORIZATIONS
    ===========================================================================*)
 
-(** [plu_decomposition matrix] is the PLU decomposition of [matrix], i.e. the
-    triple of matrices P, L, and U such that if A = [matrix], then A = PLU, 
-    where P is the permutation matrix, L is lower triangular, and U is upper
-    triangular. Similar to the LU decomposition, except the permutation matrix
-    keeps track of row interchanges which are required for numerical stability.
-    Requires: [matrix] is square. *)
 let plu_decomposition ?no_round:(no_round=false) matrix =
   assert (Matrix.is_square matrix);
   let tolerance = determine_tolerance matrix in
