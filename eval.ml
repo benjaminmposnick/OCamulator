@@ -445,9 +445,8 @@ and eval_expr e sigma =
   | Vector vec -> VVector vec, sigma
   | Command (cmd, e) -> 
     let cmd' = String.lowercase_ascii cmd in
-    evaluate_command cmd' e sigma 
+    eval_command cmd' e sigma
   | Tuple (e1,e2) -> eval_tup e1 e2 sigma
-    eval_command cmd' e sigma 
   | Binop (Assign, Var x, e) -> 
     let (v, sigma') = eval_expr e sigma in 
     eval_assign x v sigma'
