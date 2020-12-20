@@ -327,7 +327,11 @@ and evaluate_command cmd e sigma =
     | _ -> failwith "TODO: Add more functionality"
   in
   (result, sigma')
-
+and
+  eval_tup e1 e2 sigma =
+  let val1 = eval_expr e1 sigma in
+  let val2 = eval_expr e2 (snd val1)in
+  VTuple (fst val1, fst val2), snd val2
 and eval_expr e sigma =
   match e with
   | Var x -> eval_var x sigma
@@ -343,6 +347,7 @@ and eval_expr e sigma =
   | Command (cmd, e) -> 
     let cmd' = String.lowercase_ascii cmd in
     evaluate_command cmd' e sigma 
+  | Tuple (e1,e2) -> eval_tup e1 e2 sigma
 
 let rec eval_input e sigma = 
   let (value, sigma') = eval_expr e sigma in

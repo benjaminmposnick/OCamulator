@@ -58,6 +58,7 @@ type expr =
   | Binop of binop * expr * expr
   | Prob of distribution
   | Command of string * expr
+  | Tuple of expr * expr
 
 (** [value] is the type of values which result from evaluating expressions
     under the big-step relation/. *)
@@ -68,6 +69,7 @@ type value =
   | VEquation of binop * expr * expr
   | VInt of int
   | VList of value list
+  | VTuple of value * value 
 
 (* ===========================================================================
     TO STRING FUNCTIONS
@@ -126,6 +128,7 @@ let rec string_of_expr = function
   | Command (cmd, e) -> "Command (" ^ cmd ^ ", " ^ (string_of_expr e) ^ ")"
   | Vector vec -> "Vector \n" ^ Vector.string_of_vector vec
   | Matrix mat -> "Matrix \n" ^ Matrix.string_of_matrix mat
+  | Tuple (e1, e2) -> "(" ^ string_of_expr e1 ^ " , " ^ string_of_expr e2 ^ ")"
 
 (** [string_of_value val] is the string respresentation of value [val]. *)
 let rec string_of_value = function
@@ -144,3 +147,5 @@ let rec string_of_value = function
         string_of_value_list t (i + 1) acc'
     in
     string_of_value_list lst 1 "Value List:"
+  | VTuple (v1, v2) ->
+    "(" ^ string_of_value v1 ^ " , " ^ string_of_value v2 ^ ")"
