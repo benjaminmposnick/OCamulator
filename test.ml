@@ -693,6 +693,60 @@ let prob_tests = let open Prob in [
     test_rand_2 "Pois sam 1 5" 3. poisson_sam 1. 5.0 string_of_float;
     test_rand_2 "Pois sam 1 20" 25. poisson_sam 1. 20.0 string_of_float;
 
+    parse_test "parse bern sam n" (Prob (Bernoulli (SAM,0.5,10.))) 
+      "bern smpl 0.5 10";
+    parse_test "parse bern sam 0" (Prob (Bernoulli (SAM,0.5,0.))) 
+      "bern smpl 0.5";
+    parse_test "parse bern pdf" (Prob (Bernoulli (PDF,0.5,2.))) 
+      "bern pdf 0.5 2.";
+    parse_test "parse bern cdf" (Prob (Bernoulli (CDF,0.5,2.))) 
+      "bern cdf 0.5 2.";
+
+    parse_test "parse binom sam n" (Prob (Binomial (SAM,5.,0.5,10.))) 
+      "binom smpl 5 0.5 10";
+    parse_test "parse binom sam 0" (Prob (Binomial (SAM,5.,0.5,0.))) 
+      "binom smpl 5 0.5";
+    parse_test "parse binom pdf" (Prob (Binomial (PDF,5.,0.5,2.))) 
+      "binom pdf 5 0.5 2.";
+    parse_test "parse binom cdf" (Prob (Binomial (CDF,5.,0.5,2.))) 
+      "binom cdf 5 0.5 2.";
+
+    parse_test "parse unif sam n" (Prob (Uniform (SAM,0.,1.,10.))) 
+      "unif smpl 0. 1. 10";
+    parse_test "parse unif sam 0" (Prob (Uniform  (SAM,0.,1.,0.))) 
+      "unif smpl 0. 1.";
+    parse_test "parse unif pdf" (Prob (Uniform  (PDF,0.,1.,0.5))) 
+      "unif pdf 0. 1. 0.5";
+    parse_test "parse unif cdf" (Prob (Uniform  (CDF,0.,1.,0.5))) 
+      "unif cdf 0. 1. 0.5";
+
+    parse_test "parse geo sam n" (Prob (Geometric (SAM,0.5,10.))) 
+      "geo smpl 0.5 10";
+    parse_test "parse geo sam 0" (Prob (Geometric  (SAM,0.5,0.))) 
+      "geo smpl 0.5";
+    parse_test "parse geo pdf" (Prob (Geometric  (PDF,0.5,3.))) 
+      "geo pdf 0.5 3";
+    parse_test "parse geo cdf" (Prob (Geometric (CDF,0.5,3.))) 
+      "geo cdf 0.5 3";
+
+    parse_test "parse exp sam n" (Prob (Exponential (SAM,0.5,10.))) 
+      "exp smpl 0.5 10";
+    parse_test "parse exp sam 0" (Prob (Exponential (SAM,0.5,0.))) 
+      "exp smpl 0.5";
+    parse_test "parse exp pdf" (Prob (Exponential  (PDF,0.5,3.))) 
+      "exp pdf 0.5 3";
+    parse_test "parse exp cdf" (Prob (Exponential (CDF,0.5,3.))) 
+      "exp cdf 0.5 3";
+
+    parse_test "parse pois sam n" (Prob (Poisson (SAM,0.5,10.))) 
+      "pois smpl 0.5 10";
+    parse_test "parse pois sam 0" (Prob (Poisson (SAM,0.5,0.))) 
+      "pois smpl 0.5";
+    parse_test "parse pois pdf" (Prob (Poisson (PDF,0.5,3.))) 
+      "pois pdf 0.5 3";
+    parse_test "parse pois cdf" (Prob (Poisson (CDF,0.5,3.))) 
+      "pois cdf 0.5 3";
+
   ]
 
 let stat_tests = let open Stat in

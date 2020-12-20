@@ -496,7 +496,7 @@ let rec eval_binop op e1 e2 sigma  =
     evaluation, [ComputationError.EvalError] is raised instead. *)
 and eval_command cmd e sigma = 
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
-                       "variance"; "std"; "sum"; "product"] in
+                       "variance"; "std"; "sum"; "product";] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
   let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
                          "linreg";"lcm"; "gcd"] in
@@ -516,6 +516,8 @@ and eval_command cmd e sigma =
       eval_linalg_command linalg_cmd value
     | dbl_cmd, VTuple (v1,v2) when List.mem dbl_cmd double_commands ->
       eval_double_command dbl_cmd v1 v2
+    | "fac", VFloat i when Float.is_integer i -> 
+      VFloat(i |> int_of_float |> Prob.factorial|> float_of_int )
     | _ -> raise_exn ("No such command: " ^ cmd)
   in
   (result, sigma')
