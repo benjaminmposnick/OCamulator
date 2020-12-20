@@ -559,7 +559,41 @@ let solve_tests = let open Solve in [
          (Var "x"))
       string_of_bool;  
 
-    (* main solve tests *)
+    (* has_var_any tests *)
+    (* has_var tests *)
+    test "has_var_any: x" 
+      true (Solve.has_var_any (Var "x")) string_of_bool; 
+    test "has_var_any: 5" 
+      false (Solve.has_var_any (Int 5)) string_of_bool; 
+    test "has_var_any: x + 3 = 5" 
+      true 
+      (Solve.has_var_any (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 )))
+      string_of_bool; 
+    test "has_var_any: y + 3 = 5" 
+      true
+      (Solve.has_var_any (Binop(Eq, Binop(Add, Var "y", Int 4), Int 5 )))
+      string_of_bool; 
+    test "has_var_any: 4 + 4 = 5" 
+      false 
+      (Solve.has_var_any (Binop(Eq, Binop(Add, Int 4, Int 4), Int 5 )))
+      string_of_bool; 
+    test "has_var_any: 4 - 3 + 4 * x = 5" 
+      true 
+      (Solve.has_var_any (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Int 3), 
+                                      Binop(Mul, Int 4, Var "x")), Int 5 )))
+      string_of_bool;  
+    test "has_var_any: 4 - x + 4 * 3 = 5" 
+      true 
+      (Solve.has_var_any (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Var "x"), 
+                                      Binop(Mul, Int 4, Int 3)), Int 5 )))
+      string_of_bool;  
+    test "has_var_any: 4 - 6 + 4 * 3 = 5" 
+      false
+      (Solve.has_var_any (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Int 6), 
+                                      Binop(Mul, Int 4, Int 3)), Int 5 )))
+      string_of_bool;  
+
+    (* solve function tests *)
     test "solve for var x = 5" 
       (Binop(Eq, Var "x", Int 5 ))
       (Solve.solve ("x") (Binop(Eq, Var "x", Int 5 )))

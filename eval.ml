@@ -395,18 +395,6 @@ let eval_projection cmd lst =
       | Some v -> v
     end
 
-(** [eval_solve op e1 e2] is the result of solving the equation given by
-    Binop (op, e1 ,e2) for some variable that is input by the user. If an error
-    occurs during evaluation, [ComputationError.EvalError] is raised instead. *)
-let eval_solve op e1 e2 =
-  let open Solve in
-  print_endline "What variable would you like to solve for?";
-  let input = read_line () in 
-  let solve_output = solve input (Binop (op, e1, e2)) in
-  match solve_output with
-  | Binop (op, e1, e2) -> VEquation (op, e1, e2)
-  | _ -> raise_exn "Error solving equation"
-
 (** [eval_stat_command cmd value] is the result of applying the statistical
     command [cmd] to vector [vec]. If an error occurs during evaluation,
     [ComputationError.EvalError] is raised instead. *)
@@ -474,7 +462,25 @@ let eval_double_command cmd v1 v2 =
     EXPRESSION EVALUATION
    ===========================================================================*)
 
-let rec eval_binop op e1 e2 sigma  =
+(** [eval_solve op e1 e2] is the result of solving the equation given by
+    Binop (op, e1 ,e2) for some variable that is input by the user. If an error
+    occurs during evaluation, [ComputationError.EvalError] is raised instead. *)
+let rec eval_solve op e1 e2 sigma =
+  let open Solve in
+  print_endline "What variable would you like to solve for?";
+  let input = read_line () in 
+  let solve_output = solve input (Binop (op, e1, e2)) in
+  match solve_output with
+  | Binop (op', e1', e2') -> begin
+      match e2' with
+      | Binop (op'', e1'', e2'') -> if (Solve.has_var_any e2') = false 
+          then fst (eval_expr e2' sigma)
+          else VEquation (op', e1', e2')
+      | _ -> VEquation (op', e1', e2')
+    end
+  | _ -> raise_exn "Error solving equation"
+
+and eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
   let (v2, sigma'') = eval_expr e2 sigma in
   match v1, v2 with
@@ -503,7 +509,7 @@ and eval_command cmd e sigma =
       | Binop (op, e1, e2) -> (VEquation (op, e1, e2)), sigma
       | _ -> raise_exn "Invalid operation on a non-equation" in
   let result = match cmd, value with
-    | "solve", VEquation (op, e1, e2) -> eval_solve op e1 e2 
+    | "solve", VEquation (op, e1, e2) -> eval_solve op e1 e2 sigma
     | _, VList lst when String.(length cmd > 0 && get cmd 0 = '#') ->
       eval_projection cmd lst
     | stat_cmd, VVector vec when List.mem stat_cmd stat_commands -> 
