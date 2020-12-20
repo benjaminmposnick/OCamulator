@@ -42,6 +42,36 @@ let parse_test name expected_output input =
   let parsed_input = parse input in
   test name expected_output parsed_input Ast.string_of_expr 
 
+(** [read_matrix_from_text_file filename] is a matrix constructed from the 
+    contents of the text file given by [filename]. *)
+let read_matrix_from_text_file filename =
+  let ic = open_in filename in
+  let line = input_line ic in
+  match parse line with
+  | Matrix m -> m
+  | _ -> failwith "Impossible"
+
+(** [test_command name expected_output cmd e] is an OUnit test case named [name]
+    that asserts equality between [expected_output] and the value that results 
+    from evaluating the expression [Command (cmd, e)]. *)
+let test_command name expected_output cmd e =
+  test name expected_output
+    (fst (Eval.eval_expr (Command (cmd, e)) [])) string_of_value
+
+(** [test_binop name expected_output cmd e] is an OUnit test case named [name]
+    that asserts equality between [expected_output] and the value that results 
+    from evaluating the expression [Binop (op, e1, e2)]. *)
+let test_binop name expected_output op e1 e2 =
+  test name expected_output
+    (fst (Eval.eval_expr (Binop (op, e1, e2)) [])) string_of_value
+
+(** [check_lu_decomp l u] is [unit] if [l] is lower triangular and [u] is
+    upper triangular; otherwise, [Failure] is raised. *)
+let check_lu_decomp l u =
+  let open Matrix in
+  assert_bool ("L: " ^ string_of_matrix l) (is_lower_triangular l);
+  assert_bool ("U: " ^ string_of_matrix u) (is_upper_triangular u)
+
 let parse_tests = [
   (* Var tests *)
   parse_test "variable 1 charcter name" (Var "x") "x";
@@ -338,68 +368,62 @@ let parse_tests = [
     (Matrix (Matrix.of_list [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
 ]
 
-let read_matrix_from_text_file filename =
-  let ic = open_in filename in
-  let line = input_line ic in
-  match parse line with
-  | Matrix m -> m
-  | _ -> failwith "Impossible"
 
 let matrix_tests = [
-  test "row reduce 3x3 matrix with two pivot columns" 
-    (Matrix.of_list [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]])
-    (Linalg.rref (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 3x4 matrix with three pivot columns" 
-    (Matrix.of_list  [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]])
-    (Linalg.rref (Matrix.of_list 
-                    [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 3x4 matrix with two pivot columns" 
-    (Matrix.of_list [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]])
-    (Linalg.rref (Matrix.of_list [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 4x4 matrix with two pivot columns" 
-    (Matrix.of_list 
-       [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.];[0.;0.;0.;0.]])
-    (Linalg.rref (Matrix.of_list  [[1.;2.;3.;4.];[5.;6.;7.;8.];
-                                   [9.;10.;11.;12.];[13.;14.;15.;16.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 4x5 matrix with four pivot columns" 
-    (Matrix.of_list  [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];
-                      [0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]])
-    (Linalg.rref (Matrix.of_list 
-                    [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];
-                     [~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]))
-    (Matrix.string_of_matrix);
-  test "row reduce 10x10 random int matrix with 10 pivot columns" 
-    (read_matrix_from_text_file "./tests/rref/10x10_int_out.txt")
-    (Linalg.rref (read_matrix_from_text_file "./tests/rref/10x10_int_in.txt"))
-    (Matrix.string_of_matrix);
-  test "row reduce 5x7 random float matrix with 5 pivot columns" 
-    (read_matrix_from_text_file "./tests/rref/5x7_float_out.txt")
-    (Linalg.rref (read_matrix_from_text_file "./tests/rref/5x7_float_in.txt"))
-    (Matrix.string_of_matrix);
-  test "row reduce 25x50 random int matrix" 
-    (read_matrix_from_text_file "./tests/rref/25x50_int_out.txt")
-    (Linalg.rref (read_matrix_from_text_file "./tests/rref/25x50_int_in.txt"))
-    (Matrix.string_of_matrix);
+  test_command "row reduce 3x3 matrix with two pivot columns" 
+    (VMatrix (Matrix.of_list [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]]))
+    "rref" (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
+  test_command "row reduce 3x4 matrix with three pivot columns"
+    (VMatrix (Matrix.of_list  [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]]))
+    "rref" (Matrix (Matrix.of_list
+                      [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]));
+  test_command "row reduce 3x4 matrix with two pivot columns" 
+    (VMatrix (Matrix.of_list [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]]))
+    "rref" (Matrix (Matrix.of_list
+                      [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;12.]]));
+  test_command "row reduce 4x4 matrix with two pivot columns" 
+    (VMatrix (Matrix.of_list [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];
+                              [0.;0.;0.;0.];[0.;0.;0.;0.]]))
+    "rref" (Matrix (Matrix.of_list [[1.;2.;3.;4.];[5.;6.;7.;8.];
+                                    [9.;10.;11.;12.];[13.;14.;15.;16.]]));
+  test_command "row reduce 4x5 matrix with four pivot columns" 
+    (VMatrix (Matrix.of_list [[1.;0.;~-.3.;0.;0.];[0.;1.;2.;0.;0.];
+                              [0.;0.;0.;1.;0.];[0.;0.;0.;0.;1.]]))
+    "rref" (Matrix (Matrix.of_list
+                      [[0.;~-.3.;~-.6.;4.;9.];[~-.1.;~-.2.;~-.1.;3.;1.];
+                       [~-.2.;~-.3.;0.;3.;~-.1.];[1.;4.;5.;~-.9.;~-.9.]]));
+  test_command "row reduce 10x10 random int matrix with 10 pivot columns" 
+    (VMatrix (read_matrix_from_text_file "./tests/rref/10x10_int_out.txt"))
+    "rref" (Matrix
+              (read_matrix_from_text_file "./tests/rref/10x10_int_in.txt"));
+  test_command "row reduce 5x7 random float matrix with 5 pivot columns" 
+    (VMatrix (read_matrix_from_text_file "./tests/rref/5x7_float_out.txt"))
+    "rref" (Matrix 
+              (read_matrix_from_text_file "./tests/rref/5x7_float_in.txt"));
+  test_command "row reduce 25x50 random int matrix"
+    (VMatrix (read_matrix_from_text_file "./tests/rref/25x50_int_out.txt"))
+    "rref" (Matrix 
+              (read_matrix_from_text_file "./tests/rref/25x50_int_in.txt"));
+  test_binop "3x1 row vector times 3x3 matrix"
+    (VVector (Vector.make_row_vec [30.;36.;42.]))
+    Mul (Vector (Vector.make_row_vec [1.;2.;3.]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
+  test_binop "3x3 matrix times 1x3 column vector"
+    (VVector (Vector.make_col_vec [14.;32.;50.]))
+    Mul (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
+    (Vector (Vector.make_col_vec [1.;2.;3.]));
 ]
 
-let check_lu_decomp l u =
-  assert_bool ("L: " ^ Matrix.string_of_matrix l) (Matrix.is_lower_triangular l);
-  assert_bool ("U: " ^ Matrix.string_of_matrix u) (Matrix.is_upper_triangular u)
 
 let lin_alg_tests =
   let open Linalg in [
     test "Symmetric matrix" true
       Matrix.(is_symmetric (of_list [[1.;7.;3.];[7.;4.;~-.5.];[3.;~-.5.;6.]]))
       string_of_bool;
-    test "Multiply two square matrices" 
-      (Matrix.of_list [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]])
-      (Matrix.(matrix_multiply (of_list [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]])
-                 (of_list [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]])))
-      (Matrix.string_of_matrix);
+    test_binop "Multiply two square matrices" 
+      (VMatrix (Matrix.of_list [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]]))
+      Mul (Matrix (Matrix.of_list [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]]))
+      (Matrix (Matrix.of_list [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]]));
     test "PLU decomposition of 3x3 matrix with a zero in a non-pivot position"
       (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]])
       (let (p, l, u, _) = 
@@ -421,32 +445,26 @@ let lin_alg_tests =
        check_lu_decomp l u;
        Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
       (Matrix.string_of_matrix);
-    test "Determinant of 4x4 matrix" ~-.6. 
-      (Linalg.determinant 
-         (Matrix.of_list [[2.;4.;1.;1.];[2.;1.;3.;4.];[2.;1.;2.;3.];[4.;2.;1.;2.]]))
-      string_of_float;
-    test "Determinant of 3x3 zeros matrix" ~-.0. 
-      (Linalg.determinant 
-         (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]))
-      string_of_float;
-    test "Determinant of 3x3 non-zero matrix" ~-.0. 
-      (Linalg.determinant 
-         (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
-      string_of_float;
-    test "Determinant of 5x5 random float matrix" ~-.0.0293
-      (Linalg.determinant (read_matrix_from_text_file "./tests/det/5x5_float_in.txt"))
-      string_of_float;
-    test "Inverse of 4x4 int matrix"
-      (Matrix.of_list 
-         [[~-.0.7857;0.3929;0.1071;0.4643];[1.1429;~-.1.0714;0.0714;~-.0.3571];
-          [~-.0.5000;0.7500;~-.0.2500;0.2500];[0.5714;~-.0.2857; 0.2857;~-.0.4286]])
-      (Linalg.inverse
-         (Matrix.of_list [[2.;3.;4.;2.];[1.;1.;3.;2.];[3.;1.;1.;3.];[4.;4.;4.;1.]]))
-      Matrix.string_of_matrix;
-    test "Inverse of 3x3 float matrix"
-      (Matrix.of_list ([[0.75;0.5;0.25];[0.5;1.;0.5 ];[0.25;0.5;0.75]]))
-      (Linalg.inverse (Matrix.of_list [[2.;~-.1.;0.];[~-.1.;2.;~-.1.];[0.;~-.1.;2.]]))
-      Matrix.string_of_matrix;
+    test_command "Determinant of 4x4 matrix" (VFloat ~-.6.) "det"
+      (Matrix (Matrix.of_list
+                 [[2.;4.;1.;1.];[2.;1.;3.;4.];[2.;1.;2.;3.];[4.;2.;1.;2.]]));
+    test_command "Determinant of 3x3 zeros matrix" (VFloat ~-.0.) "det"
+      (Matrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]));
+    test_command "Determinant of 3x3 non-zero matrix" (VFloat ~-.0.) "det"
+      (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
+    test_command "Determinant of 5x5 random float matrix" (VFloat ~-.0.0293)
+      "det" (Matrix (read_matrix_from_text_file "./tests/det/5x5_float_in.txt"));
+    test_command "Inverse of 4x4 int matrix" 
+      (VMatrix (Matrix.of_list [[~-.0.7857;0.3929;0.1071;0.4643];
+                                [1.1429;~-.1.0714;0.0714;~-.0.3571];
+                                [~-.0.5000;0.7500;~-.0.2500;0.2500];
+                                [0.5714;~-.0.2857; 0.2857;~-.0.4286]])) "inv"
+      (Matrix (Matrix.of_list [[2.;3.;4.;2.];[1.;1.;3.;2.];
+                               [3.;1.;1.;3.];[4.;4.;4.;1.]]));
+    test_command "Inverse of 3x3 float matrix"
+      (VMatrix (Matrix.of_list
+                  ([[0.75;0.5;0.25];[0.5;1.;0.5 ];[0.25;0.5;0.75]]))) "inv"
+      (Matrix (Matrix.of_list [[2.;~-.1.;0.];[~-.1.;2.;~-.1.];[0.;~-.1.;2.]]));
   ]
 
 let solve_tests = let open Solve in [
