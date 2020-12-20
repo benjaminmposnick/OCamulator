@@ -520,8 +520,10 @@ and eval_command cmd e sigma =
       eval_linalg_command linalg_cmd value
     | dbl_cmd, VTuple (v1,v2) when List.mem dbl_cmd double_commands ->
       eval_double_command dbl_cmd v1 v2
-    | "fac", VFloat i when Float.is_integer i -> 
-      VFloat(i |> int_of_float |> Prob.factorial |> float_of_int )
+    | "fac", VFloat i -> 
+      if Float.is_integer i then
+        VFloat(i |> int_of_float |> Prob.factorial |> float_of_int )
+      else raise_exn ("Factorial requires integer input")
     | _ -> raise_exn ("No such command: " ^ cmd)
   in
   (result, sigma')
