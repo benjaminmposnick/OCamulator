@@ -493,7 +493,6 @@ let solve_tests = let open Solve in [
          (Var "x"))
       string_of_bool;  
 
-
     (* main solve tests *)
     test "solve for var x = 5" 
       (Binop(Eq, Var "x", Int 5 ))
@@ -587,14 +586,20 @@ let solve_tests = let open Solve in [
     test "solve equation y / x = (5 + z)" 
       (Binop(Eq, Var "x", Binop(Div, Var "y", Binop (Add, Int 5, Var "z")))) 
       (Solve.solve ("x") (Binop(Eq, Binop(Div, Var "y", Var "x"), 
-                                Binop (Add, Int 5, Var "z"))) )
+                                Binop (Add, Int 5, Var "z"))))
       Ast.string_of_expr;
     test "basic solve for division equation 4y / x = 5" 
       (Binop(Eq,  Var "x", Binop(Div, Binop(Mul, Int 4, Var "y"), Int 5))) 
       (Solve.solve ("x") (Binop(Eq, Binop(Div, Binop(Mul, Int 4, Var "y"),
                                           Var "x"), Int 5 )) )
       Ast.string_of_expr;
-
+    "No var given Failure" >:: 
+    (fun _ -> assert_raises (Failure "No variable given") 
+        (fun () -> Solve.solve ("x") (Binop(Eq, Int 3, Int 9)) ));        
+    "Wrong var given Failure" >:: 
+    (fun _ -> assert_raises (Failure "No variable given") 
+        (fun () -> Solve.solve ("x") (Binop(Eq, Binop(Add, Int 3, Var "y"), 
+                                            Int 9)) ));
 
     (* GCD tests *)
     test "gcd of 0 and 0 is 0" 
@@ -621,6 +626,12 @@ let solve_tests = let open Solve in [
       (372750) (Solve.lcm 1491 250) string_of_int;
     test "lcm of 41352 and 25 is 1033800" 
       (1033800) (Solve.lcm 41352 25) string_of_int;
+    "Trying to get LCM with zero" >:: 
+    (fun _ -> assert_raises (Failure "LCM of zero does not exist") 
+        (fun () -> Solve.lcm 0 25));
+    "Trying to get LCM with zero other argument" >:: 
+    (fun _ -> assert_raises (Failure "LCM of zero does not exist") 
+        (fun () -> Solve.lcm 25 0));
   ]
 
 let prob_tests = let open Prob in [
