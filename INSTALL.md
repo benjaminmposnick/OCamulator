@@ -35,6 +35,8 @@ This is the list of functionality that is currently integrated into the command
 line application as of the end of the Beta sprint. Note that there is additional
 functionality that is written or almost completed that has not yet been integrated
 with the command line application.
+
+-------- Maybe split this into sections
 - Addition, subtraction, multiplication, division, exponentiation, modulo for
 arbitrarily complex arithmetic expressions, using parentheses to force evaluation
 order
@@ -45,9 +47,10 @@ to reduced row echelon form
 - Transposing a matrix, row vector (delimited by commas), column vector (delimited
 by semicolons)
   - E.g. Try inputing `transpose: [1;2;3;4;5]`
-- Probability density functions (PDFs) and cumulative density functions (CDFs)
-  - E.g. Try inputing `Uniform pdf 0.0 1.0 1.0` which should yield 1.0
-  - E.g. Try inputting `Uniform cdf 0.0 1.0 0.5` which should yield 0.5
 
-More functionality is coming in the next sprint -- stay tuned! For now: peace,
-love, and 3110.
+Probability:
+
+The probability module of the calculator supports 
+
+Statistics:
+
