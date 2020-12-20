@@ -615,8 +615,8 @@ let solve_tests = let open Solve in [
       (60) (Solve.lcm 15 12) string_of_int;
     test "lcm of 1491 and 250 is 372750" 
       (372750) (Solve.lcm 1491 250) string_of_int;
-    test "lcm of 12 and 15 is 60" 
-      (60) (Solve.lcm 12 15) string_of_int;
+    test "lcm of 41352 and 25 is 1033800" 
+      (1033800) (Solve.lcm 41352 25) string_of_int;
   ]
 
 let prob_tests = let open Prob in [
