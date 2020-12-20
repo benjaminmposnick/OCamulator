@@ -641,7 +641,6 @@ let solve_tests = let open Solve in [
       string_of_bool;  
 
     (* has_var_any tests *)
-    (* has_var tests *)
     test "has_var_any: x" 
       true (Solve.has_var_any (Var "x")) string_of_bool; 
     test "has_var_any: 5" 
@@ -813,6 +812,10 @@ let solve_tests = let open Solve in [
     "Trying to get LCM with zero other argument" >:: 
     (fun _ -> assert_raises (Failure "LCM of zero does not exist") 
         (fun () -> Solve.lcm 25 0));
+
+    (* Root tests *)
+    (* test "root of x^2 + x + 1 = 0" 
+      () (Solve.lcm 12 15) string_of_int; *)
   ]
 
 let prob_tests = let open Prob in [
@@ -1129,6 +1132,15 @@ let eval_tests =
   [
     test "Var x is float" (VFloat 0.) (eval_expr (Var "x") [("x", VFloat 0.)])
       string_of_value;
+    test "Negate var y" (VFloat (-5.)) (eval_expr (Negate "y") [("y", VFloat 5.)])
+      string_of_value;
+    test "Negate var y" (VFloat (5.)) (eval_expr (Negate "y") [("y", VFloat (-5.))])
+      string_of_value;
+    "Unassigned var given Failure" >:: 
+      (fun _ -> assert_raises 
+          (Eval.ComputationError.EvalError
+          "Variable x is undefined in current context") 
+          (fun () -> (eval_expr (Negate "x") [("y", VFloat (-5.))]) ));
     test "Zero int evaluates to itself as a float" (VFloat 0.)
       (eval_expr (Int 0) []) string_of_value;
     test "Postive int evaluates to itself as a float" (VFloat 1.)
