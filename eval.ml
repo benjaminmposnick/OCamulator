@@ -389,6 +389,19 @@ let eval_stat_command cmd vec =
   | "product" -> stats_noargs_float cum_prod vec
   | _ -> raise_exn ("No such command: " ^ cmd)
 
+let dbl_int_commnd f arg1 arg2 =
+  if Float.is_integer arg1 && Float.is_integer arg2 then
+    f (int_of_float arg1) (int_of_float arg2)
+  else raise_exn ("Both arguements must be integer")
+
+let eval_double_command cmd v1 v2 = 
+  let open Stat in 
+  let open Prob in
+  match cmd, v1, v2 with
+  | "choose", VFloat arg1, VFloat arg2 -> 
+    VFloat (dbl_int_commnd choose arg1 arg2)
+  | _ -> raise_exn ("No such command: " ^ cmd)
+
 (* ===========================================================================
     EXPRESSION EVALUATION
    ===========================================================================*)
@@ -413,6 +426,7 @@ and eval_command cmd e sigma =
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
                        "variance"; "std"; "sum"; "product"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
+  let double_commands = ["choose"] in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
@@ -427,6 +441,8 @@ and eval_command cmd e sigma =
       eval_stat_command stat_cmd vec
     | linalg_cmd, _ when List.mem linalg_cmd linalg_commands ->
       eval_linalg_command linalg_cmd value
+    | dbl_cmd, VTuple (v1,v2) when List.mem dbl_cmd double_commands ->
+      eval_double_command dbl_cmd v1 v2
     | _ -> raise_exn ("No such command: " ^ cmd)
   in
   (result, sigma')
