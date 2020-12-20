@@ -21,19 +21,20 @@ type binop =
   | Dot
   | SolveSys
 
-(** [prob_func] is the type of density functions for distributions. *)
+(** [prob_func] is the type of operators on distributions. *)
 type prob_func =
   | PDF
   | CDF
   | SAM
 
-(** [stat_func] is the type of the stat function to be executed*)
+(** [stat_func] is the type of the statistical function to be executed. *)
 type stat_func =
   | SORT_ASC
   | SORT_DESC
   | UNIQUE
   | QUANTILE
 
+(** [stat_equ] is the type of the statistical equation. *)
 type stat_equ = 
   | NoArg of stat_func
   | OneArg of stat_func * float
@@ -53,23 +54,22 @@ type expr =
   | Var of string
   | Int of int
   | Float of float
-  | Matrix of Matrix.t
-  | Vector of Vector.t
   | Binop of binop * expr * expr
-  | Prob of distribution
   | Command of string * expr
   | Tuple of expr * expr
-
+  | Vector of Vector.t
+  | Matrix of Matrix.t
+  | Prob of distribution
+  
 (** [value] is the type of values which result from evaluating expressions
-    under the big-step relation/. *)
+    under the big-step relation. *)
 type value =
   | VFloat of float
-  | VMatrix of Matrix.t
   | VVector of Vector.t
-  | VEquation of binop * expr * expr
-  | VInt of int
+  | VMatrix of Matrix.t
   | VList of value list
   | VTuple of value * value 
+  | VEquation of binop * expr * expr
 
 (* ===========================================================================
     TO STRING FUNCTIONS
@@ -99,23 +99,16 @@ let string_of_binop = function
   | Dot -> "Dot"
   | SolveSys -> "SolveSys"
 
-(** [string_of_distribution dis] is the string respresentation of the
+(** [string_of_distribution dist] is the string respresentation of the
     probability distribution [dist]. *)
 let string_of_distribution = function
-  | Binomial (func, n, p, k) ->
-    "Binomial " ^ string_of_prob_func func 
-  | Bernoulli (func, p, k) ->
-    "Bernoulli " ^ string_of_prob_func func 
-  | Uniform (func, a, b, x) ->
-    "Uniform " ^ string_of_prob_func func 
-  | Poisson (func, l, k) ->
-    "Poisson " ^ string_of_prob_func func 
-  | Geometric (func, p, k) ->
-    "Geometric " ^ string_of_prob_func func 
-  | Exponential (func, l, x) ->
-    "Expontential " ^ string_of_prob_func func 
-  | Normal (func, m, s, x) ->
-    "Normal " ^ string_of_prob_func func 
+  | Binomial (func, _, _, _) -> "Binomial " ^ string_of_prob_func func 
+  | Bernoulli (func, _, _) -> "Bernoulli " ^ string_of_prob_func func 
+  | Uniform (func, _, _, _) -> "Uniform " ^ string_of_prob_func func 
+  | Poisson (func, _, _) -> "Poisson " ^ string_of_prob_func func 
+  | Geometric (func, _, _) -> "Geometric " ^ string_of_prob_func func 
+  | Exponential (func, _, _) -> "Expontential " ^ string_of_prob_func func 
+  | Normal (func, _, _, _) -> "Normal " ^ string_of_prob_func func 
 
 (** [string_of_expr expr] is the string respresentation of expression [expr]. *)
 let rec string_of_expr = function
@@ -130,9 +123,8 @@ let rec string_of_expr = function
   | Matrix mat -> "Matrix \n" ^ Matrix.string_of_matrix mat
   | Tuple (e1, e2) -> "(" ^ string_of_expr e1 ^ " , " ^ string_of_expr e2 ^ ")"
 
-(** [string_of_value val] is the string respresentation of value [val]. *)
+(** [string_of_value value] is the string respresentation of [value]. *)
 let rec string_of_value = function
-  | VInt f -> "Int " ^ string_of_int f
   | VFloat f -> "Float " ^ string_of_float f
   | VVector vec -> "Vector \n" ^ Vector.string_of_vector vec
   | VMatrix mat -> "Matrix \n" ^ Matrix.string_of_matrix mat
@@ -143,7 +135,7 @@ let rec string_of_value = function
       | [] -> acc
       | h :: t ->
         let acc' =
-          acc ^ "\n[Entry " ^ (string_of_int i) ^ "] " ^ (string_of_value h) in
+          acc ^ "\n[Entry " ^ (string_of_int i) ^ "]  " ^ (string_of_value h) in
         string_of_value_list t (i + 1) acc'
     in
     string_of_value_list lst 1 "Value List:"

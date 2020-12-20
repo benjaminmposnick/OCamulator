@@ -1,19 +1,63 @@
 open Vector
 
-type t = float list list
+type t = Vector.t list
+
+let n_rows mat = 
+  List.length mat
+
+let n_cols mat = 
+  if List.length mat = 0 then 0
+  else 
+    List.hd mat
+    |> Vector.size 
+
+(** [rep_ok mat] is [mat] if [mat] satisfies its representation invariants and
+    raises [Failure] otherwise. *)
+let rep_ok mat =
+  let open Vector in
+  let rec check_for_col_vecs = function
+    | [] -> ()
+    | RowVector _ :: t -> check_for_col_vecs t
+    | ColVector _ :: t-> failwith "Matrix cannot contain column vectors" in
+  let all_rows_same_len =
+    List.map Vector.size mat
+    |> List.fold_left (fun acc n ->
+        if not (List.mem n acc) then n :: acc else acc) []
+    |> (fun lst -> if List.length lst <= 1 then true else false) in
+  ignore(check_for_col_vecs mat);
+  if not (all_rows_same_len) then
+    failwith "Matrix must have all rows the same length"
+  else mat
+
+let to_list mat =
+  ignore(rep_ok mat);
+  List.map Vector.to_list mat
 
 let to_array mat =
-  List.map Array.of_list mat |> Array.of_list
+  ignore(rep_ok mat);
+  List.map Vector.to_array mat
+  |> Array.of_list
 
-let to_list mat = mat
+let of_list lst = 
+  List.map Vector.make_row_vec lst
+  |> rep_ok
 
 let of_array arr = 
-  Array.(map to_list arr) |> Array.to_list
+  Array.(map to_list arr)
+  |> Array.to_list
+  |> of_list
+  |> rep_ok
 
-let of_list lst : t = lst
+let make n m init =
+  Array.make_matrix n m init
+  |> of_array
+  |> rep_ok
 
-let zeros (n, m) =
-  Array.make_matrix n m 0. |> of_array
+let zeros ?(n=(~-1)) m =
+  let matrix = 
+    if n = ~-1 then make m m 0.
+    else make n m 0. in
+  rep_ok matrix
 
 let identity n =
   let arr = Array.make_matrix n n 0. in
@@ -21,15 +65,10 @@ let identity n =
     arr.(i).(i) <- 1.
   done;
   of_array arr
-
-let n_rows mat = 
-  List.length mat
-
-let n_cols mat = 
-  if List.length mat = 0 then 0
-  else List.hd mat |> List.length 
+  |> rep_ok
 
 let is_square mat =
+  ignore(rep_ok mat);
   n_cols mat = n_rows mat
 
 (** [string_of_matrix_row max_digits row] is the string representation of
@@ -42,52 +81,68 @@ let string_of_matrix_row max_digits row =
     let n_spaces = max_digits - (String.length float_str) in
     float_str ^ (String.make n_spaces ' ')
   in
-  List.map string_of_entry row |> String.concat " "
+  List.map string_of_entry row
+  |> String.concat " "
 
 let string_of_matrix mat =
+  ignore(rep_ok mat);
   let max_digits =
-    let string_list = List.(map (map string_of_float) mat) in
+    let string_list = 
+      let vec_to_float_strings vec =
+        List.map string_of_float (Vector.to_list vec) in
+      List.map vec_to_float_strings mat in
     let length_max s1 s2 =
       if String.(length s1 >= length s2) then s1 else s2 in
     let max_string_by_row =
-      List.(map (fun lst -> fold_left length_max "" lst) string_list) in
+      let get_max_str lst = List.fold_left length_max "" lst in
+      List.map get_max_str string_list in
     let max_string = List.fold_left length_max "" max_string_by_row in
     String.length max_string
   in
-  List.map (fun vec -> "| " ^ string_of_matrix_row max_digits vec) mat
+  to_list mat
+  |> List.map (fun vec -> "| " ^ string_of_matrix_row max_digits vec)
   |> String.concat " |\n"
   |> fun str -> str ^ " |" 
 
 let transpose mat =
-  let open List in
   let rec transpose_aux lst acc =
     match lst with
     | [] -> []
     | h :: t ->
-      if length h = 0 then rev acc
+      if Vector.size h = 0 then
+        List.rev acc
+        |> of_list
       else 
-        let next_row = map hd lst in
-        let submatrix = map tl lst in
+        let next_row = List.map Vector.head lst in
+        let submatrix = List.map Vector.tail lst in
         transpose_aux submatrix (next_row :: acc)
   in
+  ignore(rep_ok mat);
   transpose_aux mat []
+  |> rep_ok
 
 let is_symmetric mat =
   assert (is_square mat);
+  ignore(rep_ok mat);
   mat = (transpose mat)
 
-let multiply m1 m2 = 
+let matrix_multiply m1 m2 = 
   assert (n_cols m1 = n_rows m2);
-  let open List in
-  let m2_t = transpose m2 |> map (fun row -> Vector.make_row_vec row) in
-  let row_fn row = 
-    let row_vec = Vector.make_row_vec row in
-    List.map (Vector.dot_product row_vec) m2_t in
+  ignore(rep_ok m1);
+  ignore(rep_ok m2);
+  let m2_t = transpose m2 in
+  let row_fn row = List.map (Vector.dot_product row) m2_t in
   List.map row_fn m1
+  |> of_list
+  |> rep_ok
 
-let get_row = List.nth
+let get_row mat i =
+  ignore(rep_ok mat);
+  List.nth mat i
+  |> Vector.to_list
 
 let get_col mat j = 
+  ignore(rep_ok mat);
   transpose mat
   |> (fun mat_t -> get_row mat_t j)
 
@@ -98,24 +153,36 @@ let drop_row mat i =
       if i = idx then (List.rev acc) @ t
       else drop_row_aux (h :: acc) (idx + 1) t
   in
+  ignore(rep_ok mat);
   drop_row_aux [] 0 mat
+  |> rep_ok
 
 let drop_col mat j =
+  ignore(rep_ok mat);
   transpose mat
   |> (fun mat_t -> drop_row mat_t j)
   |> transpose
+  |> rep_ok
 
-let row_sums matrix =
-  List.map (fun rvec -> Vector.RowVector rvec) matrix
-  |> List.map Vector.sum 
+let apply_to_all f mat = 
+  ignore(rep_ok mat);
+  List.map (fun row -> Vector.map f row) mat
+  |> rep_ok
 
-let apply_to_all f matrix = 
-  List.(map (map f) matrix)
+let rec of_vectors vec_lst =
+  match vec_lst with
+  | [] -> failwith "Cannot create empty matrix"
+  | Vector.RowVector rvec :: _ -> vec_lst
+  | Vector.ColVector cvec :: _ ->
+    List.map Vector.transpose vec_lst
+    |> transpose
+    |> rep_ok
 
-let is_upper_triangular matrix =
-  assert (is_square matrix);
-  let n = n_rows matrix in
-  let a = to_array matrix in
+let is_upper_triangular mat =
+  assert (is_square mat);
+  ignore(rep_ok mat);
+  let n = n_rows mat in
+  let a = to_array mat in
   let elems = ref [] in
   for j = 0 to n - 1 do
     for i = j + 1 to n - 1 do
@@ -124,21 +191,36 @@ let is_upper_triangular matrix =
   done;
   List.fold_left (fun acc x -> if x = 0. then acc else false) true !elems
 
-let is_lower_triangular matrix =
-  transpose matrix |> is_upper_triangular
+let is_lower_triangular mat =
+  ignore(rep_ok mat);
+  transpose mat
+  |> is_upper_triangular
 
-let of_vectors vec_lst =
-  let rec vectors_to_lists lst acc =
-    match lst with
-    | [] -> List.rev acc
-    | h :: t -> vectors_to_lists t (Vector.to_list h :: acc)
-  in
-  let flt_lst = vectors_to_lists vec_lst [] in
-  match vec_lst with
-  | [] -> failwith "Cannot create empty matrix"
-  | RowVector rvec :: _ -> of_list flt_lst
-  | ColVector cvec :: _ -> 
-    of_list flt_lst |> transpose
+let map fn mat =
+  ignore(rep_ok mat);
+  List.map fn mat
+  |> rep_ok
 
-let map = List.map
+let map2 fn m1 m2 =
+  ignore(rep_ok m1);
+  ignore(rep_ok m2);
+  List.map2 fn m1 m2
+  |> rep_ok
 
+let row_sums mat = 
+  List.map Vector.sum mat
+
+let matrix_vector_product mat vec swap_order =
+  ignore(rep_ok mat);
+  match vec, swap_order with
+  | Vector.RowVector _, true -> 
+    List.hd (matrix_multiply [vec] mat) (* Outputs a row vector *)
+  | ColVector _, false ->
+    matrix_multiply mat [vec] (* Outputs a column vector *)
+    |> List.map Vector.to_list
+    |> List.flatten
+    |> Vector.make_col_vec
+  | ColVector _, true ->
+    failwith "Shape error: first argument should be a row vector"
+  | RowVector _, false ->
+    failwith "Shape error: second argument should be a column vector"

@@ -12,10 +12,11 @@ let round n =
   |> float_of_string
   |> (fun x -> if x = ~-.0. then 0. else x)
 
-(** [purify tolerance matrix] is [matrix] except all negative zero entries are
-    converted to zero (i.e. without the negative sign), any values in the
-    matrix less than or equal to [tolerance] are zeroed out, and all values are
-    expressed with up to four decimal places of precision. *)
+(** [purify no_round tolerance matrix] is [matrix] except all negative zero
+    entries are converted to zero (i.e. without the negative sign), any values
+    in the matrix less than or equal to [tolerance] are zeroed out, and all
+    values are rounded to four decimal places of precision if [no_round] is
+    false and they are left alone if [no_round] is true. *)
 let purify ?no_round:(no_round=false) tolerance matrix = 
   let open List in
   let purify_aux x = 
@@ -217,7 +218,7 @@ let pivot_cols matrix =
   let tolerance = determine_tolerance matrix in
   snd (row_echelon_form matrix tolerance)
   |> List.sort compare
-  |> List.map (fun i -> VInt i)
+  |> List.map (fun i -> VFloat (float_of_int i))
 
 let rref matrix =
   let tolerance = determine_tolerance matrix in
@@ -229,12 +230,6 @@ let rref matrix =
    MATRIX FACTORIZATIONS
    ===========================================================================*)
 
-(** [plu_decomposition matrix] is the PLU decomposition of [matrix], i.e. the
-    triple of matrices P, L, and U such that if A = [matrix], then A = PLU, 
-    where P is the permutation matrix, L is lower triangular, and U is upper
-    triangular. Similar to the LU decomposition, except the permutation matrix
-    keeps track of row interchanges which are required for numerical stability.
-    Requires: [matrix] is square. *)
 let plu_decomposition ?no_round:(no_round=false) matrix =
   assert (Matrix.is_square matrix);
   let tolerance = determine_tolerance matrix in
@@ -327,10 +322,10 @@ let inverse mat =
   let (p, l, u, _) = plu_decomposition ~no_round:true mat in
   let n = n_rows p in
   let b = Matrix.identity n in
-  let a_inv = ref (Matrix.(to_array (zeros (n, n)))) in
+  let a_inv = ref (Matrix.(to_array (zeros n))) in
   for i = 0 to n - 1 do
     let bi = Vector.make_col_vec (Matrix.get_row b i) in
-    let p_dot_bi_mat = Matrix.(multiply p (of_vectors [bi])) in
+    let p_dot_bi_mat = Matrix.(matrix_multiply p (of_vectors [bi])) in
     let p_dot_bi_vec = 
       Matrix.to_list p_dot_bi_mat
       |> List.flatten
@@ -345,7 +340,7 @@ let inverse mat =
 
 let solve_system a b =
   let (p, l, u, _) = plu_decomposition ~no_round:true a in (* Factor PA = LU *)
-  let p_dot_b_mat = Matrix.(multiply p (of_vectors [b])) in
+  let p_dot_b_mat = Matrix.(matrix_multiply p (of_vectors [b])) in
   let pb = 
     Matrix.to_list p_dot_b_mat
     |> List.flatten

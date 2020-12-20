@@ -1,8 +1,9 @@
 _build/
 *.byte
-_coverage/
+_coverage*/
 bisect*.coverage
 .pyc
 Search.code-search
 __pycache__
 .vscode
+doc.*

@@ -1,20 +1,20 @@
 %{
-open Ast
-open Vector
-open Matrix
+	open Ast
+	open Vector
+	open Matrix
 
-(** [vector_as_string_list str sep] is the list of strings generated from 
-		splitting [str] at [sep]. *)
-let vector_as_string_list str sep =
-	(* Splice out left and right brackets *)
-	let contents = String.sub str 1 (String.length str - 2) in
-	String.split_on_char sep contents
+	(** [vector_as_string_list str sep] is the list of strings generated from 
+			splitting [str] at [sep]. *)
+	let vector_as_string_list str sep =
+		(* Splice out left and right brackets *)
+		let contents = String.sub str 1 (String.length str - 2) in
+		String.split_on_char sep contents
 
-(** [vector_as_float_list str sep] is the list of floats generated from 
-		splitting [str] at [sep] and converting all strings to floats. *)
-let vector_as_float_list str sep =
-	let string_list = vector_as_string_list str sep in	
-	List.map Float.of_string string_list
+	(** [vector_as_float_list str sep] is the list of floats generated from 
+			splitting [str] at [sep] and converting all strings to floats. *)
+	let vector_as_float_list str sep =
+		let string_list = vector_as_string_list str sep in	
+		List.map Float.of_string string_list
 %}
 
 // Primitve values
@@ -103,7 +103,8 @@ array_expr :
 			let vals = vector_as_string_list m ';' in
 			let num_list = 
 				(fun lst -> String.split_on_char ',' lst |> List.map Float.of_string)
-				|> fun fn -> List.map fn vals in
+				|> fun fn -> List.map fn vals
+			in
 			Matrix (Matrix.of_list num_list)
 		}
 
@@ -119,7 +120,7 @@ prob_expr :
 	| BINOM; fn = prob_func; n = prob_input; p = prob_input; k = prob_input
 		{ Prob (Binomial (fn, n, p, k)) } 
 	| BERN; SAM; p = prob_input;
-		{ Prob (Bernoulli (SAM, p, 0.1)) }
+		{ Prob (Bernoulli (SAM, p, 0.)) }
 	| BERN; PDF; p = prob_input; k = prob_input
 		{ Prob (Bernoulli (PDF, p, k)) }
 	| BERN; CDF; p = prob_input;  k = prob_input
@@ -157,4 +158,3 @@ prob_expr :
 %inline prob_func :
 	| PDF { PDF }
 	| CDF { CDF }
-	| SAM { SAM }
