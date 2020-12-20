@@ -140,7 +140,6 @@ prob_expr :
 	| GEO; fn = prob_func; p = prob_input; k = prob_input
 		{ Prob (Geometric (fn, p, k)) }
 
-
 	| EXP; SAM; l = prob_input;
 		{ Prob (Exponential (SAM, l, 0.)) }
 	| EXP; fn = prob_func; l = prob_input; x = prob_input
