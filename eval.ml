@@ -494,6 +494,12 @@ let rec eval_solve op e1 e2 sigma =
 [@@ coverage off]
 (* Cannot systematically test because result depends on user input *)
 
+and eval_negate s sigma = 
+  let var_val = fst (eval_var s sigma) in 
+  match var_val with
+  | VFloat v -> VFloat (0. -. v), sigma
+  | _ -> failwith "Cannot negate non-numeric value"
+
 and eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
   let (v2, sigma'') = eval_expr e2 sigma in
@@ -565,6 +571,7 @@ and eval_expr e sigma =
     let (v, sigma') = eval_expr e sigma in 
     eval_assign x v sigma'
   | Binop (op, e1, e2) -> eval_binop op e1 e2 sigma
+  | Negate s -> eval_negate s sigma
 
 let rec eval_input e sigma = 
   let (value, sigma') = eval_expr e sigma in

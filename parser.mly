@@ -57,6 +57,7 @@ expr :
 	| LPAREN; e1 = expr; TILDE; e2 = expr; RPAREN { Tuple (e1, e2)}
 	| BEGIN_CMD; cmd = ID; e = expr { Command (cmd, e) }
 	| PROJ; i = INT; e = expr { Command ("#" ^ string_of_int i, e)}
+	| MINUS; ID { Negate ($2) }
 	;
 
 num :

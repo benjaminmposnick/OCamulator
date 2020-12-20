@@ -19,8 +19,22 @@ val pivot_cols : Matrix.t  -> Ast.value list
 val plu_decomposition : ?no_round:bool -> Matrix.t  ->
                         (Matrix.t * Matrix.t * Matrix.t * int)
 
+(** [determinant mat] is the determinant of [mat].
+    Requires: [matrix] is square. *)
 val determinant : Matrix.t -> float
 
+(** [inverse mat] is the inverse of [mat], i.e if [A] =def= [mat], then 
+    [inverse mat] = [A^(-1)].
+    Requires: [matrix] is square. *)
 val inverse : Matrix.t -> Matrix.t
 
+(** [solve_system a b] is the vector [x] that results from solving the 
+    system of equations given by [Ax = b]. If [a] is non-singular, then 
+    [Failure] is raised because there either exists no solution (i.e. an
+    inconsistent system) or there exist infinitely many solutions.
+    Requires: [a] is square.
+    Note: The requirement that [a] is square comes from the fact that this 
+    implementation utilizes the PLU factorization, which also requires that [a]
+    is square. Solving [Ax = b] for general [A] requires a different
+    factorization. *)
 val solve_system : Matrix.t -> Vector.t -> Vector.t

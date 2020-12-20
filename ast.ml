@@ -60,7 +60,8 @@ type expr =
   | Vector of Vector.t
   | Matrix of Matrix.t
   | Prob of distribution
-  
+  | Negate of string
+
 (** [value] is the type of values which result from evaluating expressions
     under the big-step relation. *)
 type value =
@@ -122,6 +123,7 @@ let rec string_of_expr = function
   | Vector vec -> "Vector \n" ^ Vector.string_of_vector vec
   | Matrix mat -> "Matrix \n" ^ Matrix.string_of_matrix mat
   | Tuple (e1, e2) -> "(" ^ string_of_expr e1 ^ " , " ^ string_of_expr e2 ^ ")"
+  | Negate s -> "-" ^ s
 
 (** [string_of_value value] is the string respresentation of [value]. *)
 let rec string_of_value = function
