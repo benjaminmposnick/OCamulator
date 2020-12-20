@@ -1329,6 +1329,7 @@ let eval_tests =
     eval_error_test "Variable x not defined"
       "Variable x is undefined in current context"
       (fun () -> Eval.eval_expr (Var "x") []);
+
     test "Zero int evaluates to itself as a float" (VFloat 0.)
       (eval_expr (Int 0) []) string_of_value;
     test "Postive int evaluates to itself as a float" (VFloat 1.)
@@ -1412,6 +1413,31 @@ let eval_tests =
       (eval_expr (Binop (Eq, Float 2., Float 2.)) []) string_of_value;
     test "Equal one int and one float" (VFloat (Bool.to_float true))
       (eval_expr (Binop (Eq, Float 2., Int 2)) []) string_of_value;
+
+    test_command "Eval sin is equivelant to OCaml sin" (VFloat (sin 0.))
+      "sin" (Float(0.));
+    test_command "Eval cos is equivelant to OCaml cos" (VFloat (cos 0.))
+      "cos" (Float(0.));
+    test_command "Eval tan is equivelant to OCaml tan" (VFloat (tan 0.))
+      "tan" (Float(0.));
+    test_command "Eval sin is equivelant to OCaml sin" (VFloat (sin Float.pi))
+      "sin" (Float(Float.pi));
+    test_command "Eval cos is equivelant to OCaml cos" (VFloat (cos Float.pi))
+      "cos" (Float(Float.pi));
+    test_command "Eval tan is equivelant to OCaml tan" (VFloat (tan Float.pi))
+      "tan" (Float(Float.pi));
+    test_command "Eval arcsin is equivelant to OCaml arcsin" (VFloat (asin 0.))
+      "arcsin" (Float(0.));
+    test_command "Eval arccos is equivelant to OCaml arccos" (VFloat (acos 0.))
+      "arccos" (Float(0.));
+    test_command "Eval arctan is equivelant to OCaml arctan" (VFloat (atan 0.))
+      "arctan" (Float(0.));
+    test_command "Eval arcsin is equivelant to OCaml arcsin" 
+      (VFloat (asin (-1.))) "arcsin" (Float(-1.));
+    test_command "Eval arccos is equivelant to OCaml arccos"
+      (VFloat (acos (-1.))) "arccos" (Float(-1.));
+    test_command "Eval arctan is equivelant to OCaml arctan"
+      (VFloat (atan (-1.))) "arctan" (Float(-1.));
 
     test "Greater than two ints" (VFloat (Bool.to_float true))
       (eval_expr (Binop (GT, Int 3, Int 2)) []) string_of_value;
