@@ -34,6 +34,14 @@ let modulo p q =
     p' mod q'
     |> float_of_int
 
+(* Define command names for supported functionality *)
+let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
+                     "variance"; "std"; "sum"; "product";"mode";"range";
+                     "unique"; "rms"]
+let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"]
+let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
+                       "linreg";"lcm"; "gcd"]
+
 (* ===========================================================================
     PROBABILITY AND STATISTICS UTILITY FUNCTIONS
    ===========================================================================*)
@@ -388,6 +396,7 @@ let eval_projection cmd lst =
       | None -> raise_exn "Index out of bounds"
       | Some v -> v
     end
+[@@coverage off] (* Tested via command line application *)
 
 (** [eval_stat_command cmd value] is the result of applying the statistical
     command [cmd] to vector [vec]. If an error occurs during evaluation,
@@ -504,12 +513,6 @@ and eval_binop op e1 e2 sigma  =
     the result of evaluating [e] in store [sigma]. If an error occurs during
     evaluation, [ComputationError.EvalError] is raised instead. *)
 and eval_command cmd e sigma = 
-  let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
-                       "variance"; "std"; "sum"; "product";"mode";"range";
-                       "unique"; "rms"] in
-  let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
-  let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
-                         "linreg";"lcm"; "gcd"] in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
@@ -517,7 +520,8 @@ and eval_command cmd e sigma =
       | Binop (op, e1, e2) -> (VEquation (op, e1, e2)), sigma
       | _ -> raise_exn "Invalid operation on a non-equation" in
   let result = match cmd, value with
-    | "solve", VEquation (op, e1, e2) -> eval_solve op e1 e2 sigma
+    | "solve", VEquation (op, e1, e2) ->
+      eval_solve op e1 e2 sigma [@coverage off] (* Cannot test systematically *)
     | _, VList lst when String.(length cmd > 0 && get cmd 0 = '#') ->
       eval_projection cmd lst
     | stat_cmd, VVector vec when List.mem stat_cmd stat_commands -> 
