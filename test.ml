@@ -81,6 +81,16 @@ let test_smpl_max name max dist =
   in 
   name >:: (fun _ -> assert_equal true (value <= max)  ~printer:string_of_bool)
 
+let test_smpl_size name k dist =
+  Random.init 42;
+  let out = (fst (Eval.eval_expr (Prob dist) [])) in
+  let value =
+    match out with
+    | VVector vec -> to_list vec
+    | _ -> failwith "Not even a vec"
+  in 
+  name >:: (fun _ -> assert_equal k (List.length value)  ~printer:string_of_int)
+
 (** [check_lu_decomp l u] is [unit] if [l] is lower triangular and [u] is
     upper triangular; otherwise, [Failure] is raised. *)
 let check_lu_decomp l u =
@@ -754,8 +764,9 @@ let prob_tests = let open Prob in [
 
     test_prob "Unif pdf eval" (VFloat 1.) (Uniform (PDF,0.,1.,0.5));
     test_prob "Unif cdf eval" (VFloat 1.) (Uniform (CDF,0.,1.,2.));
-    test_smpl_min "Unif smpl eval 1" 0. (Uniform (SAM,0.,1.,0.));
-    test_smpl_max "Unif smpl eval 1" 1. (Uniform (SAM,0.,1.,0.));
+    test_smpl_min "Unif smpl eval min" 0. (Uniform (SAM,0.,1.,0.));
+    test_smpl_max "Unif smpl eval max" 1. (Uniform (SAM,0.,1.,0.));
+    test_smpl_size "Unif smpl eval size" 10 (Uniform (SAM,0.,1.,10.));
 
     test "Bern p 1" 0.8 (bernoulli_pmf 0.8 1) string_of_float;
     test "Bern p 0" (1. -. 0.8) (bernoulli_pmf 0.8 0) string_of_float;
@@ -765,8 +776,9 @@ let prob_tests = let open Prob in [
 
     test_prob "bern pdf eval" (VFloat 0.5) (Bernoulli (PDF,0.5,0.));
     test_prob "bern cdf eval" (VFloat 1.) (Bernoulli(CDF,0.5,1.));
-    test_smpl_min "bernsmpl eval 1" 0. (Bernoulli (SAM,0.5,0.));
-    test_smpl_max "bern smpl eval 1" 1. (Bernoulli(SAM,0.5,0.));
+    test_smpl_min "bern smpl eval min" 0. (Bernoulli (SAM,0.5,0.));
+    test_smpl_max "bern smpl eval max" 1. (Bernoulli(SAM,0.5,0.));
+    test_smpl_size "bern smpl eval size" 10 (Bernoulli(SAM,0.5,10.));
 
     test "Geo p 1" 0.5 (geometric_pmf 0.5 1) string_of_float;
     test "Geo p 3" 0.125 (geometric_pmf 0.5 3) string_of_float;
@@ -775,7 +787,8 @@ let prob_tests = let open Prob in [
 
     test_prob "geo pdf eval" (VFloat 0.25) (Geometric (PDF,0.5,2.));
     test_prob "geo cdf eval" (VFloat 0.992) (Geometric (CDF,0.8,3.));
-    test_smpl_min "geo smpl eval 1" 0. (Geometric (SAM,0.5,0.));
+    test_smpl_min "geo smpl eval min" 0. (Geometric (SAM,0.5,0.));
+    test_smpl_size "geo smpl eval size" 10 (Geometric (SAM,0.5,10.));
 
     test "Exp p 0" 0.5 (exponential_pmf 0.5 0.) string_of_float;
     test "Exp p 1" (exp (-1.)) (exponential_pmf 1. 1.) string_of_float;
@@ -785,7 +798,8 @@ let prob_tests = let open Prob in [
 
     test_prob "exp pdf eval" (VFloat 0.5) (Exponential (PDF,0.5,0.));
     test_prob "exp cdf eval" (VFloat 0.) (Exponential (CDF,1.,0.));
-    test_smpl_min "exp smpl eval 1" 0. (Exponential (SAM,0.5,0.));
+    test_smpl_min "exp smpl eval min" 0. (Exponential (SAM,0.5,0.));
+    test_smpl_size "exp smpl eval max" 10 (Exponential (SAM,0.5,10.));
 
     test "Pois p 0" (exp (-1.)) (poisson_pmf 1. 0) string_of_float;
     test "Pois p 2" (exp (-1.) /. 2.) (poisson_pmf 1. 2) string_of_float;
@@ -795,7 +809,8 @@ let prob_tests = let open Prob in [
 
     test_prob "pois pdf eval" (VFloat (exp (-1.))) (Poisson (PDF,1.,0.));
     test_prob "pois cdf eval" (VFloat (exp (-1.))) (Poisson (CDF,1.,0.));
-    test_smpl_min "exp smpl eval 1" 0. (Poisson (SAM,0.5,0.));
+    test_smpl_min "exp smpl eval min" 0. (Poisson (SAM,0.5,0.));
+    test_smpl_size "exp smpl eval max" 10 (Poisson (SAM,0.5,10.));
 
     test "Binom p 0" (0.5 ** 10.) (binomial_pmf 10 0.5 0) string_of_float;
     test "Binom p n" (0.5 ** 10.) (binomial_pmf 10 0.5 10) string_of_float;
@@ -806,8 +821,9 @@ let prob_tests = let open Prob in [
       (Binomial (PDF,10.,0.5,0.));
     test_prob "binom cdf eval" (VFloat (0.5 ** 10.)) 
       (Binomial (CDF,10.,0.5,0.));
-    test_smpl_min "binom smpl eval 1" 0. (Binomial (SAM,5.,0.5,0.));
-    test_smpl_max "binom smpl eval 1" 5. (Binomial (SAM,5.,0.5,0.));
+    test_smpl_min "binom smpl eval min" 0. (Binomial (SAM,5.,0.5,0.));
+    test_smpl_max "binom smpl eval max" 5. (Binomial (SAM,5.,0.5,0.));
+    test_smpl_size "binom smpl eval size" 10 (Binomial (SAM,5.,0.5,10.));
 
     test "norm p" (exp ( 0.) /. ((acos (-1.) *. 2.) ** (0.5))) 
       (normal_pmf 0. 1. 0.) string_of_float;
@@ -818,9 +834,9 @@ let prob_tests = let open Prob in [
       (Normal (PDF,0.,1.,0.));
     test_prob "normal cdf eval" (VFloat (0.5)) 
       (Normal (CDF,0.,1.,0.));
-    test_smpl_min "normal smpl eval 1" (-1000.) (Normal (SAM,100.,0.1,0.));
-    test_smpl_max "normal smpl eval 1" (2000.) (Normal (SAM,100.,0.1,0.));
-    (**Normal testing *)
+    test_smpl_min "normal smpl eval min" (-1000.) (Normal (SAM,100.,0.1,0.));
+    test_smpl_max "normal smpl eval max" (2000.) (Normal (SAM,100.,0.1,0.));
+    test_smpl_size "normal smpl eval size"  10 (Normal (SAM,100.,0.1,10.));
 
     parse_test "parse bern sam n" (Prob (Bernoulli (SAM,0.5,10.))) 
       "bern smpl 0.5 10";
