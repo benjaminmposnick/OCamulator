@@ -292,7 +292,7 @@ let eval_binop_on_vectors op v1 v2 sigma =
     | Div -> VVector (RowVector (component_wise v1 v2 ( /. )))
     | Pow -> VVector (RowVector (component_wise v1 v2 ( ** )))
     | Eq -> VFloat (Bool.to_float (v1 = v2))
-    | SolveSys -> raise_exn "Left arg must be a matrix"
+    | SolveSys -> raise_exn "Left arg to \\ must be a matrix"
     | _ ->
       raise_exn ("Invalid operation between two vectors: " ^ string_of_binop op)
   in
@@ -310,7 +310,7 @@ let eval_binop_on_matrices op m1 m2 sigma =
     | Sub -> VMatrix (map2 component_wise_subtract m1 m2)
     | Mul -> VMatrix (matrix_multiply m1 m2)
     | Eq -> VFloat (Bool.to_float (m1 = m2))
-    | SolveSys -> raise_exn "Right arg must be a vector"
+    | SolveSys -> raise_exn "Right arg to \\ must be a vector"
     | _ ->
       raise_exn ("Invalid operation between two matrices: "
                  ^ string_of_binop op)
@@ -331,8 +331,11 @@ let eval_binop_on_scalar_and_array op k arr sigma =
     | VVector vec, Pow -> VVector (map exponentiate vec)
     | VMatrix mat, Mul -> VMatrix (apply_to_all multiply mat)
     | VMatrix mat, Pow -> VMatrix (apply_to_all exponentiate mat)
-    | _ -> raise_exn ("Invalid operation between scalar and array: "
-                      ^ string_of_binop op)
+    | VVector _, _ -> raise_exn ("Invalid operation between scalar and vector: "
+                                 ^ string_of_binop op)
+    | VMatrix _, _ -> raise_exn ("Invalid operation between scalar and matrix: "
+                                 ^ string_of_binop op)
+    | _ -> failwith "Impossible" [@coverage off]
   in
   (value, sigma)
 
@@ -477,11 +480,13 @@ let rec eval_solve op e1 e2 sigma =
   | Binop (op', e1', e2') -> begin
       match e2' with
       | Binop (op'', e1'', e2'') -> if (Solve.has_var_any e2') = false 
-          then fst (eval_expr e2' sigma)
-          else VEquation (op', e1', e2')
+        then fst (eval_expr e2' sigma)
+        else VEquation (op', e1', e2')
       | _ -> VEquation (op', e1', e2')
     end
   | _ -> raise_exn "Error solving equation"
+[@@ coverage off]
+(* Cannot systematically test because result depends on user input *)
 
 and eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
@@ -489,7 +494,8 @@ and eval_binop op e1 e2 sigma  =
   match v1, v2 with
   | VFloat f1, VFloat f2 -> eval_binop_on_floats op f1 f2 sigma''
   | VMatrix m1, VMatrix m2 -> eval_binop_on_matrices op m1 m2 sigma 
-  | VFloat f, (_ as arr)| (_ as arr), VFloat f ->
+  | VFloat f, (VMatrix _ as arr) | (VMatrix _ as arr), VFloat f 
+  | VFloat f, (VVector _ as arr) | (VVector _ as arr), VFloat f ->
     eval_binop_on_scalar_and_array op f arr sigma
   | VMatrix _, VVector _ | VVector _, VMatrix _  -> 
     eval_binop_on_matrix_and_vector op v1 v2 sigma

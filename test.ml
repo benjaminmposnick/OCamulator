@@ -57,11 +57,18 @@ let test_binop name expected_output op e1 e2 =
   test name expected_output
     (fst (Eval.eval_expr (Binop (op, e1, e2)) [])) string_of_value
 
-(** [exception_test name expected_output fn_output print_fn] is an OUnit test
+(** [failure_test name expected_output fn_output print_fn] is an OUnit test
     case named [name] that asserts that [expected_output] is raised when [fn]
     is called. *)
-let exception_test name expected_output fn =
+let failure_test name expected_output fn =
   name >:: fun _ -> assert_raises (Failure expected_output) (fun () -> fn ())
+
+(** [eval_error_test name expected_output fn_output print_fn] is an OUnit test
+    case named [name] that asserts that [expected_output] is raised when [fn]
+    is called. *)
+let eval_error_test name expected_output fn =
+  name >:: fun _ -> assert_raises (Eval.ComputationError.EvalError
+                                     expected_output) (fun () -> fn ())
 
 let test_prob name expected_output dist = 
   test name expected_output
@@ -495,7 +502,7 @@ let matrix_tests = [
     (Vector (Vector.make_row_vec [1.;2.;3.]));
   test "Transpose a row vector" (ColVector [1.;2.;3.])
     (Vector.(transpose (RowVector [1.;2.;3.]))) string_of_vector;
-  exception_test "Cannot apply binop to two vectors of different lengths"
+  failure_test "Cannot apply binop to two vectors of different lengths"
     "Vectors must be the same length"
     (fun () -> Vector.dot_product (Vector.make_col_vec [1.;2.;3.]) 
         (Vector.make_col_vec [1.;2.]));
@@ -510,7 +517,7 @@ let matrix_tests = [
   test "drop non-existent row" (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]])
     (Matrix.drop_row (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]]) 3) 
     Matrix.string_of_matrix;
-  exception_test "Cannot create an empty matrix"
+  failure_test "Cannot create an empty matrix"
     "Cannot create empty matrix"
     (fun () -> Matrix.of_vectors []);
   test "Create matrix out of row vectors"
@@ -527,12 +534,12 @@ let matrix_tests = [
        (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]])
        (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]]))
     Matrix.string_of_matrix;
-  exception_test "Multiply column vector times matrix"
+  failure_test "Multiply column vector times matrix"
     "Shape error: first argument should be a row vector"
     (fun () -> Matrix.matrix_vector_product 
         (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
         (Vector.make_col_vec [1.;2.;3.]) true);
-  exception_test "Multiply matrix times row vector"
+  failure_test "Multiply matrix times row vector"
     "Shape error: second argument should be a column vector"
     (fun () -> Matrix.matrix_vector_product 
         (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
@@ -543,6 +550,92 @@ let matrix_tests = [
   test "Not lower triangular" false
     (Matrix.(is_lower_triangular (of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])))
     string_of_bool;
+  eval_error_test "Solve system on floats"
+    "Left arg to \\ must be a matrix, right arg must be a vector"
+    (fun () -> Eval.eval_expr (Binop (SolveSys, Float 0., Float 1.)) []);
+  eval_error_test "Assign float to a float"
+    "Invalid operation between two floats: Assign"
+    (fun () -> Eval.eval_expr (Binop (Assign, Float 0., Float 1.)) []);
+  eval_error_test "Dot two floats"
+    "Invalid operation between two floats: Dot"
+    (fun () -> Eval.eval_expr (Binop (Dot, Float 0., Float 1.)) []);
+  eval_error_test "Solve system on vectors"
+    "Left arg to \\ must be a matrix"
+    (fun () -> Eval.eval_expr
+        (Binop (SolveSys,
+                Vector (Vector.make_col_vec [1.;2.;3.]),
+                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+  eval_error_test "Assign vectors to a vectors"
+    "Invalid operation between two vectors: Assign"
+    (fun () -> Eval.eval_expr
+        (Binop (Assign,
+                Vector (Vector.make_col_vec [1.;2.;3.]),
+                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+  eval_error_test "Mod two vectors"
+    "Invalid operation between two vectors: Mod"
+    (fun () -> Eval.eval_expr
+        (Binop (Mod,
+                Vector (Vector.make_col_vec [1.;2.;3.]),
+                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+  test_binop "Add two matrices"
+    (VMatrix (Matrix.of_list [[2.;4.;6.];[2.;4.;6.];[2.;4.;6.]]))
+    Add (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  eval_error_test "Solve system with two matrices"
+    "Right arg to \\ must be a vector"
+    (fun () -> Eval.eval_expr 
+        (Binop (SolveSys,
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])))) []);
+  test_binop "Subtract two matrices"
+    (VMatrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]))
+    Sub (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Two matrices are equal"
+    (VFloat 1.0) Eq (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Two matrices are not equal"
+    (VFloat 0.0) Eq (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]));
+  eval_error_test "Divide two matrices"
+    "Invalid operation between two matrices: Div"
+    (fun () -> Eval.eval_expr 
+        (Binop (Div,
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])))) []);
+  test_binop "Multiply vector by 2" (VVector (Vector.make_col_vec [2.;4.;6.]))
+    Mul (Float 2.0) (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "Square a vector" (VVector (Vector.make_col_vec [1.;4.;9.]))
+    Pow (Float 2.0) (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "Multiply matrix by 2" 
+    (VMatrix (Matrix.of_list [[2.;4.;6.];[2.;4.;6.];[2.;4.;6.]]))
+    Mul (Float 2.0) (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Square a matrix" 
+    (VMatrix (Matrix.of_list [[1.;4.;9.];[1.;4.;9.];[1.;4.;9.]]))
+    Pow (Float 2.0) (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  eval_error_test "Add a float to a matrix" 
+    "Invalid operation between scalar and matrix: Add"
+    (fun () -> Eval.eval_expr 
+        (Binop (Add, (Float 2.0),
+                (Matrix (Matrix.of_list 
+                           [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])))) []);
+  eval_error_test "Add a float to a vector" 
+    "Invalid operation between scalar and vector: Add"
+    (fun () -> Eval.eval_expr 
+        (Binop (Add, (Float 2.0),
+                (Vector (Vector.make_col_vec [1.;2.;3.])))) []);
+  eval_error_test "Add a matrix to a vector" 
+    "Invalid operation between matrix and vector: Add"
+    (fun () -> Eval.eval_expr 
+        (Binop (Add, (Matrix (Matrix.of_list 
+                                [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Vector (Vector.make_col_vec [1.;2.;3.])))) []);
+  eval_error_test "Solve system with matrix and row vector" 
+    "Shape error: second argument to \\ should be a column vector"
+    (fun () -> Eval.eval_expr 
+        (Binop (SolveSys, (Matrix (Matrix.of_list 
+                                     [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Vector (Vector.make_row_vec [1.;2.;3.])))) []);
 ]
 
 let lin_alg_tests =
@@ -1130,6 +1223,9 @@ let eval_tests =
   [
     test "Var x is float" (VFloat 0.) (eval_expr (Var "x") [("x", VFloat 0.)])
       string_of_value;
+    eval_error_test "Variable x not defined"
+      "Variable x is undefined in current context"
+      (fun () -> Eval.eval_expr (Var "x") []);
     test "Zero int evaluates to itself as a float" (VFloat 0.)
       (eval_expr (Int 0) []) string_of_value;
     test "Postive int evaluates to itself as a float" (VFloat 1.)
@@ -1191,7 +1287,9 @@ let eval_tests =
       (eval_expr (Binop (Mod, Float ~-.3., Float 4.)) []) string_of_value;
     test "modulo with -p no remainder" (VFloat 0.)
       (eval_expr (Binop (Mod, Float ~-.3., Float 3.)) []) string_of_value;
-
+    eval_error_test "Modulo when p and q are floats not representing ints" 
+      "Cannot apply modulo operator to non-integer values"
+      (fun () -> Eval.eval_expr (Binop (Mod, Float 0.1, Float 0.0)) []);
     test "Pythagorean theorem c^2" (VFloat 25.)
       (parse "3^2 + 4^2" |> fun inp -> Eval.eval_input inp [] |> fst)
       string_of_value;
