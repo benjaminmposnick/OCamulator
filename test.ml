@@ -65,17 +65,14 @@ let test_binop name expected_output op e1 e2 =
   test name expected_output
     (fst (Eval.eval_expr (Binop (op, e1, e2)) [])) string_of_value
 
-<<<<<<< HEAD
 (** [exception_test name expected_output fn_output print_fn] is an OUnit test
     case named [name] that asserts that [expected_output] is raised when [fn]
     is called. *)
 let exception_test name expected_output fn =
   name >:: fun _ -> assert_raises (Failure expected_output) (fun () -> fn ())
-=======
 let test_prob name expected_output dist = 
   test name expected_output
     (fst (Eval.eval_expr (Prob dist) [])) string_of_value
->>>>>>> 18a0428e453629aa573b9da88a862b45fa021522
 
 (** [check_lu_decomp l u] is [unit] if [l] is lower triangular and [u] is
     upper triangular; otherwise, [Failure] is raised. *)
@@ -642,17 +639,17 @@ let solve_tests = let open Solve in [
     test "has_var_any: 4 - 3 + 4 * x = 5" 
       true 
       (Solve.has_var_any (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Int 3), 
-                                      Binop(Mul, Int 4, Var "x")), Int 5 )))
+                                          Binop(Mul, Int 4, Var "x")), Int 5 )))
       string_of_bool;  
     test "has_var_any: 4 - x + 4 * 3 = 5" 
       true 
       (Solve.has_var_any (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Var "x"), 
-                                      Binop(Mul, Int 4, Int 3)), Int 5 )))
+                                          Binop(Mul, Int 4, Int 3)), Int 5 )))
       string_of_bool;  
     test "has_var_any: 4 - 6 + 4 * 3 = 5" 
       false
       (Solve.has_var_any (Binop(Eq, Binop(Add, Binop(Sub, Int 4, Int 6), 
-                                      Binop(Mul, Int 4, Int 3)), Int 5 )))
+                                          Binop(Mul, Int 4, Int 3)), Int 5 )))
       string_of_bool;  
 
     (* solve function tests *)
