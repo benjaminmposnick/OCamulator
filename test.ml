@@ -491,6 +491,14 @@ let solve_tests = let open Solve in [
 
 
     (* main solve tests *)
+    test "solve for var x = 5" 
+      (Binop(Eq, Var "x", Int 5 ))
+      (Solve.solve ("x") (Binop(Eq, Var "x", Int 5 )))
+      Ast.string_of_expr;
+    test "solve for var 5 = x" 
+      (Binop(Eq, Int 5, Var "x"))
+      (Solve.solve ("x") (Binop(Eq, Int 5, Var "x")))
+      Ast.string_of_expr;
     test "basic solve for addition equation x + 4 = 5" 
       (Binop(Eq, Var "x", Binop(Sub, Int 5, Int 4))) 
       (Solve.solve ("x") (Binop(Eq, Binop(Add, Var "x", Int 4), Int 5 )))

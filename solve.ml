@@ -51,3 +51,16 @@ let rec solve var e =
   else if (has_var e1 (Var var) ||  has_var e2 (Var var)) = false
   then failwith "No variable given"
   else e |> step_solve (Var var) |> solve var
+
+let rec gcd v1 v2 = 
+  let i1 = max v1 v2 in
+  let i2 = min v1 v2 in
+  if i1 = 0 then i2
+  else if i2 = 0 then i1 else
+  let quotient = i1 / i2 in
+  let remainder = i1 mod i2 in
+  gcd i2 remainder
+
+
+
+(* let lcd e1 e2 = failwith "unimplemented" *)
