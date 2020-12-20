@@ -1252,6 +1252,11 @@ let stat_tests = let open Stat in
     test_command "cmd count" (VFloat 2.) "count" 
       (Tuple (Float 3., Vector (make_row_vec [1.;2.;3.;3.])));
 
+    test "rms 1" 1. (rms [1.;1.;1.;1.]) string_of_float;
+
+    test_command "cmsd rms" (VFloat 1.) "rms" 
+      (Vector (make_row_vec [1.;1.;1.;1.]));
+
     test "unique empty" [] (unique []) string_of_list;
     test "unique 1" [1.] (unique [1.]) string_of_list;
     test "unique many" [1.;2.] (unique [1.;1.;1.;2.;2.]) string_of_list;

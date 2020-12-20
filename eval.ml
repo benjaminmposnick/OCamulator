@@ -408,6 +408,7 @@ let eval_stat_command cmd vec =
   | "product" -> stats_noargs_float cum_prod vec
   | "mode" -> stats_noargs_float mode vec
   | "range" -> stats_noargs_float range vec
+  | "rms" -> stats_noargs_float rms vec
   | _ -> raise_exn ("No such command: " ^ cmd)
 
 (** [dbl_int_command_nk f arg1 arg2] is the result of applying [f] to the
@@ -499,7 +500,7 @@ and eval_binop op e1 e2 sigma  =
 and eval_command cmd e sigma = 
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
                        "variance"; "std"; "sum"; "product";"mode";"range";
-                       "unique"] in
+                       "unique"; "rms"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
   let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
                          "linreg";"lcm"; "gcd"] in
