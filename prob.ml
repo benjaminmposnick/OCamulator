@@ -96,7 +96,8 @@ let bernoulli_pmf  (p : float) (k : int) : float =
 
 let bernoulli_cdf  (p : float) (k : int ) : float =
   if k < 0 then 0.
-  else 1.
+  else if k >= 1 then 1.
+  else 1. -. p 
 
 let geometric_pmf (p : float) (k : int) : float=
   p *. (1. -. p) ** (float_of_int (k - 1))
