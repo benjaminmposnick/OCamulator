@@ -219,7 +219,7 @@ let eval_normal func m s x =
     if Float.is_integer x then
       smpl_helper (normal_sam m) s (int_of_float x)
     else raise_exn "x must be int for smpling"
-  else if func = PDF then VFloat (normal_sam m s)
+  else if func = PDF then VFloat (normal_pmf m s x)
   else (* func = CDF *) VFloat (normal_cdf m s x)
 
 let eval_prob dist sigma = 
