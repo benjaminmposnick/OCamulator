@@ -8,6 +8,9 @@ val solve : string -> Ast.expr -> Ast.expr
     [var], false otherwise. *)
 val has_var : Ast.expr -> Ast.expr -> bool
 
+(** [has_var_any e] is true if [e] contains any Var, false otherwise. *)
+val has_var_any : Ast.expr -> bool
+
 (** [gcd v1 v2] is the greatest common divisor between the 
     ints [v1] and [v2]. *)
 val gcd : int -> int -> int

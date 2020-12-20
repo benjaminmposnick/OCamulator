@@ -15,6 +15,11 @@ let rec has_var_any e =
     | Binop (op', e1, e2) -> has_var_any e1 || has_var_any e2
     | _ -> false
 
+(** [simplify e] is the expression [e] solved to a single number. 
+    Example: [simplify Binop(Add, Int 5, Int 4)] is 9
+    Requires: Binop does not contain a variable *)
+(* let simplify e = let open Eval in failwith "Unimplemented" *)
+
 (** [match_ast ast] is the tuple of contents of the Ast expression if it is a
     Binop expression. Otherwise, [match_ast ast] is the input ast *)
 let match_ast ast var = match ast with

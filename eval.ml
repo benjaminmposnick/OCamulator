@@ -395,18 +395,6 @@ let eval_projection cmd lst =
       | Some v -> v
     end
 
-(** [eval_solve op e1 e2] is the result of solving the equation given by
-    Binop (op, e1 ,e2) for some variable that is input by the user. If an error
-    occurs during evaluation, [ComputationError.EvalError] is raised instead. *)
-let eval_solve op e1 e2 =
-  let open Solve in
-  print_endline "What variable would you like to solve for?";
-  let input = read_line () in 
-  let solve_output = solve input (Binop (op, e1, e2)) in
-  match solve_output with
-  | Binop (op, e1, e2) -> VEquation (op, e1, e2)
-  | _ -> raise_exn "Error solving equation"
-
 (** [eval_stat_command cmd value] is the result of applying the statistical
     command [cmd] to vector [vec]. If an error occurs during evaluation,
     [ComputationError.EvalError] is raised instead. *)
@@ -417,12 +405,15 @@ let eval_stat_command cmd vec =
   | "median" -> stats_noargs_float median vec
   | "sort_asc" -> stats_noargs_vec sort_asc vec
   | "sort_desc"-> stats_noargs_vec sort_desc vec
+  | "unique"-> stats_noargs_vec unique vec
   | "min" -> stats_noargs_float min vec
   | "max" -> stats_noargs_float max vec
   | "variance" -> stats_noargs_float smpl_var vec
   | "std" -> stats_noargs_float smpl_std vec
   | "sum" -> stats_noargs_float cum_sum vec
   | "product" -> stats_noargs_float cum_prod vec
+  | "mode" -> stats_noargs_float mode vec
+  | "range" -> stats_noargs_float range vec
   | _ -> raise_exn ("No such command: " ^ cmd)
 
 (** [dbl_int_command_nk f arg1 arg2] is the result of applying [f] to the
@@ -474,7 +465,25 @@ let eval_double_command cmd v1 v2 =
     EXPRESSION EVALUATION
    ===========================================================================*)
 
-let rec eval_binop op e1 e2 sigma  =
+(** [eval_solve op e1 e2] is the result of solving the equation given by
+    Binop (op, e1 ,e2) for some variable that is input by the user. If an error
+    occurs during evaluation, [ComputationError.EvalError] is raised instead. *)
+let rec eval_solve op e1 e2 sigma =
+  let open Solve in
+  print_endline "What variable would you like to solve for?";
+  let input = read_line () in 
+  let solve_output = solve input (Binop (op, e1, e2)) in
+  match solve_output with
+  | Binop (op', e1', e2') -> begin
+      match e2' with
+      | Binop (op'', e1'', e2'') -> if (Solve.has_var_any e2') = false 
+          then fst (eval_expr e2' sigma)
+          else VEquation (op', e1', e2')
+      | _ -> VEquation (op', e1', e2')
+    end
+  | _ -> raise_exn "Error solving equation"
+
+and eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
   let (v2, sigma'') = eval_expr e2 sigma in
   match v1, v2 with
@@ -492,7 +501,8 @@ let rec eval_binop op e1 e2 sigma  =
     evaluation, [ComputationError.EvalError] is raised instead. *)
 and eval_command cmd e sigma = 
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
-                       "variance"; "std"; "sum"; "product";] in
+                       "variance"; "std"; "sum"; "product";"mode";"range";
+                       "unique"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
   let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
                          "linreg";"lcm"; "gcd"] in
@@ -503,7 +513,7 @@ and eval_command cmd e sigma =
       | Binop (op, e1, e2) -> (VEquation (op, e1, e2)), sigma
       | _ -> raise_exn "Invalid operation on a non-equation" in
   let result = match cmd, value with
-    | "solve", VEquation (op, e1, e2) -> eval_solve op e1 e2 
+    | "solve", VEquation (op, e1, e2) -> eval_solve op e1 e2 sigma
     | _, VList lst when String.(length cmd > 0 && get cmd 0 = '#') ->
       eval_projection cmd lst
     | stat_cmd, VVector vec when List.mem stat_cmd stat_commands -> 
@@ -513,7 +523,7 @@ and eval_command cmd e sigma =
     | dbl_cmd, VTuple (v1,v2) when List.mem dbl_cmd double_commands ->
       eval_double_command dbl_cmd v1 v2
     | "fac", VFloat i when Float.is_integer i -> 
-      VFloat(i |> int_of_float |> Prob.factorial|> float_of_int )
+      VFloat(i |> int_of_float |> Prob.factorial |> float_of_int )
     | _ -> raise_exn ("No such command: " ^ cmd)
   in
   (result, sigma')
