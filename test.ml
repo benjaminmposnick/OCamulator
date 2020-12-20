@@ -412,8 +412,56 @@ let matrix_tests = [
     (VVector (Vector.make_col_vec [14.;32.;50.]))
     Mul (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
     (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "add two row vectors"
+    (VVector (Vector.make_row_vec [2.;4.;6.]))
+    Add (Vector (Vector.make_row_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "add two column vectors"
+    (VVector (Vector.make_row_vec [2.;4.;6.]))
+    Add (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "add a row and column vector"
+    (VVector (Vector.make_row_vec [2.;4.;6.]))
+    Add (Vector (Vector.make_row_vec [1.;2.;3.]))
+    (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "add a row and column vector"
+    (VVector (Vector.make_row_vec [2.;4.;6.]))
+    Add (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "subtract two vectors"
+    (VVector (Vector.make_row_vec [0.;0.;0.]))
+    Sub (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "multiply two vectors"
+    (VVector (Vector.make_row_vec [1.;4.;9.]))
+    Mul (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "dot two vectors"
+    (VFloat 14.)
+    Dot (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "divide two vectors"
+    (VVector (Vector.make_row_vec [1.;1.;1.]))
+    Div (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "exponentiate two vectors"
+    (VVector (Vector.make_row_vec [1.;4.;27.]))
+    Pow (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "two row vectors are equal" (VFloat 1.)
+    Eq (Vector (Vector.make_row_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "two column vectors are equal" (VFloat 1.)
+    Eq (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "two vectors with same contents but different orientations"
+    (VFloat 0.)
+    Eq (Vector (Vector.make_col_vec [1.;2.;3.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test_binop "two vectors not equal" (VFloat 0.)
+    Eq (Vector (Vector.make_col_vec [3.;2.;1.]))
+    (Vector (Vector.make_row_vec [1.;2.;3.]));
 ]
-
 
 let lin_alg_tests =
   let open Linalg in [
