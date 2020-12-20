@@ -75,15 +75,6 @@ let bern_check x =
   if x = 0 || x = 1 then ()
   else raise_exn "Bernoulli RV's can only be 0 or 1"
 
-let rand_vector dist i = 
-  let open Prob in
-  let open Vector in
-  let rec rand_helper acc_list acc_i i f =
-    if acc_i > i then acc_i
-    else rand_helper (f :: acc_list) (acc_i + 1) i f
-  in
-  rand_helper [] 0 i dist
-
 let stats_noargs_vec f vec = 
   let open Vector in
   let open Stat in
@@ -104,10 +95,6 @@ let stats_noargs_float f vec =
     |> f
   in VFloat value
 
-(* ===========================================================================
-   PROBABILITY AND STATISTICS EVALUATION
-   ===========================================================================*)
-
 let smpl_many smpler arg count = 
   let rec smpl_helper acc smpler arg count =
     if List.length acc = count then acc
@@ -119,6 +106,10 @@ let smpl_helper smpler arg k =
     if k = 0 then VFloat (smpler arg)
     else smpl_many smpler arg k
   else raise_exn "Need positive k for sampling"
+
+(* ===========================================================================
+   PROBABILITY AND STATISTICS EVALUATION
+   ===========================================================================*)
 
 (** [eval_binomial func n p k] is result of evaluating [func] for the Binomial
     distribution with parameters [n], [p], and [k]. If the parameters are 
@@ -161,7 +152,7 @@ let eval_uniform func a b x =
   if func = SAM then 
     if Float.is_integer x then
       smpl_helper (uniform_sam a) b (int_of_float x)
-    else raise_exn "x must be int for smpling"
+    else raise_exn "x must be int for sampling"
   else if func = PDF then VFloat (uniform_pmf a b x)
   else (* func = CDF *) VFloat (uniform_cdf a b x)
 
@@ -175,7 +166,7 @@ let eval_poisson func l x =
   if func = SAM then 
     if Float.is_integer x then
       smpl_helper (poisson_sam l) 1. (int_of_float x)
-    else raise_exn "x must be int for smpling"
+    else raise_exn "x must be int for sampling"
   else if Float.is_integer x then
     if func = PDF then VFloat (poisson_pmf l (int_of_float x))
     else (* func = CDF *) VFloat (poisson_cdf l (int_of_float x))
@@ -205,7 +196,7 @@ let eval_exponential func l x =
   if func = SAM then 
     if Float.is_integer x then
       smpl_helper (exponential_sam) l (int_of_float x)
-    else raise_exn "x must be int for smpling"
+    else raise_exn "x must be int for sampling"
   else if func = PDF then VFloat (exponential_pmf l x)
   else (* func = CDF *) VFloat (exponential_cdf l x)
 
@@ -218,7 +209,7 @@ let eval_normal func m s x =
   if func = SAM then 
     if Float.is_integer x then
       smpl_helper (normal_sam m) s (int_of_float x)
-    else raise_exn "x must be int for smpling"
+    else raise_exn "x must be int for sampling"
   else if func = PDF then VFloat (normal_pmf m s x)
   else (* func = CDF *) VFloat (normal_cdf m s x)
 
@@ -477,8 +468,8 @@ let rec eval_solve op e1 e2 sigma =
   | Binop (op', e1', e2') -> begin
       match e2' with
       | Binop (op'', e1'', e2'') -> if (Solve.has_var_any e2') = false 
-          then fst (eval_expr e2' sigma)
-          else VEquation (op', e1', e2')
+        then fst (eval_expr e2' sigma)
+        else VEquation (op', e1', e2')
       | _ -> VEquation (op', e1', e2')
     end
   | _ -> raise_exn "Error solving equation"
