@@ -57,10 +57,11 @@ let rec gcd v1 v2 =
   let i2 = min v1 v2 in
   if i1 = 0 then i2
   else if i2 = 0 then i1 else
-  let quotient = i1 / i2 in
   let remainder = i1 mod i2 in
   gcd i2 remainder
 
-
-
-(* let lcd e1 e2 = failwith "unimplemented" *)
+let lcm v1 v2 = 
+  if v1 = 0 or v2 = 0 then failwith "LCM of zero does not exist" else
+  let prod = Int.abs (v1 * v2) in
+  let divisor = gcd v1 v2 in
+  prod / divisor

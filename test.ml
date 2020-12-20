@@ -591,6 +591,32 @@ let solve_tests = let open Solve in [
                                           Var "x"), Int 5 )) )
       Ast.string_of_expr;
 
+
+    (* GCD tests *)
+    test "gcd of 0 and 0 is 0" 
+      (0) (Solve.gcd 0 0) string_of_int;
+    test "gcd of 42 and 0 is 43" 
+      (42) (Solve.gcd 42 0) string_of_int;
+    test "gcd of 0 and 42 is 42" 
+      (42) (Solve.gcd 0 42) string_of_int;
+    test "gcd of 45 and 365 is 5" 
+      (5) (Solve.gcd 45 365) string_of_int;
+    test "gcd of 365 and 45 is 5" 
+      (5) (Solve.gcd 365 45) string_of_int;
+    test "gcd of 6 and 642 is 5" 
+      (6) (Solve.gcd 6 642) string_of_int;
+    test "gcd of 1490 and 350 is 10" 
+      (10) (Solve.gcd 1490 350) string_of_int;
+
+    (* LCM tests *)
+    test "lcm of 12 and 15 is 60" 
+      (60) (Solve.lcm 12 15) string_of_int;
+    test "lcm of 15 and 12 is 60" 
+      (60) (Solve.lcm 15 12) string_of_int;
+    test "lcm of 1491 and 250 is 372750" 
+      (372750) (Solve.lcm 1491 250) string_of_int;
+    test "lcm of 12 and 15 is 60" 
+      (60) (Solve.lcm 12 15) string_of_int;
   ]
 
 let prob_tests = let open Prob in [

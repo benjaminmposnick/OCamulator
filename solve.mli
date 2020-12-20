@@ -8,12 +8,10 @@ val solve : string -> Ast.expr -> Ast.expr
     [var], false otherwise. *)
 val has_var : Ast.expr -> Ast.expr -> bool
 
-(** [gcd e1 e2] is the greatest common divisor between the fractions
-    represented by expressions e1 and e2.
-    Requires: e1 and e2 are Binops with Div operators *)
+(** [gcd v1 v2] is the greatest common divisor between the 
+    ints [v1] and [v2]. *)
 val gcd : int -> int -> int
 
-(** [lcd e1 e2] is the least common between the fractions
-    represented by expressions e1 and e2.
-    Requires: e1 and e2 are Binops with Div operators *)
-(* val lcd : Ast.expr -> Ast.expr -> int *)
+(** [lcm e1 e2] is the least common multiple between the 
+    ints [v1] and [v2]. *)
+val lcm : int -> int -> int
