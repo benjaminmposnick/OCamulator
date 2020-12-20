@@ -9,14 +9,6 @@ let rec has_var e1 var =
     | Binop (op', e1', e2') -> has_var e1' var || has_var e2' var
     | _ -> false
 
-(** [match_inner_ast ast] is the tuple of contents of the Ast expression if it
-    is a Binop expression and contains a variable.
-    Otherwise, [match_ast ast] is the input ast *)
-let match_inner_ast ast var = match ast with
-  | Binop (op, e1, e2) -> if has_var e1 var || has_var e2 var
-    then (op, e1, e2) else raise InvalidBinop
-  | _ -> raise InvalidBinop
-
 (** [match_ast ast] is the tuple of contents of the Ast expression if it is a
     Binop expression. Otherwise, [match_ast ast] is the input ast *)
 let match_ast ast var = match ast with
@@ -40,9 +32,6 @@ let inverse_helper (op, e_var, e_other) var =
     if has_var e1 var 
     then Binop(op, e1, Binop(Mul, e_other, e2))
     else Binop(op, e2, Binop(Div, e1, e_other))
-
-  (* | Var _ -> e
-     | Int _ -> e *)
   | _ -> failwith "not or subtraction"
 
 (** [step_solve var e] implements the primitive operation

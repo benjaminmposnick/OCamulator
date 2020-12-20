@@ -34,11 +34,6 @@ let modulo p q =
     p' mod q'
     |> float_of_int
 
-let rec var_present = function
-  | Binop (op, e1, e2) -> var_present e1 || var_present e2
-  | Var x -> true
-  | _ -> false
-
 (* ===========================================================================
     PROBABILITY AND STATISTICS UTILITY FUNCTIONS
    ===========================================================================*)

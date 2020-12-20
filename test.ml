@@ -445,18 +445,6 @@ let lin_alg_tests =
       Matrix.string_of_matrix;
   ]
 
-let var_present_tests = let open Eval in [
-    test "var_present with no var"
-      false (Eval.var_present (Binop (Add, Int 3, Int 3)) ) string_of_bool;
-    test "var_present with var"
-      true (Eval.var_present (Binop (Add, Int 3, Var "x")) ) string_of_bool;  
-    test "var_present with var nested"
-      true (Eval.var_present (Binop (Add, Binop (Mul, Int 2, Var "y" ), Int 6)))
-      string_of_bool;  
-    test "var_present with multiple vars"
-      true (Eval.var_present (Binop (Add, Var "x", Var "y")) ) string_of_bool;  
-  ]
-
 let solve_tests = let open Solve in [
     (* has_var tests *)
     test "has_var x: x" 
@@ -869,7 +857,6 @@ let suite =
   "test suite for OCamulator"  >::: List.flatten [
     parse_tests;
     lin_alg_tests;
-    var_present_tests;
     solve_tests;
     prob_tests;
     stat_tests;

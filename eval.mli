@@ -11,17 +11,13 @@ type result = value * store
 
 (** [ComputationError] is the module for interpreter errors. *)
 module ComputationError : sig
-    (** [EvalError msg] is the exception raised when the interpreter encounters
-        a runtime error. *)
-    exception EvalError of string
+  (** [EvalError msg] is the exception raised when the interpreter encounters
+      a runtime error. *)
+  exception EvalError of string
 end
 
-(** [var_present ast] is [true] if [ast] contains a non-numeric character to be
-    treated as a variable in an equation and is [false] otherwise. *)
-val var_present : expr -> bool
-
 (** [eval_prob dist sigma] is the result of evaluating the probability
-distribution [dist] in store [sigma]. *)
+    distribution [dist] in store [sigma]. *)
 val eval_prob : distribution -> store -> result
 
 (** [eval_expr e sigma] is the result of evaluating expression [e] in
