@@ -408,6 +408,7 @@ let eval_stat_command cmd vec =
   | "product" -> stats_noargs_float cum_prod vec
   | "mode" -> stats_noargs_float mode vec
   | "range" -> stats_noargs_float range vec
+  | "rms" -> stats_noargs_float rms vec
   | _ -> raise_exn ("No such command: " ^ cmd)
 
 (** [dbl_int_command_nk f arg1 arg2] is the result of applying [f] to the
@@ -479,6 +480,12 @@ let rec eval_solve op e1 e2 sigma =
 [@@ coverage off]
 (* Cannot systematically test because result depends on user input *)
 
+and eval_negate s sigma = 
+  let var_val = fst (eval_var s sigma) in 
+  match var_val with
+  | VFloat v -> VFloat (0. -. v), sigma
+  | _ -> failwith "Cannot negate non-numeric value"
+
 and eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
   let (v2, sigma'') = eval_expr e2 sigma in
@@ -499,7 +506,7 @@ and eval_binop op e1 e2 sigma  =
 and eval_command cmd e sigma = 
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
                        "variance"; "std"; "sum"; "product";"mode";"range";
-                       "unique"] in
+                       "unique"; "rms"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
   let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
                          "linreg";"lcm"; "gcd"] in
@@ -519,8 +526,10 @@ and eval_command cmd e sigma =
       eval_linalg_command linalg_cmd value
     | dbl_cmd, VTuple (v1,v2) when List.mem dbl_cmd double_commands ->
       eval_double_command dbl_cmd v1 v2
-    | "fac", VFloat i when Float.is_integer i -> 
-      VFloat(i |> int_of_float |> Prob.factorial |> float_of_int )
+    | "fac", VFloat i -> 
+      if Float.is_integer i then
+        VFloat(i |> int_of_float |> Prob.factorial |> float_of_int )
+      else raise_exn ("Factorial requires integer input")
     | _ -> raise_exn ("No such command: " ^ cmd)
   in
   (result, sigma')
@@ -548,6 +557,7 @@ and eval_expr e sigma =
     let (v, sigma') = eval_expr e sigma in 
     eval_assign x v sigma'
   | Binop (op, e1, e2) -> eval_binop op e1 e2 sigma
+  | Negate s -> eval_negate s sigma
 
 let rec eval_input e sigma = 
   let (value, sigma') = eval_expr e sigma in

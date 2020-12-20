@@ -732,7 +732,6 @@ let solve_tests = let open Solve in [
       string_of_bool;  
 
     (* has_var_any tests *)
-    (* has_var tests *)
     test "has_var_any: x" 
       true (Solve.has_var_any (Var "x")) string_of_bool; 
     test "has_var_any: 5" 
@@ -904,6 +903,10 @@ let solve_tests = let open Solve in [
     "Trying to get LCM with zero other argument" >:: 
     (fun _ -> assert_raises (Failure "LCM of zero does not exist") 
         (fun () -> Solve.lcm 25 0));
+
+    (* Root tests *)
+    (* test "root of x^2 + x + 1 = 0" 
+      () (Solve.lcm 12 15) string_of_int; *)
   ]
 
 let prob_tests = let open Prob in [
@@ -1252,6 +1255,11 @@ let stat_tests = let open Stat in
     test_command "cmd count" (VFloat 2.) "count" 
       (Tuple (Float 3., Vector (make_row_vec [1.;2.;3.;3.])));
 
+    test "rms 1" 1. (rms [1.;1.;1.;1.]) string_of_float;
+
+    test_command "cmsd rms" (VFloat 1.) "rms" 
+      (Vector (make_row_vec [1.;1.;1.;1.]));
+
     test "unique empty" [] (unique []) string_of_list;
     test "unique 1" [1.] (unique [1.]) string_of_list;
     test "unique many" [1.;2.] (unique [1.;1.;1.;2.;2.]) string_of_list;
@@ -1274,6 +1282,34 @@ let stat_tests = let open Stat in
       (linear_regression [(1.,2.);(2.,4.);(3.,6.)]) string_of_pair;
     test "linreg 1 0" (1.,3.) 
       (linear_regression [(1.,4.);(2.,5.);(3.,6.)]) string_of_pair;
+
+    test_command "cmd bestfit" (VTuple (VFloat 2., VFloat 0.)) "bestfit" 
+      (Tuple (Vector (make_row_vec [1.;2.;3.]), 
+              Vector (make_row_vec [2.;4.;6.])));
+
+    test_command "cmd linreg" (VTuple (VFloat 2., VFloat 0.)) "linreg" 
+      (Tuple (Vector (make_row_vec [1.;2.;3.]), 
+              Vector (make_row_vec [2.;4.;6.])));
+
+    eval_error_test "comb float err"
+      "Both arguements must be integer"
+      (fun () -> Eval.eval_expr 
+          (Command ("comb", Tuple (Float 1.5, Float 2.5))) []);
+
+    eval_error_test "choose float err"
+      "Both arguements must be integer"
+      (fun () -> Eval.eval_expr 
+          (Command ("choose", Tuple (Float 1.5, Float 2.5))) []);
+
+    eval_error_test "perm float err"
+      "Both arguements must be integer"
+      (fun () -> Eval.eval_expr 
+          (Command ("perm", Tuple (Float 1.5, Float 2.5))) []);
+
+    eval_error_test "fac float err"
+      "Factorial requires integer input"
+      (fun () -> Eval.eval_expr 
+          (Command ("fac",  Float 1.5)) []);
   ]
 
 let eval_tests = 
@@ -1281,6 +1317,15 @@ let eval_tests =
   [
     test "Var x is float" (VFloat 0.) (eval_expr (Var "x") [("x", VFloat 0.)])
       string_of_value;
+    test "Negate var y" (VFloat (-5.)) (eval_expr (Negate "y") [("y", VFloat 5.)])
+      string_of_value;
+    test "Negate var y" (VFloat (5.)) (eval_expr (Negate "y") [("y", VFloat (-5.))])
+      string_of_value;
+    "Unassigned var given Failure" >:: 
+      (fun _ -> assert_raises 
+          (Eval.ComputationError.EvalError
+          "Variable x is undefined in current context") 
+          (fun () -> (eval_expr (Negate "x") [("y", VFloat (-5.))]) ));
     eval_error_test "Variable x not defined"
       "Variable x is undefined in current context"
       (fun () -> Eval.eval_expr (Var "x") []);

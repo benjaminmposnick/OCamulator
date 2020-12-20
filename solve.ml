@@ -15,11 +15,6 @@ let rec has_var_any e =
     | Binop (op', e1, e2) -> has_var_any e1 || has_var_any e2
     | _ -> false
 
-(** [simplify e] is the expression [e] solved to a single number. 
-    Example: [simplify Binop(Add, Int 5, Int 4)] is 9
-    Requires: Binop does not contain a variable *)
-(* let simplify e = let open Eval in failwith "Unimplemented" *)
-
 (** [match_ast ast] is the tuple of contents of the Ast expression if it is a
     Binop expression. Otherwise, [match_ast ast] is the input ast *)
 let match_ast ast var = match ast with
@@ -78,3 +73,20 @@ let lcm v1 v2 =
     let prod = Int.abs (v1 * v2) in
     let divisor = gcd v1 v2 in
     prod / divisor
+
+(* let root_helper a b c =
+  let inner_root = 
+    Binop(Sub, Binop(Pow, b, Int 2), Binop(Mul, Binop(Mul, Int 4, a), c)) in
+  if inner_root > 0
+  then
+  failwith "unimplemented" *)
+
+(* let root = function
+  | Binop (op, e1, e2) -> begin
+      if e2 <> Int 0 or op <> Eq
+      then failwith "$root input must be in the form ax^2 + bx + c = 0"
+      else match e1 with
+      | Binop(Add, a, b) -> failwith "unimplemented" (* root_helper a b e2 *) 
+      | _ -> failwith "$root input must be in the form ax^2 + bx + c = 0"
+      end
+  | _ -> failwith "$root input must be in the form ax^2 + bx + c = 0" *)

@@ -18,3 +18,6 @@ val gcd : int -> int -> int
 (** [lcm e1 e2] is the least common multiple between the 
     ints [v1] and [v2]. *)
 val lcm : int -> int -> int
+
+(** [root e] is the quadratic-formula output of  *)
+(* val root : Ast.expr -> Ast.expr *)
