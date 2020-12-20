@@ -87,7 +87,7 @@ let mode (data : float list) =
   |h::t -> max_value h counts
 
 let get_slope (x : float list) (y : float list) (mu_x : float) (mu_y : float) =
-  mean (List.map2 (fun a b -> (a -. mu_x) *. (b -. mu_y)) x y) 
+  cum_sum (List.map2 (fun a b -> (a -. mu_x) *. (b -. mu_y)) x y) 
   /. (err x |> squared_sum)
 
 let compute_lin_reg (x : float list) (y : float list) = 

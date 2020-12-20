@@ -11,6 +11,10 @@ let string_of_list vec =
     |> (fun str -> "[" ^ str ^ "]") in
   string_of_list_aux "; " vec
 
+(** [string_of_pair p] is a printer funtion for float pairs *)
+let string_of_pair p = 
+  "(" ^ string_of_float (fst p) ^ ", " ^ string_of_float (snd p) ^ ")"
+
 (** [test name expected_output fn_output print_fn] is an OUnit test case named
     [name] that asserts equality between [expected_output] and [fn_output].
     [print_fn] is used to print the inputs if the assertion is false. *)
@@ -767,6 +771,11 @@ let stat_tests = let open Stat in
     test "quantile 0.75" 5. (quantile [1.;2.;3.;4.;5.] 0.75) string_of_float;
     test "quantile 0.2" 2. (quantile [1.;2.;3.;4.;5.] 0.2) string_of_float;
     test "quantile 0.25" 2. (quantile [1.;2.;3.;4.;5.] 0.25) string_of_float;
+
+    test "linreg 1 0" (2.,0.) 
+      (linear_regression [(1.,2.);(2.,4.);(3.,6.)]) string_of_pair;
+    test "linreg 1 0" (1.,3.) 
+      (linear_regression [(1.,4.);(2.,5.);(3.,6.)]) string_of_pair;
   ]
 
 let eval_tests = 
