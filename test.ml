@@ -49,7 +49,7 @@ let read_matrix_from_text_file filename =
   let line = input_line ic in
   match parse line with
   | Matrix m -> m
-  | _ -> failwith "Impossible"
+  | _ -> failwith "Impossible" [@coverage off]
 
 (** [test_command name expected_output cmd e] is an OUnit test case named [name]
     that asserts equality between [expected_output] and the value that results 
@@ -64,6 +64,12 @@ let test_command name expected_output cmd e =
 let test_binop name expected_output op e1 e2 =
   test name expected_output
     (fst (Eval.eval_expr (Binop (op, e1, e2)) [])) string_of_value
+
+(** [exception_test name expected_output fn_output print_fn] is an OUnit test
+    case named [name] that asserts that [expected_output] is raised when [fn]
+    is called. *)
+let exception_test name expected_output fn =
+  name >:: fun _ -> assert_raises (Failure expected_output) (fun () -> fn ())
 
 (** [check_lu_decomp l u] is [unit] if [l] is lower triangular and [u] is
     upper triangular; otherwise, [Failure] is raised. *)
@@ -461,6 +467,56 @@ let matrix_tests = [
   test_binop "two vectors not equal" (VFloat 0.)
     Eq (Vector (Vector.make_col_vec [3.;2.;1.]))
     (Vector (Vector.make_row_vec [1.;2.;3.]));
+  test "Transpose a row vector" (ColVector [1.;2.;3.])
+    (Vector.(transpose (RowVector [1.;2.;3.]))) string_of_vector;
+  exception_test "Cannot apply binop to two vectors of different lengths"
+    "Vectors must be the same length"
+    (fun () -> Vector.dot_product (Vector.make_col_vec [1.;2.;3.]) 
+        (Vector.make_col_vec [1.;2.]));
+  test "Apply map to column vector" (ColVector [0.;0.;0.])
+    (Vector.(map (fun x -> x -. x) (ColVector [1.;2.;3.]))) string_of_vector;
+  test "3x4 zeros matrix"
+    (Matrix.of_list [[0.;0.;0.;0.;];[0.;0.;0.;0.;];[0.;0.;0.;0.;]]) 
+    (Matrix.zeros ~n:3 4) Matrix.string_of_matrix;
+  test "drop last row" (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]])
+    (Matrix.drop_row (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]) 2) 
+    Matrix.string_of_matrix;
+  test "drop non-existent row" (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]])
+    (Matrix.drop_row (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]]) 3) 
+    Matrix.string_of_matrix;
+  exception_test "Cannot create an empty matrix"
+    "Cannot create empty matrix"
+    (fun () -> Matrix.of_vectors []);
+  test "Create matrix out of row vectors"
+    (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]])
+    (Matrix.of_vectors
+       [Vector.make_row_vec [1.;2.;3.]; Vector.make_row_vec [4.;5.;6.]]) 
+    Matrix.string_of_matrix;
+  test "Map on a matrix" (Matrix.of_list [[1.;4.;9.];[1.;4.;9.]])
+    (Matrix.map (fun vec -> Vector.map (fun x -> x ** 2.) vec)
+       (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]]))
+    Matrix.string_of_matrix;
+  test "Map2 with two matrices" (Matrix.of_list [[1.;4.;9.];[1.;4.;9.]])
+    (Matrix.map2 (fun vec1 vec2 -> Vector.component_wise_multiply vec1 vec2)
+       (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]])
+       (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]]))
+    Matrix.string_of_matrix;
+  exception_test "Multiply column vector times matrix"
+    "Shape error: first argument should be a row vector"
+    (fun () -> Matrix.matrix_vector_product 
+        (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
+        (Vector.make_col_vec [1.;2.;3.]) true);
+  exception_test "Multiply matrix times row vector"
+    "Shape error: second argument should be a column vector"
+    (fun () -> Matrix.matrix_vector_product 
+        (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
+        (Vector.make_row_vec [1.;2.;3.]) false);
+  test "Not upper triangular" false
+    (Matrix.(is_upper_triangular (of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])))
+    string_of_bool;
+  test "Not lower triangular" false
+    (Matrix.(is_lower_triangular (of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])))
+    string_of_bool;
 ]
 
 let lin_alg_tests =

@@ -13,7 +13,7 @@ let n_cols mat =
 
 (** [rep_ok mat] is [mat] if [mat] satisfies its representation invariants and
     raises [Failure] otherwise. *)
-let rep_ok mat =
+let rep_ok mat = 
   let open Vector in
   let rec check_for_col_vecs = function
     | [] -> ()
@@ -28,6 +28,7 @@ let rep_ok mat =
   if not (all_rows_same_len) then
     failwith "Matrix must have all rows the same length"
   else mat
+[@@coverage off]
 
 let to_list mat =
   ignore(rep_ok mat);
