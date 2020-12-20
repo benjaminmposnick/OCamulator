@@ -65,6 +65,9 @@ let test_binop name expected_output op e1 e2 =
   test name expected_output
     (fst (Eval.eval_expr (Binop (op, e1, e2)) [])) string_of_value
 
+let test_prob name expected_output dist = 
+  test name expected_output
+    (fst (Eval.eval_expr (Prob dist) [])) string_of_value
 
 (** [check_lu_decomp l u] is [unit] if [l] is lower triangular and [u] is
     upper triangular; otherwise, [Failure] is raised. *)
@@ -706,15 +709,26 @@ let prob_tests = let open Prob in [
     test "Factorial Base 1" 1 (factorial 1) string_of_int;
     test "Factorial Rec 5" 120 (factorial 5) string_of_int;
 
+    test_command "cmd fac" (VFloat 6.)
+      "fac" (Float 3.);
+
     test "Choose 0 is 1" 1. (choose 10 0) string_of_float; 
     test "Choose n is 1" 1. (choose 10 10) string_of_float; 
     test "Choose 1 is n" 10. (choose 10 1) string_of_float; 
     test "10 Choose 5" 252. (choose 10 5) string_of_float;
 
+    test_command "cmd choose" (VFloat 252.)
+      "choose" (Tuple (Float 10., Float 5.));
+    test_command "cmd comb" (VFloat 252.)
+      "comb" (Tuple (Float 10., Float 5.));
+
     test "Perm 0 is 1" 1. (perm 10 0) string_of_float; 
     test "Perm n n" 6. (perm 3 3) string_of_float; 
     test "Perm 1 is n" 3. (perm 3 1) string_of_float; 
     test "4 Perm 2" 12. (perm 4 2) string_of_float; 
+
+    test_command "cmd perm" (VFloat 12.)
+      "perm" (Tuple (Float 4., Float 2.));
 
     test "Unif p in range" 1. (uniform_pmf 0. 1. 0.5) string_of_float;
     test "Unif p out of range ge" 0. (uniform_pmf 0. 1. 2.) string_of_float;
@@ -726,16 +740,25 @@ let prob_tests = let open Prob in [
     test "Unif c 1" 1. (uniform_cdf 0. 1. 2.) string_of_float;
     test "Unif c middle" 0.5 (uniform_cdf 0. 1. 0.5) string_of_float;
 
+    test_prob "Unif pdf eval" (VFloat 1.) (Uniform (PDF,0.,1.,0.5));
+    test_prob "Unif cdf eval" (VFloat 1.) (Uniform (CDF,0.,1.,2.));
+
     test "Bern p 1" 0.8 (bernoulli_pmf 0.8 1) string_of_float;
     test "Bern p 0" (1. -. 0.8) (bernoulli_pmf 0.8 0) string_of_float;
     test "Bern c 0" 0. (bernoulli_cdf 0.8 (-1)) string_of_float;
     test "Bern c mid" (1. -. 0.8) (bernoulli_cdf 0.8 (0)) string_of_float;
     test "Bern c 1" 1. (bernoulli_cdf 0.8 (1)) string_of_float;
 
+    test_prob "bern pdf eval" (VFloat 0.5) (Bernoulli (PDF,0.5,0.));
+    test_prob "bern cdf eval" (VFloat 1.) (Bernoulli(CDF,0.5,1.));
+
     test "Geo p 1" 0.5 (geometric_pmf 0.5 1) string_of_float;
     test "Geo p 3" 0.125 (geometric_pmf 0.5 3) string_of_float;
     test "Geo c 1" 0.8 (geometric_cdf 0.8 1) string_of_float;
     test "Geo c 1" 0.992 (geometric_cdf 0.8 3) string_of_float;
+
+    test_prob "geo pdf eval" (VFloat 0.25) (Geometric (PDF,0.5,2.));
+    test_prob "geo cdf eval" (VFloat 0.992) (Geometric (CDF,0.8,3.));
 
     test "Exp p 0" 0.5 (exponential_pmf 0.5 0.) string_of_float;
     test "Exp p 1" (exp (-1.)) (exponential_pmf 1. 1.) string_of_float;
@@ -743,18 +766,27 @@ let prob_tests = let open Prob in [
     test "Exp c 1" (1. -. exp (-1.))
       (exponential_cdf 1. 1.) string_of_float;
 
+    test_prob "exp pdf eval" (VFloat 0.5) (Exponential (PDF,0.5,0.));
+    test_prob "exp cdf eval" (VFloat 0.) (Exponential (CDF,1.,0.));
+
     test "Pois p 0" (exp (-1.)) (poisson_pmf 1. 0) string_of_float;
     test "Pois p 2" (exp (-1.) /. 2.) (poisson_pmf 1. 2) string_of_float;
-
     test "Pois c 0" (exp (-1.)) (poisson_cdf 1. 0) string_of_float;
     test "Pois c 2" (5. *. exp (-1.) /. 2.)
       (poisson_cdf 1. 2) string_of_float;
 
+    test_prob "pois pdf eval" (VFloat (exp (-1.))) (Poisson (PDF,1.,0.));
+    test_prob "pois cdf eval" (VFloat (exp (-1.))) (Poisson (CDF,1.,0.));
+
     test "Binom p 0" (0.5 ** 10.) (binomial_pmf 10 0.5 0) string_of_float;
     test "Binom p n" (0.5 ** 10.) (binomial_pmf 10 0.5 10) string_of_float;
-
     test "Binom c 0" (0.5 ** 10.) (binomial_cdf 10 0.5 0) string_of_float;
     test "Binom c n" (1.) (binomial_cdf 10 0.5 10) string_of_float;
+
+    test_prob "binom pdf eval" (VFloat (0.5 ** 10.)) 
+      (Binomial (PDF,10.,0.5,0.));
+    test_prob "binom cdf eval" (VFloat (0.5 ** 10.)) 
+      (Binomial (CDF,10.,0.5,0.));
 
     (** All random tests use the seed 42*)
     test_rand_1 "Bern sam 1" 0. bernoulli_sam 0.5 string_of_float;
