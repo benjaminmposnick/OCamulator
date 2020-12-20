@@ -43,7 +43,7 @@ let modulo p q =
     raised.*)
 let prob_check p = 
   if p >= 0. && p <= 1. then ()
-  else raise_exn "p is not a valid probability"
+  else raise_exn "p must be between 0 and 1 inclusive"
 
 (** [nk_check n k] is [unit] if [k <= n]; otherwise,
     [ComputationError.EvalError] is raised.*)
@@ -399,7 +399,7 @@ let eval_stat_command cmd vec =
     pair [arg1] [arg2] if [arg1] and [arg2] if [arg2] <= [arg1].
     If an error occurs during evaluation, [ComputationError.EvalError] 
     is raised instead. *)
-let dbl_int_commnd_nk f arg1 arg2 =
+let dbl_int_cmd_nk f arg1 arg2 =
   if Float.is_integer arg1 && Float.is_integer arg2 then
     let arg1 = int_of_float arg1 in
     let arg2 = int_of_float arg2 in
@@ -407,19 +407,36 @@ let dbl_int_commnd_nk f arg1 arg2 =
     f arg1 arg2
   else raise_exn ("Both arguements must be integer")
 
+let cmd_linreg x_vec y_vec =
+  if List.length x_vec = List.length y_vec then 
+    let points = List.combine x_vec y_vec in
+    let mb = Stat.linear_regression points in
+    VTuple (VFloat (fst mb), VFloat (snd mb))
+  else raise_exn ("Must give the same number of x and y coords")
+
 (** [eval_double_command cmd v1 v2] is the result of applying the statistical
     command [cmd] to the paris [v1] [v12]. If an error occurs during evaluation,
     [ComputationError.EvalError] is raised instead.*)
 let eval_double_command cmd v1 v2 = 
   let open Stat in 
   let open Prob in
+  let open Vector in
   match cmd, v1, v2 with
   | "choose", VFloat arg1, VFloat arg2 ->
-    VFloat (dbl_int_commnd_nk choose arg1 arg2)
+    VFloat (dbl_int_cmd_nk choose arg1 arg2)
   | "comb", VFloat arg1, VFloat arg2 -> 
-    VFloat (dbl_int_commnd_nk choose arg1 arg2)
+    VFloat (dbl_int_cmd_nk choose arg1 arg2)
   | "perm", VFloat arg1, VFloat arg2 -> 
-    VFloat (dbl_int_commnd_nk perm arg1 arg2)
+    VFloat (dbl_int_cmd_nk perm arg1 arg2)
+  | "count", VFloat arg, VVector vec ->
+    VFloat (count arg (to_list vec))
+  | "quantile", VFloat arg, VVector vec ->
+    prob_check arg;
+    VFloat (quantile (to_list vec) arg)
+  | "bestfit", VVector vec1, VVector vec2 ->
+    cmd_linreg (to_list vec1) (to_list vec2)
+  | "linreg", VVector vec1, VVector vec2 ->
+    cmd_linreg (to_list vec1) (to_list vec2)
   | _ -> raise_exn ("No such command: " ^ cmd)
 
 (* ===========================================================================
@@ -446,7 +463,8 @@ and eval_command cmd e sigma =
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
                        "variance"; "std"; "sum"; "product"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
-  let double_commands = ["choose";"perm";"comb"] in
+  let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
+                         "linreg"] in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
