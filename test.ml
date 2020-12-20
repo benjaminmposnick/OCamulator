@@ -70,6 +70,7 @@ let test_binop name expected_output op e1 e2 =
     is called. *)
 let exception_test name expected_output fn =
   name >:: fun _ -> assert_raises (Failure expected_output) (fun () -> fn ())
+
 let test_prob name expected_output dist = 
   test name expected_output
     (fst (Eval.eval_expr (Prob dist) [])) string_of_value
