@@ -57,11 +57,16 @@ let test_binop name expected_output op e1 e2 =
   test name expected_output
     (fst (Eval.eval_expr (Binop (op, e1, e2)) [])) string_of_value
 
-(** [exception_test name expected_output fn_output print_fn] is an OUnit test
+(** [failure_test name expected_output fn_output print_fn] is an OUnit test
     case named [name] that asserts that [expected_output] is raised when [fn]
     is called. *)
-let exception_test name expected_output fn =
+let failure_test name expected_output fn =
   name >:: fun _ -> assert_raises (Failure expected_output) (fun () -> fn ())
+
+let eval_error_test name expected_output fn =
+  name >:: fun _ -> assert_raises
+      (Eval.ComputationError.EvalError expected_output) (fun () -> fn ())
+
 let test_prob name expected_output dist = 
   test name expected_output
     (fst (Eval.eval_expr (Prob dist) [])) string_of_value
@@ -494,7 +499,7 @@ let matrix_tests = [
     (Vector (Vector.make_row_vec [1.;2.;3.]));
   test "Transpose a row vector" (ColVector [1.;2.;3.])
     (Vector.(transpose (RowVector [1.;2.;3.]))) string_of_vector;
-  exception_test "Cannot apply binop to two vectors of different lengths"
+  failure_test "Cannot apply binop to two vectors of different lengths"
     "Vectors must be the same length"
     (fun () -> Vector.dot_product (Vector.make_col_vec [1.;2.;3.]) 
         (Vector.make_col_vec [1.;2.]));
@@ -509,7 +514,7 @@ let matrix_tests = [
   test "drop non-existent row" (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]])
     (Matrix.drop_row (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]]) 3) 
     Matrix.string_of_matrix;
-  exception_test "Cannot create an empty matrix"
+  failure_test "Cannot create an empty matrix"
     "Cannot create empty matrix"
     (fun () -> Matrix.of_vectors []);
   test "Create matrix out of row vectors"
@@ -526,12 +531,12 @@ let matrix_tests = [
        (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]])
        (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]]))
     Matrix.string_of_matrix;
-  exception_test "Multiply column vector times matrix"
+  failure_test "Multiply column vector times matrix"
     "Shape error: first argument should be a row vector"
     (fun () -> Matrix.matrix_vector_product 
         (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
         (Vector.make_col_vec [1.;2.;3.]) true);
-  exception_test "Multiply matrix times row vector"
+  failure_test "Multiply matrix times row vector"
     "Shape error: second argument should be a column vector"
     (fun () -> Matrix.matrix_vector_product 
         (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
@@ -542,6 +547,92 @@ let matrix_tests = [
   test "Not lower triangular" false
     (Matrix.(is_lower_triangular (of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])))
     string_of_bool;
+  eval_error_test "Solve system on floats"
+    "Left arg to \\ must be a matrix, right arg must be a vector"
+    (fun () -> Eval.eval_expr (Binop (SolveSys, Float 0., Float 1.)) []);
+  eval_error_test "Assign float to a float"
+    "Invalid operation between two floats: Assign"
+    (fun () -> Eval.eval_expr (Binop (Assign, Float 0., Float 1.)) []);
+  eval_error_test "Dot two floats"
+    "Invalid operation between two floats: Dot"
+    (fun () -> Eval.eval_expr (Binop (Dot, Float 0., Float 1.)) []);
+  eval_error_test "Solve system on vectors"
+    "Left arg to \\ must be a matrix"
+    (fun () -> Eval.eval_expr
+        (Binop (SolveSys,
+                Vector (Vector.make_col_vec [1.;2.;3.]),
+                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+  eval_error_test "Assign vectors to a vectors"
+    "Invalid operation between two vectors: Assign"
+    (fun () -> Eval.eval_expr
+        (Binop (Assign,
+                Vector (Vector.make_col_vec [1.;2.;3.]),
+                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+  eval_error_test "Mod two vectors"
+    "Invalid operation between two vectors: Mod"
+    (fun () -> Eval.eval_expr
+        (Binop (Mod,
+                Vector (Vector.make_col_vec [1.;2.;3.]),
+                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+  test_binop "Add two matrices"
+    (VMatrix (Matrix.of_list [[2.;4.;6.];[2.;4.;6.];[2.;4.;6.]]))
+    Add (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  eval_error_test "Solve system with two matrices"
+    "Right arg to \\ must be a vector"
+    (fun () -> Eval.eval_expr 
+        (Binop (SolveSys,
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])))) []);
+  test_binop "Subtract two matrices"
+    (VMatrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]))
+    Sub (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Two matrices are equal"
+    (VFloat 1.0) Eq (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Two matrices are not equal"
+    (VFloat 0.0) Eq (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]));
+  eval_error_test "Divide two matrices"
+    "Invalid operation between two matrices: Div"
+    (fun () -> Eval.eval_expr 
+        (Binop (Div,
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])))) []);
+  test_binop "Multiply vector by 2" (VVector (Vector.make_col_vec [2.;4.;6.]))
+    Mul (Float 2.0) (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "Square a vector" (VVector (Vector.make_col_vec [1.;4.;9.]))
+    Pow (Float 2.0) (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "Multiply matrix by 2" 
+    (VMatrix (Matrix.of_list [[2.;4.;6.];[2.;4.;6.];[2.;4.;6.]]))
+    Mul (Float 2.0) (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Square a matrix" 
+    (VMatrix (Matrix.of_list [[1.;4.;9.];[1.;4.;9.];[1.;4.;9.]]))
+    Pow (Float 2.0) (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  eval_error_test "Add a float to a matrix" 
+    "Invalid operation between scalar and matrix: Add"
+    (fun () -> Eval.eval_expr 
+        (Binop (Add, (Float 2.0),
+                (Matrix (Matrix.of_list 
+                           [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])))) []);
+  eval_error_test "Add a float to a vector" 
+    "Invalid operation between scalar and vector: Add"
+    (fun () -> Eval.eval_expr 
+        (Binop (Add, (Float 2.0),
+                (Vector (Vector.make_col_vec [1.;2.;3.])))) []);
+  eval_error_test "Add a matrix to a vector" 
+    "Invalid operation between matrix and vector: Add"
+    (fun () -> Eval.eval_expr 
+        (Binop (Add, (Matrix (Matrix.of_list 
+                                [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Vector (Vector.make_col_vec [1.;2.;3.])))) []);
+  eval_error_test "Solve system with matrix and row vector" 
+    "Shape error: second argument to \\ should be a column vector"
+    (fun () -> Eval.eval_expr 
+        (Binop (SolveSys, (Matrix (Matrix.of_list 
+                                     [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Vector (Vector.make_row_vec [1.;2.;3.])))) []);
 ]
 
 let lin_alg_tests =
@@ -860,6 +951,13 @@ let prob_tests = let open Prob in [
     test_smpl_max "Unif smpl eval max" 1. (Uniform (SAM,0.,1.,0.));
     test_smpl_size "Unif smpl eval size" 10 (Uniform (SAM,0.,1.,10.));
 
+    eval_error_test "Unif a>b" "a must be < b" 
+      (fun () -> Eval.eval_expr (Prob (Uniform (PDF,5.,0.,0.5))) []);
+    eval_error_test "k exp" "x must be int for sampling"
+      (fun () -> Eval.eval_expr (Prob (Uniform (SAM,1.,3.,0.5))) []);
+    eval_error_test "k neg exp" "Need positive k for sampling"
+      (fun () -> Eval.eval_expr (Prob (Uniform (SAM,1.,3.,-1.))) []);
+
     test "Bern p 1" 0.8 (bernoulli_pmf 0.8 1) string_of_float;
     test "Bern p 0" (1. -. 0.8) (bernoulli_pmf 0.8 0) string_of_float;
     test "Bern c 0" 0. (bernoulli_cdf 0.8 (-1)) string_of_float;
@@ -872,6 +970,15 @@ let prob_tests = let open Prob in [
     test_smpl_max "bern smpl eval max" 1. (Bernoulli(SAM,0.5,0.));
     test_smpl_size "bern smpl eval size" 10 (Bernoulli(SAM,0.5,10.));
 
+    eval_error_test "bern p exc" "p must be between 0 and 1 inclusive"
+      (fun () -> Eval.eval_expr (Prob (Bernoulli (PDF,4.,0.))) []);
+    eval_error_test "bern k exc" 
+      "k value of Bernoulli distribution must be an integer"
+      (fun () -> Eval.eval_expr (Prob (Bernoulli (SAM,0.5,0.5))) []);
+    eval_error_test "bern 0-1 exc" 
+      "Bernoulli RV's can only be 0 or 1"
+      (fun () -> Eval.eval_expr (Prob (Bernoulli (PDF,0.5,2.))) []);
+
     test "Geo p 1" 0.5 (geometric_pmf 0.5 1) string_of_float;
     test "Geo p 3" 0.125 (geometric_pmf 0.5 3) string_of_float;
     test "Geo c 1" 0.8 (geometric_cdf 0.8 1) string_of_float;
@@ -881,6 +988,15 @@ let prob_tests = let open Prob in [
     test_prob "geo cdf eval" (VFloat 0.992) (Geometric (CDF,0.8,3.));
     test_smpl_min "geo smpl eval min" 0. (Geometric (SAM,0.5,0.));
     test_smpl_size "geo smpl eval size" 10 (Geometric (SAM,0.5,10.));
+
+    eval_error_test "geo p exc" "p must be between 0 and 1 inclusive"
+      (fun () -> Eval.eval_expr (Prob (Geometric (PDF,4.,0.))) []);
+    eval_error_test "geo k float exc" 
+      "k value of Geometric distribution must be an integer"
+      (fun () -> Eval.eval_expr (Prob (Geometric(PDF,0.5,0.5))) []);
+    eval_error_test "geo k neg exc" 
+      "Input value must be >= 0"
+      (fun () -> Eval.eval_expr (Prob (Geometric (PDF,0.5,-2.))) []);
 
     test "Exp p 0" 0.5 (exponential_pmf 0.5 0.) string_of_float;
     test "Exp p 1" (exp (-1.)) (exponential_pmf 1. 1.) string_of_float;
@@ -893,6 +1009,13 @@ let prob_tests = let open Prob in [
     test_smpl_min "exp smpl eval min" 0. (Exponential (SAM,0.5,0.));
     test_smpl_size "exp smpl eval max" 10 (Exponential (SAM,0.5,10.));
 
+    eval_error_test "exp l exc" "Lambda must be > 0"
+      (fun () -> Eval.eval_expr (Prob (Exponential (PDF,-1.,1.))) []);
+    eval_error_test "exp x neg exc" "Input value must be >= 0"
+      (fun () -> Eval.eval_expr (Prob (Exponential (PDF,1.,-1.))) []);
+    eval_error_test "exp x float exc" "x must be int for sampling"
+      (fun () -> Eval.eval_expr (Prob (Exponential (SAM,1.,1.4))) []);
+
     test "Pois p 0" (exp (-1.)) (poisson_pmf 1. 0) string_of_float;
     test "Pois p 2" (exp (-1.) /. 2.) (poisson_pmf 1. 2) string_of_float;
     test "Pois c 0" (exp (-1.)) (poisson_cdf 1. 0) string_of_float;
@@ -903,6 +1026,16 @@ let prob_tests = let open Prob in [
     test_prob "pois cdf eval" (VFloat (exp (-1.))) (Poisson (CDF,1.,0.));
     test_smpl_min "exp smpl eval min" 0. (Poisson (SAM,0.5,0.));
     test_smpl_size "exp smpl eval max" 10 (Poisson (SAM,0.5,10.));
+
+    eval_error_test "pois l exc" "Lambda must be > 0"
+      (fun () -> Eval.eval_expr (Prob (Poisson (PDF,-1.,1.))) []);
+    eval_error_test "pois x neg exc" "Input value must be >= 0"
+      (fun () -> Eval.eval_expr (Prob (Poisson (PDF,1.,-1.))) []);
+    eval_error_test "pois x float sam exc" "x must be int for sampling"
+      (fun () -> Eval.eval_expr (Prob (Poisson (SAM,1.,1.4))) []);
+    eval_error_test "pois x float dist exc" 
+      "x value of Poisson distribution must be an integer"
+      (fun () -> Eval.eval_expr (Prob (Poisson (PDF,1.,1.4))) []);
 
     test "Binom p 0" (0.5 ** 10.) (binomial_pmf 10 0.5 0) string_of_float;
     test "Binom p n" (0.5 ** 10.) (binomial_pmf 10 0.5 10) string_of_float;
@@ -917,6 +1050,18 @@ let prob_tests = let open Prob in [
     test_smpl_max "binom smpl eval max" 5. (Binomial (SAM,5.,0.5,0.));
     test_smpl_size "binom smpl eval size" 10 (Binomial (SAM,5.,0.5,10.));
 
+    eval_error_test "binom p exc" "p must be between 0 and 1 inclusive"
+      (fun () -> Eval.eval_expr (Prob (Binomial (PDF,4.,8.,2.))) []);
+    eval_error_test "binom k neg exc" 
+      "Input value must be >= 0"
+      (fun () -> Eval.eval_expr (Prob (Binomial (PDF,4.,0.5,-2.))) []);
+    eval_error_test "binom n k int exc" 
+      "n and k values of Binomial distribution must be ints"
+      (fun () -> Eval.eval_expr (Prob (Binomial (PDF,3.5,0.5,2.))) []);
+    eval_error_test "binom k > n exc" 
+      "k must be <= n"
+      (fun () -> Eval.eval_expr (Prob (Binomial (PDF,3.,0.5,5.))) []);
+
     test "norm p" (exp ( 0.) /. ((acos (-1.) *. 2.) ** (0.5))) 
       (normal_pmf 0. 1. 0.) string_of_float;
     test "norm c" (0.5) (normal_cdf 0. 1. 0.) string_of_float;
@@ -929,6 +1074,13 @@ let prob_tests = let open Prob in [
     test_smpl_min "normal smpl eval min" (-1000.) (Normal (SAM,100.,0.1,0.));
     test_smpl_max "normal smpl eval max" (2000.) (Normal (SAM,100.,0.1,0.));
     test_smpl_size "normal smpl eval size"  10 (Normal (SAM,100.,0.1,10.));
+
+    eval_error_test "norm s neg exc" "Input value must be >= 0"
+      (fun () -> Eval.eval_expr (Prob (Normal (PDF,1.,-1.,2.))) []);
+    eval_error_test "norm sam float exc" "x must be int for sampling"
+      (fun () -> Eval.eval_expr (Prob (Normal (SAM,1.,1.,2.5))) []);
+    eval_error_test "norm sam neg neg exc" "Need positive k for sampling"
+      (fun () -> Eval.eval_expr (Prob (Normal (SAM,1.,1.,-2.))) []);
 
     parse_test "parse bern sam n" (Prob (Bernoulli (SAM,0.5,10.))) 
       "bern smpl 0.5 10";
@@ -1103,6 +1255,11 @@ let stat_tests = let open Stat in
     test_command "cmd count" (VFloat 2.) "count" 
       (Tuple (Float 3., Vector (make_row_vec [1.;2.;3.;3.])));
 
+    test "rms 1" 1. (rms [1.;1.;1.;1.]) string_of_float;
+
+    test_command "cmsd rms" (VFloat 1.) "rms" 
+      (Vector (make_row_vec [1.;1.;1.;1.]));
+
     test "unique empty" [] (unique []) string_of_list;
     test "unique 1" [1.] (unique [1.]) string_of_list;
     test "unique many" [1.;2.] (unique [1.;1.;1.;2.;2.]) string_of_list;
@@ -1141,6 +1298,9 @@ let eval_tests =
           (Eval.ComputationError.EvalError
           "Variable x is undefined in current context") 
           (fun () -> (eval_expr (Negate "x") [("y", VFloat (-5.))]) ));
+    eval_error_test "Variable x not defined"
+      "Variable x is undefined in current context"
+      (fun () -> Eval.eval_expr (Var "x") []);
     test "Zero int evaluates to itself as a float" (VFloat 0.)
       (eval_expr (Int 0) []) string_of_value;
     test "Postive int evaluates to itself as a float" (VFloat 1.)
@@ -1202,7 +1362,9 @@ let eval_tests =
       (eval_expr (Binop (Mod, Float ~-.3., Float 4.)) []) string_of_value;
     test "modulo with -p no remainder" (VFloat 0.)
       (eval_expr (Binop (Mod, Float ~-.3., Float 3.)) []) string_of_value;
-
+    eval_error_test "Modulo when p and q are floats not representing ints" 
+      "Cannot apply modulo operator to non-integer values"
+      (fun () -> Eval.eval_expr (Binop (Mod, Float 0.1, Float 0.0)) []);
     test "Pythagorean theorem c^2" (VFloat 25.)
       (parse "3^2 + 4^2" |> fun inp -> Eval.eval_input inp [] |> fst)
       string_of_value;

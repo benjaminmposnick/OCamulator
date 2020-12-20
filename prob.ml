@@ -43,6 +43,8 @@ let horner2 r x =
     t := !t *. x +. q
   done;
   !s /. !t
+(** can't test as produces a numerical approx using the tables above *)
+[@@ Coverage Off]
 
 let iqpi = 5.64189_58354_77562_86948_1e-01
 
@@ -50,11 +52,13 @@ let erfc x =
   let z  = abs_float x in
   let z2 = z *. z in
   let y =
-    if z < 0.46875 then   1. -.         z   *. horner2 r0 z2 else
-    if z < 4.      then         exp (-. z2) *. horner2 r1 z  else
-      let z'  = 1. /. z  in
-      let z'2 = z' *. z' in       exp (-. z2) *. z' *. (iqpi +. z'2 *. horner2 r2 z'2)
+    if z < 0.46875 then 1. -. z *. horner2 r0 z2 else
+    if z < 4. then exp (-. z2) *. horner2 r1 z  else
+      let z'  = 1. /. z in
+      let z'2 = z' *. z' in exp (-. z2) *. z' *. (iqpi +. z'2 *. horner2 r2 z'2)
   in if x < 0. then 2. -. y else y
+(** can't test as produces a numerical approx using the tables above *)
+[@@ Coverage Off]
 
 let erf x = 1. -. erfc x
 
