@@ -1,3 +1,33 @@
+(** TEST PLAN:
+    All of the following Compilation units are tested automatically via OUnit.
+    Projection was the only functionality that was tested manually which is
+    a utility found in Eval.
+
+    Eval:
+
+    Linalg:
+
+    Solve:
+
+    Matrix:
+
+    Vector:
+
+    Prob: Probalistic functions expect sampling were tested via black box 
+    testing comparing true distribution values to the function outputs. 
+    Random variable generators were tested also with balck box testing, but due 
+    to the nature of the functions property based testing was done. For each
+    distribution the mean and variance of the random vector was compared to
+    the true values for 1000 samples to ensure a tight confidence interval.
+    All the tests use a set random seed to ensure consistency and repeatability.
+
+    Stat: All statistical functions were tested via black box testing comparing
+    the expected output of statisitical functions with their expected output on
+    known input vector with the given parameters.
+
+    Demonstrates correctness because ...
+*)
+
 open OUnit2
 open Ast
 open Vector
@@ -119,7 +149,7 @@ let test_smpl_size name k dist =
 
 (** [test_rand name dist metric expected_output dif] is an OUnit test case 
     named [name] that asserts that the difference between a given [metric] 
-    in [dist] and [expected_output] is less than dif on the random seed 42  *)
+    in [dist] and [expected_output] is less than dif on the random seed 42 *)
 let test_rand name dist metric expected_output dif =
   Random.init 42;
   let out = fst (Eval.eval_expr (Prob dist) []) in
