@@ -413,6 +413,7 @@ let dbl_int_commnd_nk f arg1 arg2 =
 let eval_double_command cmd v1 v2 = 
   let open Stat in 
   let open Prob in
+  let open Solve in
   match cmd, v1, v2 with
   | "choose", VFloat arg1, VFloat arg2 ->
     VFloat (dbl_int_commnd_nk choose arg1 arg2)
@@ -420,6 +421,10 @@ let eval_double_command cmd v1 v2 =
     VFloat (dbl_int_commnd_nk choose arg1 arg2)
   | "perm", VFloat arg1, VFloat arg2 -> 
     VFloat (dbl_int_commnd_nk perm arg1 arg2)
+  | "gcd", VFloat arg1, VFloat arg2 -> 
+    VFloat (float_of_int (gcd (int_of_float arg1) (int_of_float arg2)))
+  | "lcm", VFloat arg1, VFloat arg2 -> 
+    VFloat (float_of_int (lcm (int_of_float arg1) (int_of_float arg2)))
   | _ -> raise_exn ("No such command: " ^ cmd)
 
 (* ===========================================================================
@@ -446,7 +451,7 @@ and eval_command cmd e sigma =
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
                        "variance"; "std"; "sum"; "product"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
-  let double_commands = ["choose";"perm";"comb"] in
+  let double_commands = ["choose";"perm";"comb"; "lcm"; "gcd"] in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
