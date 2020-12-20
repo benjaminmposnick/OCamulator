@@ -230,65 +230,84 @@ let rref matrix =
    MATRIX FACTORIZATIONS
    ===========================================================================*)
 
+(** [swap i n u_mat p_mat n_swaps] swaps the rows of [u_mat] and [p_mat]
+    simulataneously until either (1) the [i],[i] entry of [u_mat] is not 0, or
+    (2) there are no more rows to swap. The number of swaps performed is store
+    in the counter [n_swaps]. [n] is the number of rows/columns in both [u_mat]
+    and [p_mat]. *)
+let swap i n u_mat p_mat n_swaps =
+  let rec swap_aux k =
+    if !u_mat.(i).(i) = 0. then
+      if k = n - 1 then false
+      else
+        let tmp_u = !u_mat.(i) in
+        !u_mat.(i) <- !u_mat.(k + 1); !u_mat.(k + 1) <- tmp_u;
+        let tmp_p = !p_mat.(i) in
+        !p_mat.(i) <- !p_mat.(k + 1); !p_mat.(k + 1) <- tmp_p;
+        n_swaps := !n_swaps + 1;
+        swap_aux (k + 1)
+    else true 
+  in
+  swap_aux i
+
 let plu_decomposition ?no_round:(no_round=false) matrix =
   assert (Matrix.is_square matrix);
   let tolerance = determine_tolerance matrix in
   let n = n_rows matrix in
   let a = Matrix.to_array matrix in (* original matrix *)
-  let u = ref (Array.copy a) in (* upper triangular *)
-  let l = ref (Matrix.(to_array (identity n))) in (* lower triangular *)
-  let p = ref (Matrix.(to_array (identity n))) in (* permutation matrix *)
+  let u_mat = ref (Array.copy a) in (* upper triangular *)
+  let l_mat = ref (Matrix.(to_array (identity n))) in (* lower triangular *)
+  let p_mat = ref (Matrix.(to_array (identity n))) in (* permutation matrix *)
   let n_swaps = ref 0 in
   for i = 0 to n - 1 do
-    let rec swap k =
-      if !u.(i).(i) = 0. then
-        if k = n - 1 then false
-        else
-          let tmp_u = !u.(i) in
-          !u.(i) <- !u.(k + 1); !u.(k + 1) <- tmp_u;
-          let tmp_p = !p.(i) in
-          !p.(i) <- !p.(k + 1); !p.(k + 1) <- tmp_p;
-          n_swaps := !n_swaps + 1;
-          swap (k + 1)
-      else true in
-    if swap i then
+    if swap i n u_mat p_mat n_swaps then
       for j = i + 1 to n - 1 do
-        !l.(j).(i) <- !u.(j).(i) /. !u.(i).(i) ;
-        !u.(j) <- Array.(map2 ( -. ) !u.(j) (map (fun x -> x *. !l.(j).(i)) !u.(i)));
+        !l_mat.(j).(i) <- !u_mat.(j).(i) /. !u_mat.(i).(i);
+        let multiply = (fun x -> x *. !l_mat.(j).(i)) in
+        !u_mat.(j) <- Array.(map2 ( -. ) !u_mat.(j) (map multiply !u_mat.(i)));
       done
     else ()
   done;
   let format arr =
     Matrix.of_array arr
-    |> (fun m -> purify ~no_round:no_round tolerance m)in
-  (format !p, format !l, format !u, !n_swaps)
+    |> (fun m -> purify ~no_round:no_round tolerance m) in
+  (format !p_mat, format !l_mat, format !u_mat, !n_swaps)
 
-(** [diagonal_product matrix] is the product of the entries on the main
-    diagonal of [matrix].
-    Requires: [matrix] is square. *)
-let diagonal_product matrix =
-  assert (Matrix.is_square matrix);
-  let n = Matrix.n_rows matrix in
-  let a = Matrix.to_array matrix in
+(** [diagonal_product mat] is the product of the entries on the main
+    diagonal of [mat].
+    Requires: [mat] is square. *)
+let diagonal_product mat =
+  assert (Matrix.is_square mat);
+  let n = Matrix.n_rows mat in
+  let a = Matrix.to_array mat in
   let diag = ref [] in
   for i = 0 to n - 1 do
     diag := a.(i).(i) :: !diag
   done;
-  List.fold_left ( *. ) 1. !diag |> round
+  List.fold_left ( *. ) 1. !diag
+  |> round
 
 let determinant mat = 
+  assert (Matrix.is_square mat);
   let (p, l, u, n_swaps) = plu_decomposition mat in
+  (* Since [det_p] contains only ones and zeros, the determinant of the 
+     permutation matrix [p] is just the parity of [n_swaps]. *)
   let det_p = if n_swaps mod 2 = 0 then 1. else -1. in
+  (* Determinant of [l] and [u] are both just the product of their diagonal. *)
   let det_l = diagonal_product l in
   let det_u = diagonal_product u in
-  det_p *. det_l *. det_u |> round
+  det_p *. det_l *. det_u
+  |> round
 
+(** [range lo hi] is a list of natural numbers from [lo] to [hi], inclusive. *)
 let range lo hi =
   let rec range_aux idx acc =
     if idx = lo - 1 then acc 
     else range_aux (idx - 1) (idx :: acc) in
   range_aux hi []
 
+(** [forward_substitution l b] is the vector [c] that results from solving
+    the system of equations given by [Lc = b]. *)
 let forward_substitution l b =
   let n = Vector.size b in
   let y = ref (Vector.(to_array (zeros n))) in
@@ -303,6 +322,11 @@ let forward_substitution l b =
   done; 
   Vector.of_array !y
 
+(** [back_substitution u y] is the vector [x] that results from solving the 
+    system of equations given by [Ux = c].
+    Requires: [c] is the result of [forward_substitution l b], where [l] is
+    the lower triangular matrix that resulted from the same factorization
+    which produced [u].  *)
 let back_substitution u y =
   let n = Vector.size y in
   let x = ref (Vector.(to_array (zeros n))) in
@@ -318,6 +342,7 @@ let back_substitution u y =
   done; !x
 
 let inverse mat =
+  assert (Matrix.is_square mat);
   let tolerance = determine_tolerance mat in
   let (p, l, u, _) = plu_decomposition ~no_round:true mat in
   let n = n_rows p in
@@ -325,12 +350,8 @@ let inverse mat =
   let a_inv = ref (Matrix.(to_array (zeros n))) in
   for i = 0 to n - 1 do
     let bi = Vector.make_col_vec (Matrix.get_row b i) in
-    let p_dot_bi_mat = Matrix.(matrix_multiply p (of_vectors [bi])) in
-    let p_dot_bi_vec = 
-      Matrix.to_list p_dot_bi_mat
-      |> List.flatten
-      |> Vector.make_col_vec in
-    let y = forward_substitution l p_dot_bi_vec in
+    let p_dot_bi = Matrix.matrix_vector_product p bi false in
+    let y = forward_substitution l p_dot_bi in
     !a_inv.(i) <- back_substitution u y
   done;
   !a_inv
@@ -339,12 +360,9 @@ let inverse mat =
   |> purify tolerance
 
 let solve_system a b =
+  assert (Matrix.is_square a);
   let (p, l, u, _) = plu_decomposition ~no_round:true a in (* Factor PA = LU *)
-  let p_dot_b_mat = Matrix.(matrix_multiply p (of_vectors [b])) in
-  let pb = 
-    Matrix.to_list p_dot_b_mat
-    |> List.flatten
-    |> Vector.make_col_vec in
+  let pb = Matrix.matrix_vector_product p b false in
   let y = forward_substitution l pb in (* Solve L(Ux) = L(c) = Pb for c *)
   let is_invalid_result vec =
     Vector.to_list vec
