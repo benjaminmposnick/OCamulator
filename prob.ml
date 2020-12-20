@@ -1,9 +1,15 @@
 
 let pi = acos (-1.)
 
-(** http://alaska-kamtchatka.blogspot.com/2011/12/
-    better-gauss-error-function.html*)
+(** 
+   erf computation from:
+   http://alaska-kamtchatka.blogspot.com/2011/12/
+    better-gauss-error-function.html
+   supposedly acturate to the 10**95
+   used in caluculation of the normal cdf    
+*)
 
+(** 3 tables used in esitamtion of the erf *)
 let r0 = [|
   3.20937_75891_38469_47256_2e+03, 2.84423_68334_39170_62227_3e+03;
   3.77485_23768_53020_20813_7e+02, 1.28261_65260_77372_27564_5e+03;
@@ -33,6 +39,7 @@ let r2 = [|
   -1.63153_87137_30209_78498e-02, 1.00000_00000_00000_00000e+00;
 |]
 
+(** [horner2 r x] is the horner2 value of [r] and [x] *)
 let horner2 r x =
   let n = Array.length r in
   let s = ref 0.
@@ -48,6 +55,7 @@ let horner2 r x =
 
 let iqpi = 5.64189_58354_77562_86948_1e-01
 
+(** [erfc x] is the erfc value of [x]. Used to compute erf of [x] *)
 let erfc x =
   let z  = abs_float x in
   let z2 = z *. z in
@@ -55,24 +63,31 @@ let erfc x =
     if z < 0.46875 then 1. -. z *. horner2 r0 z2 else
     if z < 4. then exp (-. z2) *. horner2 r1 z  else
       let z'  = 1. /. z in
-      let z'2 = z' *. z' in exp (-. z2) *. z' *. (iqpi +. z'2 *. horner2 r2 z'2)
+      let z'2 = z' *. z' in 
+      exp (-. z2) *. z' *. (iqpi +. z'2 *. horner2 r2 z'2)
   in if x < 0. then 2. -. y else y
 (** can't test as produces a numerical approx using the tables above *)
 [@@ Coverage Off]
 
+(** [erf x] is the gaussian error of [x] used in the normal cdf *)
 let erf x = 1. -. erfc x
 
+(** [reduce_tr inc test op base f x] applies [f] to [base] while imncrementing
+    [x] with [op] until [test] is reached. Used for sigma_tr *)
 let reduce_tr inc test op base f x =
   let rec apply_tr acc x =
     if test x then acc
     else apply_tr (op (f x) acc) (inc x)
   in apply_tr base x
 
+(** [sigma_tr f a b] is a tail recursive summation *)
 let sigma_tr f a b =
   reduce_tr (fun x -> x + 1) 
     (fun x -> if x = b then true else false) ( +. ) (f b) f a
 
-(** from lecture code*)
+(** from lecture code
+    [factorial num] is the factorial of [num]
+*)
 let factorial : int -> int = fun num ->
   let rec helper : int -> int -> int = fun n acc ->
     if n > 0
@@ -82,13 +97,15 @@ let factorial : int -> int = fun num ->
   helper num 1
 
 let choose (n : int) (k : int) : float = 
-  float_of_int(factorial(n)) /. float_of_int((factorial(k) * factorial(n - k)))
+  float_of_int (factorial n) /. float_of_int (factorial k * factorial (n - k))
 
 let perm (n : int) (r : int) : float =
-  float_of_int(factorial(n)) /. float_of_int((factorial(n - r)))
+  float_of_int (factorial n) /. float_of_int (factorial (n - r))
 
 let uniform_pmf (a : float) (b : float) (x : float) : float =
-  if x >= a && x <= b then 1. /. (b -. a) else 0.
+  if x >= a && x <= b 
+  then 1. /. (b -. a) 
+  else 0.
 
 let uniform_cdf (a : float) (b : float) (x : float) : float =
   if x < a then 0. 
@@ -96,7 +113,9 @@ let uniform_cdf (a : float) (b : float) (x : float) : float =
   else (x -. a) /. (b -. a)
 
 let bernoulli_pmf  (p : float) (k : int) : float =
-  if k = 1 then p else 1. -. p
+  if k = 1 
+  then p 
+  else 1. -. p
 
 let bernoulli_cdf  (p : float) (k : int ) : float =
   if k < 0 then 0.
@@ -104,10 +123,10 @@ let bernoulli_cdf  (p : float) (k : int ) : float =
   else 1. -. p 
 
 let geometric_pmf (p : float) (k : int) : float=
-  p *. (1. -. p) ** (float_of_int (k - 1))
+  p *. (1. -. p) ** float_of_int (k - 1)
 
 let geometric_cdf  (p : float) (k : int) : float =
-  1. -. (1. -. p) ** (float_of_int k)
+  1. -. (1. -. p) ** float_of_int k
 
 let exponential_pmf  (l : float) (x : float) : float =
   l *. exp (x *. -1. *. l)
@@ -116,33 +135,37 @@ let exponential_cdf (l : float) (x : float) : float =
   1. -. exp (-1. *. l *. x)
 
 let binomial_pmf (n : int) (p : float) (k : int) : float =
-  (choose n k) *. p ** (float_of_int k) *. (1. -. p) ** (float_of_int (n - k))
+  choose n k *. p ** float_of_int k *. (1. -. p) ** float_of_int (n - k)
 
 let binomial_cdf (n : int) (p : float) (k : int) : float =
   sigma_tr (fun x -> binomial_pmf n p x) 0 k
 
 let poisson_pmf (l : float) (k : int) : float =
-  l ** (float_of_int k) *. exp (-1. *. l) /. (float_of_int (factorial k))
+  l ** float_of_int k *. exp (-1. *. l) /. float_of_int (factorial k)
 
 let poisson_cdf  (l : float) (k : int) : float =
   sigma_tr (fun k -> poisson_pmf l k) 0 k
 
 let normal_pmf (mu : float) (sigma : float) (x : float) : float =
-  exp (-0.5 *. ((x -. mu) /. sigma) ** (2.)) /. (sigma *. ((pi *. 2.) ** (0.5)))
+  exp (-0.5 *. ((x -. mu) /. sigma) ** 2.) /. (sigma *. ((pi *. 2.) ** (0.5)))
 
 let normal_cdf (mu : float) (sigma : float) (x : float) : float =
   let var = (x -. mu) /. (sigma *. 2. ** 0.5) in
   0.5 *. (1. +. erf var)
 
+(** [get U ()] generates a uniform(0,1) random varaible *)
 let get_U () = Random.float 1.
 
 let bernoulli_sam  (p : float) : float  =
-  if get_U () < p then 1.
+  if get_U () < p 
+  then 1.
   else 0.
 
 let exponential_sam (l : float) : float =
-  -1. *. log (1. -. (get_U ())) /. l
+  -1. *. log (1. -. get_U ()) /. l
 
+(** [geo_helper x] is the partial inverse of the geometric cdf used for
+    sampling *)
 let geo_helper x = log (-1. *. (x -. 1.))
 
 let geometric_sam (p : float) : float =
@@ -170,4 +193,4 @@ let poisson_sam (l : float) (t : float) : float =
 let normal_sam (mu : float) (sigma : float) : float =
   let theta = 2. *. pi *. get_U () in 
   let r = (log (get_U ()) *. -2.) ** 0.5 in
-  (r *. sin theta) *. sigma +. mu
+  r *. sin theta *. sigma +. mu

@@ -75,6 +75,8 @@ let bern_check x =
   if x = 0 || x = 1 then ()
   else raise_exn "Bernoulli RV's can only be 0 or 1"
 
+(** [stats_noargs_vec f vec] is the vector result of the
+    stats function [f] applied to vec*)
 let stats_noargs_vec f vec = 
   let open Vector in
   let open Stat in
@@ -83,9 +85,10 @@ let stats_noargs_vec f vec =
     |> to_list
     |> f
     |> make_row_vec
-  in
-  VVector value
+  in VVector value
 
+(** [stats_noargs_float f vec] is the singleton result of 
+    the stats function [f] applied to vec*)
 let stats_noargs_float f vec = 
   let open Vector in
   let open Stat in
@@ -95,17 +98,47 @@ let stats_noargs_float f vec =
     |> f
   in VFloat value
 
+(** [smpl_many smpler arg count] is a vector or random variable drawn from
+    distribution [smpler] [arg] of length count*)
 let smpl_many smpler arg count = 
   let rec smpl_helper acc smpler arg count =
     if List.length acc = count then acc
     else smpl_helper ((smpler arg)::acc) smpler arg count
   in VVector (make_row_vec (smpl_helper [] smpler arg count))
 
+(** [smpl_helper smpler arg k] is a vector of random varaibles drawn from
+    distribution [smpler] [arg] of length [k] if k > 0. If k = 0 then
+    a singleton random variable is returns not a vector. 
+    If an error occurs during evaluation, [ComputationError.EvalError] 
+    is raised instead.*)
 let smpl_helper smpler arg k =
   if k >= 0 then 
     if k = 0 then VFloat (smpler arg)
     else smpl_many smpler arg k
   else raise_exn "Need positive k for sampling"
+
+(** [dbl_int_command_nk f arg1 arg2] is the result of applying [f] to the
+    pair [arg1] [arg2] if [arg1] and [arg2] if [arg2] <= [arg1].
+    If an error occurs during evaluation, [ComputationError.EvalError] 
+    is raised instead. *)
+let dbl_int_cmd_nk f arg1 arg2 =
+  if Float.is_integer arg1 && Float.is_integer arg2 then
+    let arg1 = int_of_float arg1 in
+    let arg2 = int_of_float arg2 in
+    nk_check arg1 arg2;
+    f arg1 arg2
+  else raise_exn ("Both arguements must be integer")
+
+(** [cmd_linreg x_vec y_vec] is the value of the slope and intercept
+    of the line of best fit between the n points where [x_vec] are
+    the x-coords and [y_vec] are the y-coords. If an error occurs 
+    during evaluation, [ComputationError.EvalError] is raised instead. *)
+let cmd_linreg x_vec y_vec =
+  if List.length x_vec = List.length y_vec then 
+    let points = List.combine x_vec y_vec in
+    let mb = Stat.linear_regression points in
+    VTuple (VFloat (fst mb), VFloat (snd mb))
+  else raise_exn ("Must give the same number of x and y coords")
 
 (* ===========================================================================
    PROBABILITY AND STATISTICS EVALUATION
@@ -410,25 +443,6 @@ let eval_stat_command cmd vec =
   | "range" -> stats_noargs_float range vec
   | "rms" -> stats_noargs_float rms vec
   | _ -> raise_exn ("No such command: " ^ cmd)
-
-(** [dbl_int_command_nk f arg1 arg2] is the result of applying [f] to the
-    pair [arg1] [arg2] if [arg1] and [arg2] if [arg2] <= [arg1].
-    If an error occurs during evaluation, [ComputationError.EvalError] 
-    is raised instead. *)
-let dbl_int_cmd_nk f arg1 arg2 =
-  if Float.is_integer arg1 && Float.is_integer arg2 then
-    let arg1 = int_of_float arg1 in
-    let arg2 = int_of_float arg2 in
-    nk_check arg1 arg2;
-    f arg1 arg2
-  else raise_exn ("Both arguements must be integer")
-
-let cmd_linreg x_vec y_vec =
-  if List.length x_vec = List.length y_vec then 
-    let points = List.combine x_vec y_vec in
-    let mb = Stat.linear_regression points in
-    VTuple (VFloat (fst mb), VFloat (snd mb))
-  else raise_exn ("Must give the same number of x and y coords")
 
 (** [eval_double_command cmd v1 v2] is the result of applying the statistical
     command [cmd] to the paris [v1] [v12]. If an error occurs during evaluation,
