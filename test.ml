@@ -669,6 +669,7 @@ let prob_tests = let open Prob in [
     test "Bern p 1" 0.8 (bernoulli_pmf 0.8 1) string_of_float;
     test "Bern p 0" (1. -. 0.8) (bernoulli_pmf 0.8 0) string_of_float;
     test "Bern c 0" 0. (bernoulli_cdf 0.8 (-1)) string_of_float;
+    test "Bern c mid" (1. -. 0.8) (bernoulli_cdf 0.8 (0)) string_of_float;
     test "Bern c 1" 1. (bernoulli_cdf 0.8 (1)) string_of_float;
 
     test "Geo p 1" 0.5 (geometric_pmf 0.5 1) string_of_float;

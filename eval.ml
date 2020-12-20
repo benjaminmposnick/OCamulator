@@ -72,7 +72,7 @@ let neg_check x =
 (** [bern_check x] is [unit] if [x] is either 0 or 1; otherwise,
     [ComputationError.EvalError] is raised. *)
 let bern_check x = 
-  if x = 0. || x = 1. then ()
+  if x = 0 || x = 1 then ()
   else raise_exn "Bernoulli RV's can only be 0 or 1"
 
 let rand_vector dist i = 
@@ -108,6 +108,18 @@ let stats_noargs_float f vec =
    PROBABILITY AND STATISTICS EVALUATION
    ===========================================================================*)
 
+let smpl_many smpler arg count = 
+  let rec smpl_helper acc smpler arg count =
+    if List.length acc = count then acc
+    else smpl_helper ((smpler arg)::acc) smpler arg count
+  in VVector (make_row_vec (smpl_helper [] smpler arg count))
+
+let smpl_helper smpler arg k =
+  if k >= 0 then 
+    if k = 0 then VFloat (smpler arg)
+    else smpl_many smpler arg k
+  else raise_exn "Need positive k for sampling"
+
 (** [eval_binomial func n p k] is result of evaluating [func] for the Binomial
     distribution with parameters [n], [p], and [k]. If the parameters are 
     invalid, then [ComputationError.EvalError] is raised. *)
@@ -115,11 +127,15 @@ let eval_binomial func n p k =
   let open Prob in
   prob_check p;
   neg_check k;
-  nk_check n k;
   if Float.is_integer n && Float.is_integer k then
-    if func = SAM then binomial_sam (int_of_float n) p
-    else if func = PDF then binomial_pmf (int_of_float n) p (int_of_float k)
-    else (* func = CDF *) binomial_cdf (int_of_float n) p (int_of_float k)
+    let n = int_of_float n in 
+    let k = int_of_float k in
+    if func = SAM then smpl_helper (binomial_sam n) p k
+    else 
+    if nk_check n k; func = PDF then 
+      VFloat (binomial_pmf  n p k)
+    else (* func = CDF *) 
+      VFloat (binomial_cdf n p k)
   else raise_exn "n and k values of Binomial distribution must be ints"
 
 (** [eval_bernoulli func p k] is result of evaluating [func] for the Bernoulli
@@ -128,11 +144,12 @@ let eval_binomial func n p k =
 let eval_bernoulli func p k =
   let open Prob in
   prob_check p;
-  bern_check k;
   if Float.is_integer k then
-    if func = SAM then bernoulli_sam p
-    else if func = PDF then bernoulli_pmf p (int_of_float k)
-    else (* func = CDF *) bernoulli_cdf p (int_of_float k)
+    let k = int_of_float k in
+    if func = SAM then smpl_helper bernoulli_sam p k
+    else if bern_check k; func = PDF 
+    then VFloat (bernoulli_pmf p k)
+    else (* func = CDF *) VFloat (bernoulli_cdf p k)
   else raise_exn "k value of Bernoulli distribution must be an integer"
 
 (** [eval_uniform func a b x] is result of evaluating [func] for the Uniform
@@ -141,9 +158,12 @@ let eval_bernoulli func p k =
 let eval_uniform func a b x =
   let open Prob in
   unif_check a b;
-  if func = SAM then uniform_sam a b
-  else if func = PDF then uniform_pmf a b x
-  else (* func = CDF *) uniform_cdf a b x
+  if func = SAM then 
+    if Float.is_integer x then
+      smpl_helper (uniform_sam a) b (int_of_float x)
+    else raise_exn "x must be int for smpling"
+  else if func = PDF then VFloat (uniform_pmf a b x)
+  else (* func = CDF *) VFloat (uniform_cdf a b x)
 
 (** [eval_poisson func l x] is result of evaluating [func] for the Poisson
     distribution with parameters [l] and [x]. If the parameters are invalid,
@@ -152,10 +172,13 @@ let eval_poisson func l x =
   let open Prob in
   lmbda_check l;
   neg_check x;
-  if func = SAM then poisson_sam l x
+  if func = SAM then 
+    if Float.is_integer x then
+      smpl_helper (poisson_sam l) 1. (int_of_float x)
+    else raise_exn "x must be int for smpling"
   else if Float.is_integer x then
-    if func = PDF then poisson_pmf l (int_of_float x)
-    else (* func = CDF *) poisson_cdf l (int_of_float x)
+    if func = PDF then VFloat (poisson_pmf l (int_of_float x))
+    else (* func = CDF *) VFloat (poisson_cdf l (int_of_float x))
   else raise_exn "x value of Poisson distribution must be an integer"
 
 (** [eval_geometric func p k] is result of evaluating [func] for the Geometric
@@ -165,10 +188,11 @@ let eval_geometric func p k =
   let open Prob in
   neg_check k;
   prob_check p;
-  if func = SAM then geometric_sam p
-  else if Float.is_integer k then
-    if func = PDF then geometric_pmf p (int_of_float k)
-    else geometric_cdf p (int_of_float k)
+  if Float.is_integer k then
+    let k = int_of_float k in
+    if func = SAM then smpl_helper geometric_sam p k 
+    else if func = PDF then VFloat (geometric_pmf p  k)
+    else VFloat (geometric_cdf p k)
   else raise_exn "k value of Geometric distribution must be an integer"
 
 (** [eval_exponential func l x] is result of evaluating [func] for the
@@ -178,9 +202,12 @@ let eval_exponential func l x =
   let open Prob in
   neg_check x;
   lmbda_check l;
-  if func = SAM then exponential_sam l
-  else if func = PDF then exponential_pmf l x
-  else (* func = CDF *) exponential_cdf l x
+  if func = SAM then 
+    if Float.is_integer x then
+      smpl_helper (exponential_sam) l (int_of_float x)
+    else raise_exn "x must be int for smpling"
+  else if func = PDF then VFloat (exponential_pmf l x)
+  else (* func = CDF *) VFloat (exponential_cdf l x)
 
 (** [eval_normal func m s x] is result of evaluating [func] for the Normal
     distribution with parameters [m], [s], and [x]. If the parameters are
@@ -188,9 +215,12 @@ let eval_exponential func l x =
 let eval_normal func m s x = 
   let open Prob in
   neg_check s;
-  if func = SAM then normal_pmf m s x
-  else if func = PDF then normal_sam m s
-  else (* func = CDF *) normal_cdf m s x
+  if func = SAM then 
+    if Float.is_integer x then
+      smpl_helper (normal_sam m) s (int_of_float x)
+    else raise_exn "x must be int for smpling"
+  else if func = PDF then VFloat (normal_sam m s)
+  else (* func = CDF *) VFloat (normal_cdf m s x)
 
 let eval_prob dist sigma = 
   let value = 
@@ -203,7 +233,7 @@ let eval_prob dist sigma =
     | Exponential (func, l, x) -> eval_exponential func l x
     | Normal (func, m, s, x) -> eval_normal func m s x
   in 
-  VFloat value, sigma
+  value, sigma
 
 (* ===========================================================================
     BINOP EVALUATION UTILITY FUNCTIONS
