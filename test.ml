@@ -17,6 +17,14 @@ let string_of_list vec =
 let test name expected_output fn_output print_fn =
   name >:: (fun _ -> assert_equal expected_output fn_output ~printer:print_fn)
 
+let test_rand_1 name out sampler arg print_fn =
+  Random.init 42;
+  name >:: (fun _ -> assert_equal out (sampler arg) ~printer:print_fn)
+
+let test_rand_2 name out sampler arg1 arg2 print_fn =
+  Random.init 42;
+  name >:: (fun _ -> assert_equal out (sampler arg1 arg2) ~printer:print_fn)
+
 (** [parse str] is the abstract syntax tree that results from lexing and
     parsing [str]. *)
 let parse str =
@@ -642,6 +650,21 @@ let prob_tests = let open Prob in [
 
     test "Binom c 0" (0.5 ** 10.) (binomial_cdf 10 0.5 0) string_of_float;
     test "Binom c n" (1.) (binomial_cdf 10 0.5 10) string_of_float;
+
+    (** All random tests use the seed 42*)
+    test_rand_1 "Bern sam 1" 0. bernoulli_sam 0.5 string_of_float;
+    test_rand_1 "Bern sam 0" 1. bernoulli_sam 0.9 string_of_float;
+
+    test_rand_1 "Geo sam 0.5" 2. geometric_sam 0.5 string_of_float;
+    test_rand_1 "Geo sam 0.8" 1. geometric_sam 0.8 string_of_float;
+    test_rand_1 "Geo sam 0.1" 4. geometric_sam 0.1 string_of_float;
+
+    test_rand_2 "Bin sam 10 .5" 3. binomial_sam 10 0.5 string_of_float;
+    test_rand_2 "Bin sam 10 .8" 7. binomial_sam 10 0.8 string_of_float;
+
+    test_rand_2 "Pois sam 1 5" 0. poisson_sam 1. 0.5 string_of_float;
+    test_rand_2 "Pois sam 1 5" 4. poisson_sam 1. 5.0 string_of_float;
+    test_rand_2 "Pois sam 1 20" 25. poisson_sam 1. 20.0 string_of_float;
   ]
 
 let stat_tests = let open Stat in

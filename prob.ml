@@ -100,7 +100,7 @@ let poisson_sam (l : float) (t : float) : float =
   let rec poisson_helper l t curr =
     let e = exponential_sam l in
     if  e > t then curr
-    else poisson_helper l (e -. t) (curr +. 1.)
+    else poisson_helper l (t -. e) (curr +. 1.)
   in poisson_helper l t 0.
 
 let normal_sam (mu : float) (sigma : float) : float =
