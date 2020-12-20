@@ -1282,6 +1282,34 @@ let stat_tests = let open Stat in
       (linear_regression [(1.,2.);(2.,4.);(3.,6.)]) string_of_pair;
     test "linreg 1 0" (1.,3.) 
       (linear_regression [(1.,4.);(2.,5.);(3.,6.)]) string_of_pair;
+
+    test_command "cmd bestfit" (VTuple (VFloat 2., VFloat 0.)) "bestfit" 
+      (Tuple (Vector (make_row_vec [1.;2.;3.]), 
+              Vector (make_row_vec [2.;4.;6.])));
+
+    test_command "cmd linreg" (VTuple (VFloat 2., VFloat 0.)) "linreg" 
+      (Tuple (Vector (make_row_vec [1.;2.;3.]), 
+              Vector (make_row_vec [2.;4.;6.])));
+
+    eval_error_test "comb float err"
+      "Both arguements must be integer"
+      (fun () -> Eval.eval_expr 
+          (Command ("comb", Tuple (Float 1.5, Float 2.5))) []);
+
+    eval_error_test "choose float err"
+      "Both arguements must be integer"
+      (fun () -> Eval.eval_expr 
+          (Command ("choose", Tuple (Float 1.5, Float 2.5))) []);
+
+    eval_error_test "perm float err"
+      "Both arguements must be integer"
+      (fun () -> Eval.eval_expr 
+          (Command ("perm", Tuple (Float 1.5, Float 2.5))) []);
+
+    eval_error_test "fac float err"
+      "Factorial requires integer input"
+      (fun () -> Eval.eval_expr 
+          (Command ("fac",  Float 1.5)) []);
   ]
 
 let eval_tests = 
