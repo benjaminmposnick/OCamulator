@@ -118,7 +118,6 @@ let transpose mat =
         let submatrix = List.map Vector.tail lst in
         transpose_aux submatrix (next_row :: acc)
   in
-  ignore(rep_ok mat);
   transpose_aux mat []
   |> rep_ok
 

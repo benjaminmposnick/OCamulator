@@ -77,7 +77,7 @@ let test_smpl_min name min dist =
   let value =
     match out with
     | VFloat f -> f 
-    | _ -> failwith "Not even a float"
+    | _ -> failwith "Not even a float" [@coverage off]
   in 
   name >:: (fun _ -> assert_equal true (value >= min)  ~printer:string_of_bool)
 
@@ -87,7 +87,7 @@ let test_smpl_max name max dist =
   let value =
     match out with
     | VFloat f -> f 
-    | _ -> failwith "Not even a float"
+    | _ -> failwith "Not even a float" [@coverage off]
   in 
   name >:: (fun _ -> assert_equal true (value <= max)  ~printer:string_of_bool)
 
@@ -97,7 +97,7 @@ let test_smpl_size name k dist =
   let value =
     match out with
     | VVector vec -> to_list vec
-    | _ -> failwith "Not even a vec"
+    | _ -> failwith "Not even a vec" [@coverage off]
   in 
   name >:: (fun _ -> assert_equal k (List.length value)  ~printer:string_of_int)
 
@@ -413,6 +413,13 @@ let matrix_tests = [
     (VMatrix (Matrix.of_list  [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]]))
     "rref" (Matrix (Matrix.of_list
                       [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]));
+  test_command "3x3 matrix with two pivot columns" 
+    (VList [VFloat 0.; VFloat 1.])
+    "pivots" (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
+  test_command "3x4 matrix with three pivot columns"
+    (VList [VFloat 0.; VFloat 1.; VFloat 3.])
+    "pivots" (Matrix (Matrix.of_list
+                        [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]));
   test_command "row reduce 3x4 matrix with two pivot columns" 
     (VMatrix (Matrix.of_list [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]]))
     "rref" (Matrix (Matrix.of_list
@@ -497,8 +504,12 @@ let matrix_tests = [
   test_binop "two vectors not equal" (VFloat 0.)
     Eq (Vector (Vector.make_col_vec [3.;2.;1.]))
     (Vector (Vector.make_row_vec [1.;2.;3.]));
-  test "Transpose a row vector" (ColVector [1.;2.;3.])
-    (Vector.(transpose (RowVector [1.;2.;3.]))) string_of_vector;
+  test_command "Transpose a column vector"
+    (VVector (Vector.RowVector [1.;2.;3.])) "transpose"
+    (Vector (Vector.ColVector [1.;2.;3.]));
+  test_command "Transpose a matrix"
+    (VMatrix (Matrix.of_list [[1.;4.;7.];[2.;5.;8.];[3.;6.;9.]])) "transpose"
+    (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
   failure_test "Cannot apply binop to two vectors of different lengths"
     "Vectors must be the same length"
     (fun () -> Vector.dot_product (Vector.make_col_vec [1.;2.;3.]) 
@@ -521,6 +532,12 @@ let matrix_tests = [
     (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]])
     (Matrix.of_vectors
        [Vector.make_row_vec [1.;2.;3.]; Vector.make_row_vec [4.;5.;6.]]) 
+    Matrix.string_of_matrix;
+  test "Create matrix out of column vectors"
+    (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]])
+    (Matrix.of_vectors
+       [Vector.make_col_vec [1.;4.]; Vector.make_col_vec [2.;5.]; 
+        Vector.make_row_vec [3.;6.]]) 
     Matrix.string_of_matrix;
   test "Map on a matrix" (Matrix.of_list [[1.;4.;9.];[1.;4.;9.]])
     (Matrix.map (fun vec -> Vector.map (fun x -> x ** 2.) vec)
@@ -633,6 +650,26 @@ let matrix_tests = [
         (Binop (SolveSys, (Matrix (Matrix.of_list 
                                      [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
                 (Vector (Vector.make_row_vec [1.;2.;3.])))) []);
+  eval_error_test "Row reduce a float" 
+    "Cannot row reduce a non-matrix"
+    (fun () -> Eval.eval_expr (Command ("rref", (Float 2.0))) []);
+  eval_error_test "Transpose a float" 
+    "Cannot transpose a non-matrix / non-vector"
+    (fun () -> Eval.eval_expr (Command ("transpose", (Float 2.0))) []);
+  eval_error_test "Determinant of a float" 
+    "Cannot calculate determinant of a non-matrix"
+    (fun () -> Eval.eval_expr (Command ("det", (Float 2.0))) []);
+  eval_error_test "Pivot columns of a float" 
+    "Cannot calculate pivots of a non-matrix"
+    (fun () -> Eval.eval_expr (Command ("pivots", (Float 2.0))) []);
+  eval_error_test "Inverse of a float" 
+    "Cannot calculate inverse of a non-matrix"
+    (fun () -> Eval.eval_expr (Command ("inv", (Float 2.0))) []);
+  eval_error_test "QR factorization of a matrix (which isn't supported)" 
+    "No such command: qr"
+    (fun () -> Eval.eval_expr
+        (Command ("qr", Matrix (Matrix.of_list 
+                                  [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))) []);
 ]
 
 let lin_alg_tests =
@@ -685,6 +722,21 @@ let lin_alg_tests =
       (VMatrix (Matrix.of_list
                   ([[0.75;0.5;0.25];[0.5;1.;0.5 ];[0.25;0.5;0.75]]))) "inv"
       (Matrix (Matrix.of_list [[2.;~-.1.;0.];[~-.1.;2.;~-.1.];[0.;~-.1.;2.]]));
+    test_binop "Solve Ax=b for 3x3 int matrix A"
+      (VVector (Vector.make_col_vec [0.;0.;1.])) SolveSys
+      (Matrix (Matrix.of_list ([[3.;3.;1.];[1.;2.;2.];[3.;3.;3.]]))) 
+      (Vector (Vector.make_col_vec [1.;2.;3.]));
+    test_binop "Solve Ax=b for 3x3 int matrix A with b vector of zeros"
+      (VVector (Vector.make_col_vec [0.;0.;0.])) SolveSys
+      (Matrix (Matrix.of_list ([[3.;2.;1.];[1.;3.;2.];[2.;3.;2.]]))) 
+      (Vector (Vector.make_col_vec [0.;0.;0.]));
+    failure_test "Solve non-singular system" 
+      "Matrix is not singular -- cannot solve numerically"
+      (fun () -> Eval.eval_expr 
+          (Binop (SolveSys,
+                  (Matrix (Matrix.of_list ([[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))),
+                  (Vector (Vector.make_col_vec [1.;2.;3.])))) []);
+
   ]
 
 let solve_tests = let open Solve in [
@@ -906,7 +958,7 @@ let solve_tests = let open Solve in [
 
     (* Root tests *)
     (* test "root of x^2 + x + 1 = 0" 
-      () (Solve.lcm 12 15) string_of_int; *)
+       () (Solve.lcm 12 15) string_of_int; *)
   ]
 
 let prob_tests = let open Prob in [
@@ -1317,15 +1369,18 @@ let eval_tests =
   [
     test "Var x is float" (VFloat 0.) (eval_expr (Var "x") [("x", VFloat 0.)])
       string_of_value;
+    test "Assign to var x" (VFloat 0.)
+      (eval_expr (Binop (Assign, Var "x", Int 0)) [("x", VFloat 0.)])
+      string_of_value;
     test "Negate var y" (VFloat (-5.)) (eval_expr (Negate "y") [("y", VFloat 5.)])
       string_of_value;
     test "Negate var y" (VFloat (5.)) (eval_expr (Negate "y") [("y", VFloat (-5.))])
       string_of_value;
     "Unassigned var given Failure" >:: 
-      (fun _ -> assert_raises 
-          (Eval.ComputationError.EvalError
-          "Variable x is undefined in current context") 
-          (fun () -> (eval_expr (Negate "x") [("y", VFloat (-5.))]) ));
+    (fun _ -> assert_raises 
+        (Eval.ComputationError.EvalError
+           "Variable x is undefined in current context") 
+        (fun () -> (eval_expr (Negate "x") [("y", VFloat (-5.))]) ));
     eval_error_test "Variable x not defined"
       "Variable x is undefined in current context"
       (fun () -> Eval.eval_expr (Var "x") []);
