@@ -49,7 +49,13 @@ let prob_check p =
     [ComputationError.EvalError] is raised.*)
 let nk_check n k = 
   if k <= n then ()
-  else raise_exn "k > n (Binomial) or a > b (Uniform)"
+  else raise_exn "k must be <= n"
+
+(** [unif_check a b] is [unit] if [a < b]; otherwise,
+    [ComputationError.EvalError] is raised.*)
+let unif_check a b = 
+  if a < b then ()
+  else raise_exn "a must be < b"
 
 (** [lmbda_check l] is [unit] if [l > 0]; otherwise,
     [ComputationError.EvalError] is raised. *)
@@ -134,7 +140,7 @@ let eval_bernoulli func p k =
     invalid, then [ComputationError.EvalError] is raised. *)
 let eval_uniform func a b x =
   let open Prob in
-  nk_check b a;
+  unif_check a b;
   if func = SAM then uniform_sam a b
   else if func = PDF then uniform_pmf a b x
   else (* func = CDF *) uniform_cdf a b x
@@ -389,17 +395,31 @@ let eval_stat_command cmd vec =
   | "product" -> stats_noargs_float cum_prod vec
   | _ -> raise_exn ("No such command: " ^ cmd)
 
-let dbl_int_commnd f arg1 arg2 =
+(** [dbl_int_command_nk f arg1 arg2] is the result of applying [f] to the
+    pair [arg1] [arg2] if [arg1] and [arg2] if [arg2] <= [arg1].
+    If an error occurs during evaluation, [ComputationError.EvalError] 
+    is raised instead. *)
+let dbl_int_commnd_nk f arg1 arg2 =
   if Float.is_integer arg1 && Float.is_integer arg2 then
-    f (int_of_float arg1) (int_of_float arg2)
+    let arg1 = int_of_float arg1 in
+    let arg2 = int_of_float arg2 in
+    nk_check arg1 arg2;
+    f arg1 arg2
   else raise_exn ("Both arguements must be integer")
 
+(** [eval_double_command cmd v1 v2] is the result of applying the statistical
+    command [cmd] to the paris [v1] [v12]. If an error occurs during evaluation,
+    [ComputationError.EvalError] is raised instead.*)
 let eval_double_command cmd v1 v2 = 
   let open Stat in 
   let open Prob in
   match cmd, v1, v2 with
-  | "choose", VFloat arg1, VFloat arg2 -> 
-    VFloat (dbl_int_commnd choose arg1 arg2)
+  | "choose", VFloat arg1, VFloat arg2 ->
+    VFloat (dbl_int_commnd_nk choose arg1 arg2)
+  | "comb", VFloat arg1, VFloat arg2 -> 
+    VFloat (dbl_int_commnd_nk choose arg1 arg2)
+  | "perm", VFloat arg1, VFloat arg2 -> 
+    VFloat (dbl_int_commnd_nk perm arg1 arg2)
   | _ -> raise_exn ("No such command: " ^ cmd)
 
 (* ===========================================================================
@@ -426,7 +446,7 @@ and eval_command cmd e sigma =
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
                        "variance"; "std"; "sum"; "product"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
-  let double_commands = ["choose"] in
+  let double_commands = ["choose";"perm";"comb"] in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
