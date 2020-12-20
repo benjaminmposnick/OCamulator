@@ -559,7 +559,6 @@ let solve_tests = let open Solve in [
          (Var "x"))
       string_of_bool;  
 
-
     (* main solve tests *)
     test "solve for var x = 5" 
       (Binop(Eq, Var "x", Int 5 ))
@@ -653,14 +652,20 @@ let solve_tests = let open Solve in [
     test "solve equation y / x = (5 + z)" 
       (Binop(Eq, Var "x", Binop(Div, Var "y", Binop (Add, Int 5, Var "z")))) 
       (Solve.solve ("x") (Binop(Eq, Binop(Div, Var "y", Var "x"), 
-                                Binop (Add, Int 5, Var "z"))) )
+                                Binop (Add, Int 5, Var "z"))))
       Ast.string_of_expr;
     test "basic solve for division equation 4y / x = 5" 
       (Binop(Eq,  Var "x", Binop(Div, Binop(Mul, Int 4, Var "y"), Int 5))) 
       (Solve.solve ("x") (Binop(Eq, Binop(Div, Binop(Mul, Int 4, Var "y"),
                                           Var "x"), Int 5 )) )
       Ast.string_of_expr;
-
+    "No var given Failure" >:: 
+    (fun _ -> assert_raises (Failure "No variable given") 
+        (fun () -> Solve.solve ("x") (Binop(Eq, Int 3, Int 9)) ));        
+    "Wrong var given Failure" >:: 
+    (fun _ -> assert_raises (Failure "No variable given") 
+        (fun () -> Solve.solve ("x") (Binop(Eq, Binop(Add, Int 3, Var "y"), 
+                                            Int 9)) ));
 
     (* GCD tests *)
     test "gcd of 0 and 0 is 0" 
@@ -687,6 +692,12 @@ let solve_tests = let open Solve in [
       (372750) (Solve.lcm 1491 250) string_of_int;
     test "lcm of 41352 and 25 is 1033800" 
       (1033800) (Solve.lcm 41352 25) string_of_int;
+    "Trying to get LCM with zero" >:: 
+    (fun _ -> assert_raises (Failure "LCM of zero does not exist") 
+        (fun () -> Solve.lcm 0 25));
+    "Trying to get LCM with zero other argument" >:: 
+    (fun _ -> assert_raises (Failure "LCM of zero does not exist") 
+        (fun () -> Solve.lcm 25 0));
   ]
 
 let prob_tests = let open Prob in [
@@ -758,6 +769,60 @@ let prob_tests = let open Prob in [
     test_rand_2 "Pois sam 1 5" 0. poisson_sam 1. 0.5 string_of_float;
     test_rand_2 "Pois sam 1 5" 3. poisson_sam 1. 5.0 string_of_float;
     test_rand_2 "Pois sam 1 20" 25. poisson_sam 1. 20.0 string_of_float;
+
+    parse_test "parse bern sam n" (Prob (Bernoulli (SAM,0.5,10.))) 
+      "bern smpl 0.5 10";
+    parse_test "parse bern sam 0" (Prob (Bernoulli (SAM,0.5,0.))) 
+      "bern smpl 0.5";
+    parse_test "parse bern pdf" (Prob (Bernoulli (PDF,0.5,2.))) 
+      "bern pdf 0.5 2.";
+    parse_test "parse bern cdf" (Prob (Bernoulli (CDF,0.5,2.))) 
+      "bern cdf 0.5 2.";
+
+    parse_test "parse binom sam n" (Prob (Binomial (SAM,5.,0.5,10.))) 
+      "binom smpl 5 0.5 10";
+    parse_test "parse binom sam 0" (Prob (Binomial (SAM,5.,0.5,0.))) 
+      "binom smpl 5 0.5";
+    parse_test "parse binom pdf" (Prob (Binomial (PDF,5.,0.5,2.))) 
+      "binom pdf 5 0.5 2.";
+    parse_test "parse binom cdf" (Prob (Binomial (CDF,5.,0.5,2.))) 
+      "binom cdf 5 0.5 2.";
+
+    parse_test "parse unif sam n" (Prob (Uniform (SAM,0.,1.,10.))) 
+      "unif smpl 0. 1. 10";
+    parse_test "parse unif sam 0" (Prob (Uniform  (SAM,0.,1.,0.))) 
+      "unif smpl 0. 1.";
+    parse_test "parse unif pdf" (Prob (Uniform  (PDF,0.,1.,0.5))) 
+      "unif pdf 0. 1. 0.5";
+    parse_test "parse unif cdf" (Prob (Uniform  (CDF,0.,1.,0.5))) 
+      "unif cdf 0. 1. 0.5";
+
+    parse_test "parse geo sam n" (Prob (Geometric (SAM,0.5,10.))) 
+      "geo smpl 0.5 10";
+    parse_test "parse geo sam 0" (Prob (Geometric  (SAM,0.5,0.))) 
+      "geo smpl 0.5";
+    parse_test "parse geo pdf" (Prob (Geometric  (PDF,0.5,3.))) 
+      "geo pdf 0.5 3";
+    parse_test "parse geo cdf" (Prob (Geometric (CDF,0.5,3.))) 
+      "geo cdf 0.5 3";
+
+    parse_test "parse exp sam n" (Prob (Exponential (SAM,0.5,10.))) 
+      "exp smpl 0.5 10";
+    parse_test "parse exp sam 0" (Prob (Exponential (SAM,0.5,0.))) 
+      "exp smpl 0.5";
+    parse_test "parse exp pdf" (Prob (Exponential  (PDF,0.5,3.))) 
+      "exp pdf 0.5 3";
+    parse_test "parse exp cdf" (Prob (Exponential (CDF,0.5,3.))) 
+      "exp cdf 0.5 3";
+
+    parse_test "parse pois sam n" (Prob (Poisson (SAM,0.5,10.))) 
+      "pois smpl 0.5 10";
+    parse_test "parse pois sam 0" (Prob (Poisson (SAM,0.5,0.))) 
+      "pois smpl 0.5";
+    parse_test "parse pois pdf" (Prob (Poisson (PDF,0.5,3.))) 
+      "pois pdf 0.5 3";
+    parse_test "parse pois cdf" (Prob (Poisson (CDF,0.5,3.))) 
+      "pois cdf 0.5 3";
 
   ]
 

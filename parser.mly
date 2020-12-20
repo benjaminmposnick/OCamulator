@@ -115,50 +115,37 @@ prob_input :
 	;
 
 prob_expr :
-	| BINOM; SAM; n = prob_input; p = prob_input; k = prob_input
-		{ Prob (Binomial (SAM, n, p, k)) } 
 	| BINOM; SAM; n = prob_input; p = prob_input;
 		{ Prob (Binomial (SAM, n, p, 0.)) } 
 	| BINOM; fn = prob_func; n = prob_input; p = prob_input; k = prob_input
 		{ Prob (Binomial (fn, n, p, k)) } 
-	
-	| BERN; SAM; p = prob_input; k = prob_input
-		{ Prob (Bernoulli (SAM, p, k)) }
+
 	| BERN; SAM; p = prob_input;
 		{ Prob (Bernoulli (SAM, p, 0.)) }
 	| BERN; fn = prob_func; p = prob_input; k = prob_input
 		{ Prob (Bernoulli (fn, p, k)) }
 
-	| UNIF; SAM; a = prob_input; b = prob_input; x = prob_input
-		{ Prob (Uniform (SAM, a, b, x)) }
 	| UNIF; SAM; a = prob_input; b = prob_input;
 		{ Prob (Uniform (SAM, a, b, 0.)) }
 	| UNIF; fn = prob_func; a = prob_input; b = prob_input; x = prob_input
 		{ Prob (Uniform (fn, a, b, x)) }
 
-	| POIS; SAM; l = prob_input; k = prob_input 
-	 	{ Prob (Poisson (SAM, l, k)) }
 	| POIS; SAM; l = prob_input;
 	 	{ Prob (Poisson (SAM, l, 0.)) }
 	| POIS; fn = prob_func; l = prob_input; k = prob_input 
 	 	{ Prob (Poisson (fn, l, k)) }
 
-	| GEO; SAM; p = prob_input; k = prob_input
-		{ Prob (Geometric (SAM, p, k)) }
 	| GEO; SAM; p = prob_input;
 		{ Prob (Geometric (SAM, p, 0.)) }
 	| GEO; fn = prob_func; p = prob_input; k = prob_input
 		{ Prob (Geometric (fn, p, k)) }
 
-	| EXP; SAM; l = prob_input; x = prob_input
-		{ Prob (Exponential (SAM, l, x)) }
+
 	| EXP; SAM; l = prob_input;
 		{ Prob (Exponential (SAM, l, 0.)) }
 	| EXP; fn = prob_func; l = prob_input; x = prob_input
 		{ Prob (Exponential (fn, l, x)) }
 
-	| NORM; SAM; m = prob_input; s = prob_input; x = prob_input
-		{ Prob (Normal (SAM, m, s, x)) }
 	| NORM; SAM; m = prob_input; s = prob_input;
 		{ Prob (Normal (SAM, m, s, 0.)) }
 	| NORM; fn = prob_func; m = prob_input; s = prob_input; x = prob_input
@@ -168,3 +155,4 @@ prob_expr :
 %inline prob_func :
 	| PDF { PDF }
 	| CDF { CDF }
+	| SAM { SAM }

@@ -9,6 +9,12 @@ let rec has_var e1 var =
     | Binop (op', e1', e2') -> has_var e1' var || has_var e2' var
     | _ -> false
 
+let rec has_var_any e = 
+  match e with
+    | Var _ -> true
+    | Binop (op', e1, e2) -> has_var_any e1 || has_var_any e2
+    | _ -> false
+
 (** [match_ast ast] is the tuple of contents of the Ast expression if it is a
     Binop expression. Otherwise, [match_ast ast] is the input ast *)
 let match_ast ast var = match ast with
@@ -52,6 +58,7 @@ let rec solve var e =
   then failwith "No variable given"
   else e |> step_solve (Var var) |> solve var
 
+(* Uses the Euclidean algorithm as explained on Khan Academy *)
 let rec gcd v1 v2 = 
   let i1 = max v1 v2 in
   let i2 = min v1 v2 in
@@ -60,6 +67,7 @@ let rec gcd v1 v2 =
     let remainder = i1 mod i2 in
     gcd i2 remainder
 
+(* Uses mathematical definition of lcm that relies on gcd *)
 let lcm v1 v2 = 
   if v1 = 0 || v2 = 0 then failwith "LCM of zero does not exist" else
     let prod = Int.abs (v1 * v2) in
