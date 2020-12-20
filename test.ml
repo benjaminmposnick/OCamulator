@@ -65,6 +65,7 @@ let test_binop name expected_output op e1 e2 =
   test name expected_output
     (fst (Eval.eval_expr (Binop (op, e1, e2)) [])) string_of_value
 
+
 (** [check_lu_decomp l u] is [unit] if [l] is lower triangular and [u] is
     upper triangular; otherwise, [Failure] is raised. *)
 let check_lu_decomp l u =
@@ -774,25 +775,52 @@ let stat_tests = let open Stat in
     test "sort asc nothing" [1.;2.;3.] (sort_asc [1.;2.;3.]) string_of_list;
     test "sort asc" [1.;2.;3.] (sort_asc [3.;2.;1.]) string_of_list;
 
+    test_command "cmd sort_asc empty" (VVector (make_row_vec [])) "sort_asc" 
+      (Vector (make_row_vec []));
+    test_command "cmd sort_asc 1" (VVector (make_row_vec [1.])) "sort_asc" 
+      (Vector (make_row_vec [1.]));
+    test_command "cmd sort_asc n" (VVector (make_row_vec [1.;2.;3.])) "sort_asc" 
+      (Vector (make_row_vec [1.;2.;3.]));
+    test_command "cmd sort_asc" (VVector (make_row_vec [1.;2.;3.])) "sort_asc" 
+      (Vector (make_row_vec [1.;2.;3.]));
+
     test "sort desc empty" [] (sort_desc[]) string_of_list;
     test "sort desc 1" [1.] (sort_desc [1.]) string_of_list;
     test "sort desc" [3.;2.;1.] (sort_desc [1.;2.;3.]) string_of_list;
     test "sort desc nothing" [3.;2.;1.] (sort_desc [3.;2.;1.]) string_of_list;
+
+    test_command "cmd sort_desc empty" (VVector (make_row_vec [])) "sort_desc" 
+      (Vector (make_row_vec []));
+    test_command "cmd sort_desc 1" (VVector (make_row_vec [1.])) "sort_desc" 
+      (Vector (make_row_vec [1.]));
+    test_command "cmd sort_desc n" (VVector (make_row_vec [3.;2.;1.])) 
+      "sort_desc" (Vector (make_row_vec [1.;2.;3.]));
+    test_command "cmd sort_desc" (VVector (make_row_vec [3.;2.;1.])) 
+      "sort_desc" (Vector (make_row_vec [3.;2.;1.]));
 
     test "sum empty" 0. (cum_sum []) string_of_float;
     test "sum 1" 1. (cum_sum [1.]) string_of_float;
     test "sum many" 6. (cum_sum [1.;2.;3.]) string_of_float;
     test "sum neg" 2. (cum_sum [1.;-2.;3.]) string_of_float;
 
+    test_command "cmd sum" (VFloat 6.)
+      "sum" (Vector (make_row_vec [3.;2.;1.]));
+
     test "prod empty" 1. (cum_prod []) string_of_float;
     test "prod 1" 1. (cum_prod [1.]) string_of_float;
     test "prod many" 6. (cum_prod [1.;2.;3.]) string_of_float;
     test "prod neg" (-6.) (cum_prod [1.;-2.;3.]) string_of_float;
 
+    test_command "cmd prod" (VFloat 6.)
+      "product" (Vector (make_row_vec [3.;2.;1.]));
+
     test "mean empty" 0. (mean []) string_of_float;
     test "mean 1" 1. (mean [1.]) string_of_float;
     test "mean same" 2. (mean [2.;2.;2.;2.]) string_of_float;
     test "mean neg" 0. (mean [-1.;1.;-1.;1.]) string_of_float;
+
+    test_command "cmd mean" (VFloat 2.)
+      "mean" (Vector (make_row_vec [3.;2.;1.]));
 
     test "median empty" 0. (median []) string_of_float;
     test "median 1" 1. (median [1.]) string_of_float;
@@ -800,42 +828,69 @@ let stat_tests = let open Stat in
     test "median even" 0. (median [-1.;1.;-1.;1.]) string_of_float;
     test "median odd" 2. (median [1.;2.;3.]) string_of_float;
 
+    test_command "cmd median" (VFloat 2.)
+      "median" (Vector (make_row_vec [3.;2.;1.]));
+
     test "mode empty" 0. (mode []) string_of_float;
     test "mode 1" 1. (mode [1.]) string_of_float;
     test "mode tie" 2. (mode [2.;2.;3.;3.]) string_of_float;
     test "mode many" 1. (mode [1.;1.;1.;2.;2.]) string_of_float;
     test "mode rev" 2. (mode [1.;2.;2.;2.;2.]) string_of_float;
 
+    test_command "cmd mode" (VFloat 2.)
+      "mode" (Vector (make_row_vec [1.;2.;2.;2.;2.]));
+
     test "max empty" 0. (max []) string_of_float;
     test "max empty" 1. (max [1.]) string_of_float;
     test "max many" 3. (max [1.;2.;3.]) string_of_float;
     test "max neg" 2. (max [1.;2.;-3.]) string_of_float;
+
+    test_command "cmd max" (VFloat 3.)
+      "max" (Vector (make_row_vec [3.;2.;1.]));
 
     test "min empty" 0. (min []) string_of_float;
     test "min empty" 1. (min [1.]) string_of_float;
     test "min many" 1. (min [1.;2.;3.]) string_of_float;
     test "min neg" (-3.) (min [1.;2.;-3.]) string_of_float;
 
+    test_command "cmd min" (VFloat 1.)
+      "min" (Vector (make_row_vec [3.;2.;1.]));
+
     test "range empty" 0. (range []) string_of_float;
     test "range none" 0. (range [1.;1.]) string_of_float;
     test "range pos" 7. (range [8.;1.]) string_of_float;
+
+    test_command "cmd range" (VFloat 2.)
+      "range" (Vector (make_row_vec [3.;2.;1.]));
 
     test "var empty" 0. (smpl_var []) string_of_float;
     test "var same" 0. (smpl_var [1.;1.;1.]) string_of_float;
     test "var many" 2.5 (smpl_var [1.;2.;3.;4.;5.]) string_of_float;
 
+    test_command "cmd var" (VFloat 2.5)
+      "variance" (Vector (make_row_vec [1.;2.;3.;4.;5.]));
+
     test "std empty" 0. (smpl_std []) string_of_float;
     test "std same" 0. (smpl_std [1.;1.;1.]) string_of_float;
     test "std many" (2.5 ** 0.5) (smpl_std [1.;2.;3.;4.;5.]) string_of_float;
+
+    test_command "cmd std" (VFloat 0.)
+      "std" (Vector (make_row_vec [1.;1.;1.]));
 
     test "count empty" 0. (count 0. []) string_of_float;
     test "count 1" 1. (count 1. [1.]) string_of_float;
     test "count only" 3. (count 1. [1.;1.;1.]) string_of_float;
     test "count many" 3. (count 1. [1.;1.;1.;2.;2.]) string_of_float;
 
+    test_command "cmd count" (VFloat 2.) "count" 
+      (Tuple (Float 3., Vector (make_row_vec [1.;2.;3.;3.])));
+
     test "unique empty" [] (unique []) string_of_list;
     test "unique 1" [1.] (unique [1.]) string_of_list;
     test "unique many" [1.;2.] (unique [1.;1.;1.;2.;2.]) string_of_list;
+
+    test_command "cmd unique n" (VVector (make_row_vec [1.;2.;3.])) "unique" 
+      (Vector (make_row_vec [1.;2.;3.;3.]));
 
     test "quantile empty" 0. (quantile [] 0.5) string_of_float;
     test "quantile single" 1. (quantile [1.] 0.5) string_of_float;
@@ -844,6 +899,9 @@ let stat_tests = let open Stat in
     test "quantile 0.75" 5. (quantile [1.;2.;3.;4.;5.] 0.75) string_of_float;
     test "quantile 0.2" 2. (quantile [1.;2.;3.;4.;5.] 0.2) string_of_float;
     test "quantile 0.25" 2. (quantile [1.;2.;3.;4.;5.] 0.25) string_of_float;
+
+    test_command "cmd quantile" (VFloat 2.) "quantile" 
+      (Tuple (Float 0.25, Vector (make_row_vec [1.;2.;3.;4.;5.])));
 
     test "linreg 1 0" (2.,0.) 
       (linear_regression [(1.,2.);(2.,4.);(3.,6.)]) string_of_pair;

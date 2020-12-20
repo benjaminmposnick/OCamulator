@@ -417,12 +417,15 @@ let eval_stat_command cmd vec =
   | "median" -> stats_noargs_float median vec
   | "sort_asc" -> stats_noargs_vec sort_asc vec
   | "sort_desc"-> stats_noargs_vec sort_desc vec
+  | "unique"-> stats_noargs_vec unique vec
   | "min" -> stats_noargs_float min vec
   | "max" -> stats_noargs_float max vec
   | "variance" -> stats_noargs_float smpl_var vec
   | "std" -> stats_noargs_float smpl_std vec
   | "sum" -> stats_noargs_float cum_sum vec
   | "product" -> stats_noargs_float cum_prod vec
+  | "mode" -> stats_noargs_float mode vec
+  | "range" -> stats_noargs_float range vec
   | _ -> raise_exn ("No such command: " ^ cmd)
 
 (** [dbl_int_command_nk f arg1 arg2] is the result of applying [f] to the
@@ -492,7 +495,8 @@ let rec eval_binop op e1 e2 sigma  =
     evaluation, [ComputationError.EvalError] is raised instead. *)
 and eval_command cmd e sigma = 
   let stat_commands = ["mean"; "median"; "sort_asc"; "sort_desc"; "min"; "max";
-                       "variance"; "std"; "sum"; "product";] in
+                       "variance"; "std"; "sum"; "product";"mode";"range";
+                       "unique"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
   let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
                          "linreg";"lcm"; "gcd"] in
