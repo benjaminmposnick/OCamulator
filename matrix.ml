@@ -212,11 +212,13 @@ let row_sums mat =
 
 let matrix_vector_product mat vec swap_order =
   ignore(rep_ok mat);
+  let open Vector in
   match vec, swap_order with
   | Vector.RowVector _, true -> 
     List.hd (matrix_multiply [vec] mat) (* Outputs a row vector *)
   | ColVector _, false ->
-    matrix_multiply mat [vec] (* Outputs a column vector *)
+    let cvec = List.map (fun elem -> make_row_vec [elem]) (to_list vec) in
+    matrix_multiply mat cvec (* Outputs a column vector *)
     |> List.map Vector.to_list
     |> List.flatten
     |> Vector.make_col_vec

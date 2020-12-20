@@ -425,14 +425,10 @@ let eval_double_command cmd v1 v2 =
   match cmd, v1, v2 with
   | "choose", VFloat arg1, VFloat arg2 ->
     VFloat (dbl_int_cmd_nk choose arg1 arg2)
-  | "comb", VFloat arg1, VFloat arg2 -> 
-    VFloat (dbl_int_cmd_nk choose arg1 arg2)
-  | "perm", VFloat arg1, VFloat arg2 -> 
-    VFloat (dbl_int_cmd_nk perm arg1 arg2)
-  | "count", VFloat arg, VVector vec ->
-    VFloat (count arg (to_list vec))
-  | "quantile", VFloat arg, VVector vec ->
-    prob_check arg;
+  | "comb", VFloat arg1, VFloat arg2 -> VFloat (dbl_int_cmd_nk choose arg1 arg2)
+  | "perm", VFloat arg1, VFloat arg2 -> VFloat (dbl_int_cmd_nk perm arg1 arg2)
+  | "count", VFloat arg, VVector vec -> VFloat (count arg (to_list vec))
+  | "quantile", VFloat arg, VVector vec -> prob_check arg; 
     VFloat (quantile (to_list vec) arg)
   | "bestfit", VVector vec1, VVector vec2 ->
     cmd_linreg (to_list vec1) (to_list vec2)
@@ -489,11 +485,14 @@ and eval_command cmd e sigma =
     | _ -> raise_exn ("No such command: " ^ cmd)
   in
   (result, sigma')
-and
-  eval_tup e1 e2 sigma =
+
+(** [eval_tup e1 e2 sigma] is the tuple [(v1, v2)] that results from evaluating
+    [e1] to a value [v1] and [e2] to a value [v2] in store [sigma]. *)
+and eval_tup e1 e2 sigma =
   let val1 = eval_expr e1 sigma in
   let val2 = eval_expr e2 (snd val1)in
   VTuple (fst val1, fst val2), snd val2
+
 and eval_expr e sigma =
   match e with
   | Var x -> eval_var x sigma
