@@ -25,18 +25,18 @@ val to_array : t -> float array
     Requires: [v1] and [v2] are the same length. *)
 val component_wise : t -> t -> (float -> float -> float) -> float list
 
-(** [component_wise_add v1 v2] is the result of adding the elements of vectors
-    [v1] and [v2] component-wise.
+(** [component_wise_add v1 v2] is the [RowVector] resulting from adding the
+    elements of vectors [v1] and [v2] component-wise.
     Requires: [v1] and [v2] are the same length. *)
 val component_wise_add : t -> t -> t
 
-(** [component_wise_subtract v1 v2] is the result of subtracting [v2] from
-    [v1] component-wise.
+(** [component_wise_subtract v1 v2] is the [RowVector] resulting from
+    subtracting [v2] from [v1] component-wise.
     Requires: [v1] and [v2] are the same length. *)
 val component_wise_subtract : t -> t -> t
 
-(** [component_wise_multiply v1 v2] is the result of multiplying the elements
-    of vectors [v1] and [v2] component-wise.
+(** [component_wise_multiply v1 v2] is the[RowVector] resulting from multiplying
+    the elements of vectors [v1] and [v2] component-wise.
     Requires: [v1] and [v2] are the same length. *)
 val component_wise_multiply : t -> t -> t
 
