@@ -6,3 +6,4 @@ bisect*.coverage
 Search.code-search
 __pycache__
 .vscode
+doc.*
