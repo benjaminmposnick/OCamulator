@@ -421,12 +421,14 @@ let eval_double_command cmd v1 v2 =
   let open Stat in 
   let open Prob in
   let open Vector in
+  let open Solve in
   match cmd, v1, v2 with
   | "choose", VFloat arg1, VFloat arg2 ->
     VFloat (dbl_int_cmd_nk choose arg1 arg2)
   | "comb", VFloat arg1, VFloat arg2 -> 
     VFloat (dbl_int_cmd_nk choose arg1 arg2)
   | "perm", VFloat arg1, VFloat arg2 -> 
+
     VFloat (dbl_int_cmd_nk perm arg1 arg2)
   | "count", VFloat arg, VVector vec ->
     VFloat (count arg (to_list vec))
@@ -437,6 +439,11 @@ let eval_double_command cmd v1 v2 =
     cmd_linreg (to_list vec1) (to_list vec2)
   | "linreg", VVector vec1, VVector vec2 ->
     cmd_linreg (to_list vec1) (to_list vec2)
+    VFloat (dbl_int_commnd_nk perm arg1 arg2)
+  | "gcd", VFloat arg1, VFloat arg2 -> 
+    VFloat (float_of_int (gcd (int_of_float arg1) (int_of_float arg2)))
+  | "lcm", VFloat arg1, VFloat arg2 -> 
+    VFloat (float_of_int (lcm (int_of_float arg1) (int_of_float arg2)))
   | _ -> raise_exn ("No such command: " ^ cmd)
 
 (* ===========================================================================
@@ -464,7 +471,7 @@ and eval_command cmd e sigma =
                        "variance"; "std"; "sum"; "product"] in
   let linalg_commands = ["rref"; "transpose"; "pivots"; "det"; "inv"; "plu"] in
   let double_commands = ["choose";"perm";"comb";"count";"quantile";"bestfit";
-                         "linreg"] in
+                         "linreg","lcm"; "gcd"] in
   let (value, sigma') =
     if cmd <> "solve" then eval_expr e sigma
     else
