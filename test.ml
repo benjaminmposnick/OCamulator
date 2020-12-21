@@ -1,7 +1,8 @@
 (** TEST PLAN:
-    All of the following Compilation units are tested automatically via OUnit.
-    Projection was the only functionality that was tested manually which is
-    a utility found in Eval.
+    All of the compilation units are tested automatically via OUnit.
+    Projection was the only functionality that was tested manually, which is
+    a utility found in Eval. main.ml was not tested via OUnit either and was
+    instead tested by running the command line application manually.
 
     Eval: The Eval compilation unit is essentially a wrapper that applies
     functions from the other compilation units. Because of this, much of the
@@ -11,13 +12,13 @@
     used. For the functions in eval that were not directly tested via testing
     for other files (for example, trig functions, which were evaluated directly
     in Eval), we used black box testing to compare expected outputs against the
-    outputs given  by function calls. Finally, we used Bisect to ensure that an
+    outputs given by function calls. Finally, we used Bisect to ensure that an
     appropriate amount of the compilation unit was being tested. We did choose
     to exclude Bisect coverage of specific functions that could not be directly
     tested, as they require user input.
 
-    Linalg: The [Linalg] module was tested using both glass box and black box
-    testing. Glass boxing testing was done using Bisect as an aid to ensure
+    Linalg: The Linalg module was tested using both glass box and black box
+    testing. Glass box testing was done using Bisect as an aid to ensure
     nearly 100% code coverage for this module. Black box testing was done by
     comparing the results of various computations (e.g. row reduction, inverse
     determinants, solve systems of equations) to the results outputted by 
@@ -33,9 +34,9 @@
     read into this test suite to ensure efficient computation even for massive
     inputs.
 
-    Solve: The main [solve] function was tested via black box testing comparing 
+    Solve: The main solve function was tested via black box testing comparing 
     known hand-solved outputs of equations with the function outputs. The
-    functions that check for variables in equations, [has_var] and [has_var_any]
+    functions that check for variables in equations, has_var and has_var_any
     were similarly tested via black box testing on equations with and without
     variables nested at various levels in the ast representation. LCM and GCD
     were tested with black box testing to compare known LCMs and GCDs, solved
@@ -45,17 +46,20 @@
 
     Matrix: Matrix was tested using both black box and glass box testing, with
     the latter being done using Bisect as an aid. Much of the module's 
-    functionality is utilized by the [Linalg] module, which allowed for "free"
-    black box testing -- as the [Linalg] module is concerned only with the
-    output. A [rep_ok] function was developed to ensure that no matter what,
+    functionality is utilized by the Linalg module, which allowed for "free"
+    black box testing -- as the Linalg module is concerned only with the
+    output. A rep_ok function was developed to ensure that no matter what,
     the representation invariants always hold.
 
-    Vector:
+    Vector: Vector was tested using both black box and glass box testing, with
+    the latter being done using Bisect as an aid. Once again, much of the
+    module's functionality is utilized by the Linalg module, as well as the 
+    Stat module, which allowed for "free" black box testing.
 
-    Prob: Probalistic functions expect sampling were tested via black box 
-    testing comparing true distribution values to the function outputs. 
-    Random variable generators were tested also with balck box testing, but due 
-    to the nature of the functions property based testing was done. For each
+    Prob: Probalistic functions, expect sampling, were tested via black box 
+    testing by comparing true distribution values to the function outputs. 
+    Random variable generators were tested also with black box testing, but due 
+    to the nature of the functions, property-based testing was done. For each
     distribution the mean and variance of the random vector was compared to
     the true values for 1000 samples to ensure a tight confidence interval.
     All the tests use a set random seed to ensure consistency and repeatability.
@@ -64,7 +68,17 @@
     the expected output of statisitical functions with their expected output on
     known input vector with the given parameters.
 
-    Demonstrates correctness because ...
+    Our testing approach demonstrates the correctness of our system because we:
+    (1) utilized glass box, black box, and property based testing
+    (2) achieved 97.73% code coverage according to Bisect
+    (3) developed a robust and rigorous test suite, making sure to test edge
+        cases throughly
+    (4) compared the outputs of our linear algebra computations to Matlab
+    (5) extensively tested by hand using the command line application
+    (6) tested all parts of the system, end-to-end: from the lexer to the
+        parser, to the interpreter, to the individual modules
+    (7) utilized custom exceptions extensively in the interpreter to ensure
+        that only valid inputs are evaluated 
 *)
 
 open OUnit2
