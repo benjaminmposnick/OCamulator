@@ -1,3 +1,7 @@
+(** [Prob] is the module for calculating probabilities and sampling from 
+    various probability distributions as well as for computing factorials,
+    combinations, and permutations. *)
+
 (** [factorial n] is the factorial of [n]*)
 val factorial : int -> int 
 
@@ -26,8 +30,8 @@ val uniform_sam : float -> float -> float
 val bernoulli_pmf : float -> int -> float 
 
 (** [bernoulli_cdf k p] is the bernoulli([p]) cumulative density of k
-    Requires: [p] is a valid bernolli p, [0.1] *)
-(**else if k < 1 then 1. -. p *)
+    Requires: [p] is a valid bernolli p, [0.1]
+    else if k < 1 then 1. -. p *)
 val bernoulli_cdf : float -> int -> float
 
 (** [bernoulli_sam p] is a random variable drawn from Bernoulli [p]

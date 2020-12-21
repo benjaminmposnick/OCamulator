@@ -1,3 +1,6 @@
+(** [Eval] is the module for the interpreter for the OCamulator, charged with
+    evaluating expressions and updating the variable store. *)
+
 open Ast
 
 (** [store] is the type of the variable store, which maps variable identifiers

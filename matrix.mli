@@ -1,3 +1,5 @@
+(** [Matrix] is the module for creating and manipulating matrices. *)
+
 open Vector
 
 (** [t] is the type of [Matrix]. 

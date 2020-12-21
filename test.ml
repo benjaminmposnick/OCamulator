@@ -5,7 +5,22 @@
 
     Eval: 
 
-    Linalg:
+    Linalg: The [Linalg] module was tested using both glass box and black box
+    testing. Glass boxing testing was done using Bisect as an aid to ensure
+    nearly 100% code coverage for this module. Black box testing was done by
+    comparing the results of various computations (e.g. row reduction, inverse
+    determinants, solve systems of equations) to the results outputted by 
+    Matlab. By doing this, we were also able to ensure that such functions
+    could be accurately expressed to the same number of digits as Matlab --
+    something that helped us greatly to find and reduce roundoff errors.
+    Property-based testing was employed to test the PLU decomposition, which 
+    ensured that for a matrix A that is factorized, (1) A = (P^T)LU, (2)
+    L is lower triangular, and (3) U is triangular. Furthermore, when choosing
+    matrices for tests, we aimed to find matrices that were square and 
+    non-square, singular and non-singular, full rank and deficient rank,
+    large and small. The "./tests" folder contains larger matrices which are
+    read into this test suite to ensure efficient computation even for massive
+    inputs.
 
     Solve: The main [solve] function was tested via black box testing comparing 
     known hand-solved outputs of equations with the function outputs. The
@@ -17,7 +32,12 @@
     in the compilation unit were checked with Bisect to ensure that all branches
     of the functions were accounted for in testing.
 
-    Matrix:
+    Matrix: Matrix was tested using both black box and glass box testing, with
+    the latter being done using Bisect as an aid. Much of the module's 
+    functionality is utilized by the [Linalg] module, which allowed for "free"
+    black box testing -- as the [Linalg] module is concerned only with the
+    output. A [rep_ok] function was developed to ensure that no matter what,
+    the representation invariants always hold.
 
     Vector:
 

@@ -1,3 +1,7 @@
+(** [Linalg] is the module for performing linear algebra computations, ranging
+    from row reduction, matrix factorization, solving systems of equations, 
+    finding determinants, and finding inverses. *)
+
 open Matrix
 open Vector
 

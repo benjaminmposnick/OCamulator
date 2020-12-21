@@ -1,3 +1,7 @@
+(** [Solve] is the module for solving algebraic equations for variables as
+    well as finding the least common and greatest common denominators of two
+    natural numbers. *)
+
 (** [solve var e] is the equation [e] solved for Var [var].
     Example: [solve "x" (Binop(Eq, Binop(Mul, Var "x", Int 4), Int 5 ))] is
               (Binop(Eq, Var "x", Binop(Div, Int 5, Int 4))) 

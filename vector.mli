@@ -1,3 +1,5 @@
+(** [Vector] is the module for creating and manipulating vectors. *)
+
 (** [t] is the type of [Vector]. *)
 type t =
   | RowVector of float list

@@ -1,3 +1,6 @@
+(** [Stat] is the module for statistical of vectors, including measures of
+    central tendency and linear regression. *)
+
 (** [sort_asc d] is [d] sorted in ascending order*)
 val sort_asc : float list -> float list
 
