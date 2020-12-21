@@ -125,12 +125,40 @@ let rec string_of_expr = function
   | Tuple (e1, e2) -> "(" ^ string_of_expr e1 ^ " , " ^ string_of_expr e2 ^ ")"
   | Negate s -> "-" ^ s
 
+(** [string_of_op binop] is the string respresentation of [binop] to be used
+    in string of equation.
+    Requires: [binop] is Eq, Add, Sub, Mul, or Div *)
+let string_of_op = function
+  | Eq -> " = "
+  | Add -> " + "
+  | Sub -> " - "
+  | Mul -> " * "
+  | Div -> " / "
+  | _ -> failwith "Invalid equation operation"
+
+(** [string_of_VEquation v] is the string respresentation of 
+    VEquation [v]. *)
+let rec string_of_VEquation = function
+  | Binop (Mul, e1, e2) -> 
+    " (" ^ string_of_VEquation e1 ^ ") * (" ^
+    string_of_VEquation  e2 ^ ") "
+  | Binop (Div, e1, e2) -> 
+    " (" ^ string_of_VEquation e1 ^ ") / (" ^
+    string_of_VEquation  e2 ^ ") "
+  | Binop (op, e1, e2) -> 
+    string_of_VEquation e1 ^ string_of_op op ^ 
+    string_of_VEquation e2
+  | Var x -> x
+  | Int i -> string_of_int i
+  | Float f -> string_of_float f
+  | _ -> failwith "String of invalid equation piece"
+
 (** [string_of_value value] is the string respresentation of [value]. *)
 let rec string_of_value = function
   | VFloat f -> "Float " ^ string_of_float f
   | VVector vec -> "Vector \n" ^ Vector.string_of_vector vec
   | VMatrix mat -> "Matrix \n" ^ Matrix.string_of_matrix mat
-  | VEquation (op, e1, e2) -> string_of_expr (Binop (op, e1, e2))
+  | VEquation (op, e1, e2) -> string_of_VEquation (Binop (op, e1, e2))
   | VList lst -> 
     let rec string_of_value_list lst i acc =
       match lst with
