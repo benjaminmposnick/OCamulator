@@ -3,11 +3,19 @@
     Projection was the only functionality that was tested manually which is
     a utility found in Eval.
 
-    Eval:
+    Eval: 
 
     Linalg:
 
-    Solve:
+    Solve: The main [solve] function was tested via black box testing comparing 
+    known hand-solved outputs of equations with the function outputs. The
+    functions that check for variables in equations, [has_var] and [has_var_any]
+    were similarly tested via black box testing on equations with and without
+    variables nested at various levels in the ast representation. LCM and GCD
+    were tested with black box testing to compare known LCMs and GCDs, solved
+    by hand and verified with online calculators. Finally, all of the functions
+    in the compilation unit were checked with Bisect to ensure that all branches
+    of the functions were accounted for in testing.
 
     Matrix:
 
