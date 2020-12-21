@@ -148,10 +148,9 @@ let is_pivot_col col next_pivot_idx =
     Requires: [matrix] is no smaller than a 2x2 matrix and [tolerance] is
     computed by the function [determine_tolerance] applied to [matrix].  *)
 let row_echelon_form matrix tolerance = 
-  let open List in
   let rec row_echelon_form_aux matrix next_pivot_idx acc pivot_col_idxs =
-    let n_cols = Matrix.n_cols matrix in 
-    if n_cols = 0 then (Matrix.(transpose (of_list (List.rev acc))), pivot_col_idxs)
+    if Matrix.n_cols matrix  = 0 then
+      (Matrix.(transpose (of_list (List.rev acc))), pivot_col_idxs)
     else
       let next_col = Matrix.get_col matrix 0 in
       if not (is_pivot_col next_col next_pivot_idx) then
@@ -166,9 +165,10 @@ let row_echelon_form matrix tolerance =
         let pivot_col = Matrix.get_col matrix' 0 in
         let remaining_cols = Matrix.drop_col matrix' 0 in
         let acc' = pivot_col :: acc in
-        let col_idx = length (acc') - 1 in
+        let col_idx = List.length (acc') - 1 in
         let pivot_col_idxs' = col_idx :: pivot_col_idxs in
-        row_echelon_form_aux remaining_cols (next_pivot_idx + 1) acc' pivot_col_idxs'
+        row_echelon_form_aux remaining_cols
+          (next_pivot_idx + 1) acc' pivot_col_idxs'
   in
   row_echelon_form_aux matrix 0 [] []
 

@@ -510,7 +510,7 @@ and eval_negate s sigma =
   let var_val = fst (eval_var s sigma) in 
   match var_val with
   | VFloat v -> VFloat (0. -. v), sigma
-  | _ -> failwith "Cannot negate non-numeric value"
+  | _ -> raise_exn "Cannot negate non-numeric value"
 
 (** [eval_trig f v sigma] is the value of the trig function [f] applied to [v]. 
     Requires: f is a string representing a trig function *)
@@ -522,7 +522,7 @@ and eval_trig f v sigma =
   | "arcsin", i -> VFloat(asin i)
   | "arccos", i -> VFloat(acos i)  
   | "arctan", i -> VFloat(atan i)
-  | _, _ -> failwith "Invalid trig entry"
+  | _, _ -> raise_exn "Invalid trig entry"
 
 and eval_binop op e1 e2 sigma  =
   let (v1, sigma') = eval_expr e1 sigma in
@@ -542,12 +542,7 @@ and eval_binop op e1 e2 sigma  =
     the result of evaluating [e] in store [sigma]. If an error occurs during
     evaluation, [ComputationError.EvalError] is raised instead. *)
 and eval_command cmd e sigma = 
-  let (value, sigma') =
-    if cmd <> "solve" then eval_expr e sigma
-    else
-      match e with
-      | Binop (op, e1, e2) -> (VEquation (op, e1, e2)), sigma
-      | _ -> raise_exn "Invalid operation on a non-equation" in
+  let (value, sigma') = eval_expr_from_command cmd e sigma in
   let result = match cmd, value with
     | "solve", VEquation (op, e1, e2) ->
       eval_solve op e1 e2 sigma [@coverage off] (* Cannot test systematically *)
@@ -568,6 +563,17 @@ and eval_command cmd e sigma =
     | _ -> raise_exn ("No such command: " ^ cmd)
   in
   (result, sigma')
+
+(** [eval_expr_from_command cmd e sigma] is the result of evaluating the 
+    expression [e] in store [sigma] so long as [cmd] is not ["solve"];
+    otherwise, if [cmd] is ["solve"], then the expression is converted to a
+    [VEquation] if the expression if [e = Binop(op, e1 e2)]. *)
+and eval_expr_from_command cmd e sigma =
+  if cmd <> "solve" then eval_expr e sigma
+  else
+    match e with
+    | Binop (op, e1, e2) -> (VEquation (op, e1, e2)), sigma
+    | _ -> raise_exn "Invalid operation on a non-equation" 
 
 (** [eval_tup e1 e2 sigma] is the tuple [(v1, v2)] that results from evaluating
     [e1] to a value [v1] and [e2] to a value [v2] in store [sigma]. *)
