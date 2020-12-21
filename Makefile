@@ -27,7 +27,7 @@ clean:
 	rm -rf ocamulator.zip doc.public doc.private _coverage* bisect*.coverage __pycache__
 
 zip:
-	zip -r ocamulator.zip *.ml* *.md Makefile _tags .ocamlinit .merlin .gitignore
+	zip -r ocamulator.zip *.ml* *.md Makefile _tags .ocamlinit .merlin .gitignore ./tests ./docs.*
 
 docs: docs-public docs-private
 

@@ -70,7 +70,7 @@
 
     Our testing approach demonstrates the correctness of our system because we:
     (1) utilized glass box, black box, and property based testing
-    (2) achieved 97.73% code coverage according to Bisect
+    (2) achieved 96.94% code coverage according to Bisect
     (3) developed a robust and rigorous test suite, making sure to test edge
         cases throughly
     (4) compared the outputs of our linear algebra computations to Matlab
