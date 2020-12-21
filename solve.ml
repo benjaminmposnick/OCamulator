@@ -22,7 +22,6 @@ let match_ast ast var = match ast with
   | _ -> raise InvalidBinop
 
 let inverse_helper (op, e_var, e_other) var =
-  (* let (op, e_var, e_other) = match_ast e var in *)
   match e_var with 
   | Binop(Add, e1, e2) -> 
     let e_var', e_other' = if has_var e1 var then e1, e2 else e2, e1 in
@@ -58,7 +57,7 @@ let rec solve var e =
   then failwith "No variable given"
   else e |> step_solve (Var var) |> solve var
 
-(* Uses the Euclidean algorithm as explained on Khan Academy *)
+(* Uses the Euclidean algorithm, as explained mathematically online *)
 let rec gcd v1 v2 = 
   let i1 = max v1 v2 in
   let i2 = min v1 v2 in

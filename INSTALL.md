@@ -256,6 +256,9 @@ Equations must:
 The user can enter trigonometry commands preceded by the `$` symbol.
 The output is the result of the OCaml built in trigonometry functions.
 
+The input is entered in the form:
+`$[function] [argument]`
+
 Supported trigonometry commands are:
 - `$sin`, the sine function
 - `$tan`, the tangent function
@@ -264,7 +267,7 @@ Supported trigonometry commands are:
 - `$arccose`, the inverse cosine function
 - `$arctan`, the inverse tangent function
 
-The user must enter a numeric value (`pi` is allowed as well).
+The user must enter a numeric value (`pi` is allowed as well) as the argument.
 
 *The arguments for the trig functions are in radians.*
 
