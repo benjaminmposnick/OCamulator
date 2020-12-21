@@ -3,7 +3,18 @@
     Projection was the only functionality that was tested manually which is
     a utility found in Eval.
 
-    Eval: 
+    Eval: The Eval compilation unit is essentially a wrapper that applies
+    functions from the other compilation units. Because of this, much of the
+    testing for eval was done through testing the other files; instead of
+    directly calling the functions in the other files, we would call them via
+    the eval functions that handle their cases when the actual program is being
+    used. For the functions in eval that were not directly tested via testing
+    for other files (for example, trig functions, which were evaluated directly
+    in Eval), we used black box testing to compare expected outputs against the
+    outputs given  by function calls. Finally, we used Bisect to ensure that an
+    appropriate amount of the compilation unit was being tested. We did choose
+    to exclude Bisect coverage of specific functions that could not be directly
+    tested, as they require user input.
 
     Linalg:
 
