@@ -3,8 +3,7 @@ open Vector
 (** [t] is the type of [Matrix]. 
     Representation invariants:
     - A [Matrix] represented as a list of [RowVector]s
-    - All [RowVectors] which comprise a [Matrix] are the same length.
-*)
+    - All [RowVectors] which comprise a [Matrix] are the same length. *)
 type t
 
 (** [to_list mat] returns a 2-dimensional list containing the elements of
@@ -54,7 +53,7 @@ val string_of_matrix : t -> string
 
 (** [transpose mat] is the transpose of [mat], obtained by interchanging the
     rows and columns of [mat], i.e. if A =def= [mat], then
-    [transpose mat] = A^T.*)
+    [transpose mat] = A^T. *)
 val transpose : t -> t
 
 (** [is_symmetric mat] is true iff [mat] is symmetric, i.e. A = A^T, if

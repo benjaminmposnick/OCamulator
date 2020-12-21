@@ -72,14 +72,14 @@ let rec event_loop sigma =
       | None -> event_loop sigma
       | Some ast -> 
         let result = try Some (Eval.eval_input ast sigma) with
-          | Eval.ComputationError.EvalError msg -> cprint_newline [red] msg; None
+          | Eval.ComputationError.EvalError msg ->
+            cprint_newline [red] msg; None
           | Failure msg -> cprint_newline [red] msg; None in
         match result with
         | None -> event_loop sigma
         | Some (value, sigma') -> let value_str = string_of_value value in
           cprint_newline [green] ("==> " ^ (value_str)); event_loop sigma'
-  end;
-  exit 0
+  end; exit 0
 
 let main () =
   cprint_newline [blue] "Welcome to the OCamulator!";

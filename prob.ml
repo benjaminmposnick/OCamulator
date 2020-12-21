@@ -51,7 +51,7 @@ let horner2 r x =
   done;
   !s /. !t
 (** can't test as produces a numerical approx using the tables above *)
-[@@ Coverage Off]
+[@@coverage off]
 
 let iqpi = 5.64189_58354_77562_86948_1e-01
 
@@ -67,7 +67,7 @@ let erfc x =
       exp (-. z2) *. z' *. (iqpi +. z'2 *. horner2 r2 z'2)
   in if x < 0. then 2. -. y else y
 (** can't test as produces a numerical approx using the tables above *)
-[@@ Coverage Off]
+[@@coverage off]
 
 (** [erf x] is the gaussian error of [x] used in the normal cdf *)
 let erf x = 1. -. erfc x

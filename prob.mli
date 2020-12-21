@@ -17,8 +17,7 @@ val uniform_pmf : float -> float -> float -> float
 val uniform_cdf : float -> float -> float -> float
 
 (** [uniform_sam a b] is a random variable sampled from Uniform [a] [b]
-    Requires: a < b
-*)
+    Requires: a < b *)
 val uniform_sam : float -> float -> float
 
 (** [bernoulli_pmf k p] is the bernoulli([p]) probability mass of k
