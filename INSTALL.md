@@ -55,7 +55,7 @@ mass or density, evalutating the cumulative density, and sampling from various
 standard probability distributions, as well as some standard probabilistic
 functions.
 
-# Standard Probability Functions
+## Standard Probability Functions
   $[command_name] [args]
 
 [command_name]
@@ -75,7 +75,7 @@ Examples:
   - 10 choose 2
     $choose 10 2
  
-# Probability Distribution Functions:
+## Probability Distribution Functions:
   [distribution_tag] [op_tag] [distribution_params] [value_param]
 
 distribution_tag - tag of one of the below distributions
@@ -159,7 +159,7 @@ Examples sampling:
 # Statistics:
 The statistics module includes various statistical functions on vectors.
 
-# Basic Statistics:
+## Basic Statistics:
 Basic statistics such as mean and median require no other arguments and have the form:
 
 $[statistic] [data]
@@ -190,7 +190,7 @@ Example:
   $mean [1;2;3]
   $mean x
 
-# More Functions:
+## More Functions:
 Some functions require added arguments as well as the data. The arguments must be pass as a tuple.
 
 $[statistic] ([arg] ~ [data])
@@ -228,3 +228,66 @@ Example:
 
 
 
+# Solving Equations
+Basic linear equations containing one variable can be solved
+`$solve [equation]`
+The user is then prompted to enter the variable to solve for.
+
+Example: `$solve x + 5 = 6`
+will result in the user being prompted with:
+```What variable would you like to solve for?```
+If the user enters `x`, then the output will be `1`.
+
+The user can also enter an equation with two distinct variables (*NOTE* only
+once instance of the variable being solved for is permitted)
+`$solve x + 5 = 6 + y`
+The user can enter either `x` or `y`. In the case that the answer contains a
+variable, the output is the AST representation of the answer. For example,
+if the user chose to solve this equation for x, the answer would be
+`Binop(Sub, Binop(Add, Int 6, Var "y"), Int 5)`
+
+Equations must:
+- Contain only one instance of the variable being solved for
+- Include one, and only one, equal sign
+- Be linear (no powers)
+- Include only the operators `+`, `-`, `*`, and `/`
+
+# Trigonometry Commands
+The user can enter trigonometry commands preceded by the `$` symbol.
+The output is the result of the OCaml built in trigonometry functions.
+
+Supported trigonometry commands are:
+- `$sin`, the sine function
+- `$tan`, the tangent function
+- `$cos`, the cosine function
+- `$arcsin`, the inverse sine function
+- `$arccose`, the inverse cosine function
+- `$arctan`, the inverse tangent function
+
+The user must enter a numeric value (`pi` is allowed as well).
+
+*The arguments for the trig functions are in radians.*
+
+The user can simply write `$sin 0` or `$cos pi`. 
+If a more complex input is needed, parantheses are necessary.
+Example: `$sin (2 * pi)`
+
+# Other Commands
+
+### Least Common Multiple
+The `$lcm` command solves for the Least Common Multiple of two numeric inputs. 
+The two required arguments are entered with the syntax `(x ~ y)`.
+
+Example: `$lcm (2 ~ 5)` is `10`. 
+
+Though input can be floats or ints, the function solves the input as integers.
+Floats with numbers after the decimal are effectively truncated.
+
+### Greatest Common Divisor
+The `$gcd` command solves for the Greatest Common Divisor of two numeric inputs. 
+The two required arguments are entered with the syntax `(x ~ y)`.
+
+Example: `$gcd (6 ~ 8)` is `2`. 
+
+Though input can be floats or ints, the function solves the input as integers.
+Floats with numbers after the decimal are effectively truncated.
