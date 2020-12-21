@@ -1,8 +1,7 @@
 # Installing OCamulator
 - To install our software, simply run `make build`.
 - To delete any build files, run `make clean`.
-- To run the test suite, run `make test`. All 263 tests should pass (as of the
-end of the Beta sprint).
+- To run the test suite, run `make test`. All 591 tests should pass.
 - Most importantly, to use the command line application that runs our calculator,
 first install `ledit` using `brew install ledit` or `apt-get install ledit` and
 then run `make start`.
@@ -14,48 +13,72 @@ then run `make start`.
   - If none of these methods work, the system can still be run without `ledit` 
   by using `make start_no_keys`. In this mode, the calculator's mathematical
   functionality is no different, it is just that the user cannot use the arrow
-  keys to fix a mistake earlier in an expression or "arrow up" to a recently
-  used command.
+  keys to fix a mistake earlier in an expression or "arrow up/down" to a
+  recently used command.
 
 # Using the Command Line Application
 Try entering mathematical expressions into our calculator!
-- Type `scope` to see the current variables in scope during the calculator
-  session.
+- Type `#state` to see the current variables in scope during the calculator
+  session. `ans` is a variable that is always in scope and contains the result
+  of the most recent computation. `ans` can be used directly in expressions,
+  just like in Matlab.
 - A variable can be stored with the following abstract syntax:
   `<name> := <expr>`, where `name` is an arbitrary length alphabetical identifier
   with no spaces, no symbols, and no numbers, and `expr` is a mathematical
   expression (e.g. arithmetic expression, vector, matrix, etc).
 - If you want to store the result of the last command executed, input
-`<name> := ans`.
-- You should see both the parsed input and the final result (if
-that functionality is not yet fully functional, you may see an error).
-- When you are done, type `quit` to exit the application.
+  `<name> := ans`.
+- To call a function on a given input, use the following abstract syntax:
+  `$<func> <expr>`, where `func` is a keyword for some supported function (see
+  the list of supported functions below) and `expr` is a mathematical
+  expression. For two argument functions, the syntax is almost the same, except
+  there is a pair of expressions separated by a tilde: `$<func> (<expr> ~ <expr>)`
+- If a value list is returned by a function, the elements of that list can be
+  accessed using the abstract syntax `#<nat> <value_list>`, where `nat` is a
+  natural number (not including zero).
+- When you are done, type `#quit` to exit the application.
 
-This is the list of functionality that is currently integrated into the command
-line application as of the end of the Beta sprint. Note that there is additional
-functionality that is written or almost completed that has not yet been integrated
-with the command line application.
-
--------- Maybe split this into sections
+# Supported Functionality
+## Arithmetic
 - Addition, subtraction, multiplication, division, exponentiation, modulo for
-arbitrarily complex arithmetic expressions, using parentheses to force evaluation
-order
-  - E.g. Try inputing `(3^2 + 4^2)^(1/2) % 2`, which should yield 1
-- Efficient row reduction of an arbitrarily-sized matrix (no smaller than 2x2)
-to reduced row echelon form
-  - E.g. Try inputting `rref: [1,2,3;4,5,6;7,8,9]`
+  arbitrarily complex arithmetic expressions, using parentheses to force evaluation
+  order
+  - E.g. `((1 - 2) / (3 % 4) + 5 * 6)^(1/2)`, which should yield 1
+
+## Linear algebra
+- Row reduction of an arbitrarily-sized matrix (no smaller than 2x2) to reduced
+  row echelon form
+  - E.g. `$rref [1,2,3;4,5,6;7,8,9]`
 - Transposing a matrix, row vector (delimited by commas), column vector (delimited
-by semicolons)
-  - E.g. Try inputing `transpose: [1;2;3;4;5]`
+  by semicolons)
+  - E.g. `$transpose [1;2;3]`
+  - E.g. `$transpose [1,2,3]`
+  - E.g. `$transpose [1,2,3;4,5,6;7,8,9]`
+- PLU decomposition of a square matrix
+  - E.g. `$plu [1,2,3;4,5,6;7,8,9]`
+  - This always returns a value list. One can use the `#` syntax to get an
+    element from this list.
+  - E.g. If `tmp := $plu [1,2,3;4,5,6;7,8,9]` then `p := #1 tmp`, `l := #2 tmp`,
+    `u := #3 tmp`, which could then be used to verify the factorization by 
+    running `[1,2,3;4,5,6;7,8,9] = ($transpose p) * l * u`.
+- Determinant of a square matrix
+  - E.g. `$det [1,2,3;4,5,6;7,8,9]`
+- Inverse of a square matrix
+  - E.g. `$inv [1,2;3,4]`
+  - If the matrix is not singular, then an error is raised.
+- Solve a linear system of equations of the form Ax=b, where A is square
+  - E.g. `[1,2;3,4] \ [5;6]`
+  - If the matrix A is not singular, then an error is raised.
+- Pivot columns of a matrix
+  - E.g. `$pivots [1,2,3;4,5,6;7,8,9]`
 
-# Probability:
-
+## Probability
 The probability module of the calculator supports evaluting for the probability
 mass or density, evalutating the cumulative density, and sampling from various 
 standard probability distributions, as well as some standard probabilistic
 functions.
 
-## Standard Probability Functions
+### Standard Probability Functions
   $[command_name] [args]
 
 [command_name]
@@ -75,7 +98,7 @@ Examples:
   - 10 choose 2
     $choose 10 2
  
-## Probability Distribution Functions:
+### Probability Distribution Functions:
   [distribution_tag] [op_tag] [distribution_params] [value_param]
 
 distribution_tag - tag of one of the below distributions
@@ -156,10 +179,10 @@ Examples sampling:
 - Sample 10 rv from Exp (l = 5)
   exp smpl 5 10
 
-# Statistics:
+## Statistics
 The statistics module includes various statistical functions on vectors.
 
-## Basic Statistics:
+### Basic Statistics
 Basic statistics such as mean and median require no other arguments and have the form:
 
 $[statistic] [data]
@@ -190,7 +213,7 @@ Example:
   $mean [1;2;3]
   $mean x
 
-## More Functions:
+### More Functions
 Some functions require added arguments as well as the data. The arguments must be pass as a tuple.
 
 $[statistic] ([arg] ~ [data])
@@ -226,9 +249,7 @@ Example:
   $linreg ([1;2] ~ [2,4])
 
 
-
-
-# Solving Equations
+## Solving Equations
 Basic linear equations containing one variable can be solved
 `$solve [equation]`
 The user is then prompted to enter the variable to solve for.
@@ -252,7 +273,7 @@ Equations must:
 - Be linear (no powers)
 - Include only the operators `+`, `-`, `*`, and `/`
 
-# Trigonometry Commands
+### Trigonometry Commands
 The user can enter trigonometry commands preceded by the `$` symbol.
 The output is the result of the OCaml built in trigonometry functions.
 
@@ -264,7 +285,7 @@ Supported trigonometry commands are:
 - `$tan`, the tangent function
 - `$cos`, the cosine function
 - `$arcsin`, the inverse sine function
-- `$arccose`, the inverse cosine function
+- `$arccos`, the inverse cosine function
 - `$arctan`, the inverse tangent function
 
 The user must enter a numeric value (`pi` is allowed as well) as the argument.
@@ -274,8 +295,6 @@ The user must enter a numeric value (`pi` is allowed as well) as the argument.
 The user can simply write `$sin 0` or `$cos pi`. 
 If a more complex input is needed, parantheses are necessary.
 Example: `$sin (2 * pi)`
-
-# Other Commands
 
 ### Least Common Multiple
 The `$lcm` command solves for the Least Common Multiple of two numeric inputs. 

@@ -341,6 +341,13 @@ let back_substitution u y =
     !x.(i) <- (1. /. !u.(i).(i)) *. (!y.(i) -. !sum)
   done; !x
 
+(** [is_invalid_result vec] is true iff [vec] contains no NaN or infinity
+    values, which if present, would imply that this matrix is non-singular. *)
+let is_invalid_result vec =
+  Vector.to_list vec
+  |> List.map (fun f -> Float.is_nan f || Float.is_infinite f)
+  |> List.fold_left (fun acc b -> acc || b) false              
+
 let inverse mat =
   assert (Matrix.is_square mat);
   let tolerance = determine_tolerance mat in
@@ -354,21 +361,21 @@ let inverse mat =
     let y = forward_substitution l p_dot_bi in
     !a_inv.(i) <- back_substitution u y
   done;
+  let check_fn = fun vec ->
+    if is_invalid_result vec then
+      failwith "Matrix is not singular -- cannot solve numerically"
+    else vec in
   !a_inv
   |> Matrix.of_array
   |> Matrix.transpose
   |> purify tolerance
+  |> (fun mat -> Matrix.map check_fn mat)
 
 let solve_system a b =
   assert (Matrix.is_square a);
   let (p, l, u, _) = plu_decomposition ~no_round:true a in (* Factor PA = LU *)
   let pb = Matrix.matrix_vector_product p b false in
   let y = forward_substitution l pb in (* Solve L(Ux) = L(c) = Pb for c *)
-  let is_invalid_result vec =
-    Vector.to_list vec
-    |> List.map (fun f -> Float.is_nan f || Float.is_infinite f)
-    |> List.fold_left (fun acc b -> acc || b) false
-  in
   back_substitution u y (* Solve Ux = c for x *)
   |> Vector.of_array
   |> (fun vec ->
