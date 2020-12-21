@@ -73,20 +73,3 @@ let lcm v1 v2 =
     let prod = Int.abs (v1 * v2) in
     let divisor = gcd v1 v2 in
     prod / divisor
-
-(* let root_helper a b c =
-  let inner_root = 
-    Binop(Sub, Binop(Pow, b, Int 2), Binop(Mul, Binop(Mul, Int 4, a), c)) in
-  if inner_root > 0
-  then
-  failwith "unimplemented" *)
-
-(* let root = function
-  | Binop (op, e1, e2) -> begin
-      if e2 <> Int 0 or op <> Eq
-      then failwith "$root input must be in the form ax^2 + bx + c = 0"
-      else match e1 with
-      | Binop(Add, a, b) -> failwith "unimplemented" (* root_helper a b e2 *) 
-      | _ -> failwith "$root input must be in the form ax^2 + bx + c = 0"
-      end
-  | _ -> failwith "$root input must be in the form ax^2 + bx + c = 0" *)

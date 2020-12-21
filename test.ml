@@ -33,6 +33,10 @@ open Ast
 open Vector
 open Stat
 
+(* ===========================================================================
+    UTILITY FUNCTIONS
+   ===========================================================================*)
+
 (** [string_of_list lst] is a printer funtion for float lists *)
 let string_of_list vec = 
   let string_of_list_aux sep vec =
@@ -117,7 +121,7 @@ let test_smpl_min name min dist =
   let value =
     match out with
     | VFloat f -> f 
-    | _ -> failwith "Not even a float"
+    | _ -> failwith "Not even a float" [@coverage off]
   in 
   name >:: (fun _ -> assert_equal true (value >= min)  ~printer:string_of_bool)
 
@@ -130,7 +134,7 @@ let test_smpl_max name max dist =
   let value =
     match out with
     | VFloat f -> f 
-    | _ -> failwith "Not even a float"
+    | _ -> failwith "Not even a float" [@coverage off]
   in 
   name >:: (fun _ -> assert_equal true (value <= max)  ~printer:string_of_bool)
 
@@ -143,7 +147,7 @@ let test_smpl_size name k dist =
   let value =
     match out with
     | VVector vec -> to_list vec
-    | _ -> failwith "Not even a vec"
+    | _ -> failwith "Not even a vec" [@coverage off]
   in 
   name >:: (fun _ -> assert_equal k (List.length value)  ~printer:string_of_int)
 
@@ -175,6 +179,10 @@ let check_lu_decomp l u =
   assert_bool ("L: " ^ string_of_matrix l) (is_lower_triangular l);
   assert_bool ("U: " ^ string_of_matrix u) (is_upper_triangular u)
 
+(* ===========================================================================
+   TESTS
+   ===========================================================================*)
+
 let parse_tests = [
   (* Var tests *)
   parse_test "variable 1 charcter name" (Var "x") "x";
@@ -202,7 +210,6 @@ let parse_tests = [
   parse_test "float 0.01 with leading zero" (Float 0.01) "0.01";
   parse_test "float 0.01 without leading zero" (Float 0.01) ".01";
   parse_test "float 0.01 with trailing zero" (Float 0.01) "0.010";
-
   parse_test "-1 with one decimal place" (Float ~-.1.0) "-1.0";
   parse_test "-1 with two decimal places" (Float ~-.1.0) "-1.00";
   parse_test "-10 with one decimal place" (Float ~-.10.0) "-10.0";
@@ -231,7 +238,6 @@ let parse_tests = [
   parse_test "Add one Int and one Var" (Binop (Add, Int 1, Var "x")) "1 + x";
   parse_test "Add one Float and one Var"
     (Binop (Add, Float 1.0, Var "x")) "1.0 + x";
-
   parse_test "Add an Int and Binop"
     (Binop (Add, Binop (Add, Int 1, Int 2), Int 3)) "1 + 2 + 3";
   parse_test "Add an Int and Binop, forced right assoc"
@@ -246,7 +252,6 @@ let parse_tests = [
   parse_test "Add three Binops"
     (Binop (Add, Binop (Add, Binop (Add, Int 2, Int 3), Int 2), Int 3))
     "2 + 3 + 2 + 3";
-
   parse_test "Add - and + Ints" (Binop (Add, Int ~-1, Int 2)) "-1 + 2";
   parse_test "Add + and - Ints" (Binop (Add, Int 1, Int ~-2)) "1 + -2";
   parse_test "Add + and - Ints with parens"
@@ -254,7 +259,6 @@ let parse_tests = [
   parse_test "Add two - Ints" (Binop (Add, Int ~-1, Int ~-2)) "-1 + -2";
   parse_test "Add + and - Ints with parens"
     (Binop (Add, Int ~-1, Int ~-2)) "(-1) + (-2)";
-
   parse_test "Add - and + Floats"
     (Binop (Add, Float ~-.1., Float 2.)) "-1.0 + 2.0";
   parse_test "Add + and - Floats"
@@ -282,7 +286,6 @@ let parse_tests = [
     (Binop (Sub, Int 1, Var "x")) "1 - x";
   parse_test "Subtract one Float and one Var"
     (Binop (Sub, Float 1.0, Var "x")) "1.0 - x";
-
   parse_test "Subtract - and + Ints" (Binop (Sub, Int ~-1, Int 2)) "-1 - 2";
   parse_test "Subtract + and - Ints" (Binop (Sub, Int 1, Int ~-2)) "1 - -2";
   parse_test "Subtract + and - Ints with parens"
@@ -290,7 +293,6 @@ let parse_tests = [
   parse_test "Subtract two - Ints" (Binop (Sub, Int ~-1, Int ~-2)) "-1 - -2";
   parse_test "Subtract + and - Ints with parens"
     (Binop (Sub, Int ~-1, Int ~-2)) "(-1) - (-2)";
-
   parse_test "Subtract - and + Floats"
     (Binop (Sub, Float ~-.1., Float 2.)) "-1.0 - 2.0";
   parse_test "Subtract + and - Floats"
@@ -405,7 +407,8 @@ let parse_tests = [
     (Binop (LT, Float 1., Float 2.)) "1.0 < 2.0";
   parse_test "< inequality of Vars" (Binop (LT, Var "x", Var "y")) "x < y";
   parse_test "< inequality two Binops"
-    (Binop (LT, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b"))) "x + y < a + b";
+    (Binop (LT, Binop(Add, Var "x", Var "y"), Binop(Add, Var "a", Var "b")))
+    "x + y < a + b";
   parse_test "< inequality of Int and Float"
     (Binop (LT, Float 1., Int 2)) "1.0 < 2";
   parse_test "< inequality of Int and Var" (Binop (LT, Var "x", Int 1)) "x < 1";
@@ -429,23 +432,27 @@ let parse_tests = [
 
   (* Vector tests *)
   parse_test "Int RowVector in R1" (Vector (Vector.make_row_vec [1.])) "[1]";
-  parse_test "Int RowVector in R2" (Vector (Vector.make_row_vec [1.; 2.])) "[1, 2]";
-  parse_test "Int RowVector in R3" (Vector (Vector.make_row_vec [1.; 2.; 3.])) "[1, 2, 3]";
-  parse_test "Float RowVector in R1" (Vector (Vector.make_row_vec [1.])) "[1.0]";
-  parse_test "Float RowVector in R2" (Vector (Vector.make_row_vec [1.; 2.])) "[1.0, 2.0]";
+  parse_test "Int RowVector in R2"
+    (Vector (Vector.make_row_vec [1.; 2.])) "[1, 2]";
+  parse_test "Int RowVector in R3"
+    (Vector (Vector.make_row_vec [1.; 2.; 3.])) "[1, 2, 3]";
+  parse_test "Float RowVector in R1" 
+    (Vector (Vector.make_row_vec [1.])) "[1.0]";
+  parse_test "Float RowVector in R2" 
+    (Vector (Vector.make_row_vec [1.; 2.])) "[1.0, 2.0]";
   parse_test "Float RowVector in R3"
     (Vector (Vector.make_row_vec  [1.; 2.; 3.])) "[1.0, 2.0, 3.0]";
   parse_test "Mixed type RowVector in R2"
     (Vector (Vector.make_row_vec  [0.5; 2.])) "[0.5, 2]";
-
-  parse_test "Int ColumnVector in R2" (Vector (Vector.make_col_vec [1.; 2.])) "[1; 2]";
-  parse_test "Int ColumnVector in R3"
+  parse_test "Int ColVector in R2"
+    (Vector (Vector.make_col_vec [1.; 2.])) "[1; 2]";
+  parse_test "Int ColVector in R3"
     (Vector (Vector.make_col_vec [1.; 2.; 3.])) "[1; 2; 3]";
-  parse_test "Float ColumnVector in R2"
+  parse_test "Float ColVector in R2"
     (Vector (Vector.make_col_vec [1.; 2.])) "[1.0; 2.0]";
-  parse_test "Float ColumnVector in R3"
+  parse_test "Float ColVector in R3"
     (Vector (Vector.make_col_vec [1.; 2.; 3.])) "[1.0; 2.0; 3.0]";
-  parse_test "Mixed type ColumnVector in R2"
+  parse_test "Mixed type ColVector in R2"
     (Vector (Vector.make_col_vec [0.5; 2.])) "[0.5; 2]";
 
   (* Matrix tests *)
@@ -461,9 +468,11 @@ let parse_tests = [
   parse_test "Float Matrix in R(2x2)" 
     (Matrix (Matrix.of_list [[1.;2.]; [3.;4.]])) "[1.0, 2.0; 3.0, 4.0]";
   parse_test "Float Matrix in R(2x3)" 
-    (Matrix (Matrix.of_list [[1.;2.;3.]; [4.;5.;6.]])) "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
+    (Matrix (Matrix.of_list [[1.;2.;3.]; [4.;5.;6.]]))
+    "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0]";
   parse_test "Float Matrix in R(3x2)" 
-    (Matrix (Matrix.of_list [[1.;2.]; [3.;4.]; [5.;6.]])) "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
+    (Matrix (Matrix.of_list [[1.;2.]; [3.;4.]; [5.;6.]]))
+    "[1.0, 2.0; 3.0, 4.0; 5.0, 6.0]";
   parse_test "Float Matrix in R(2x3)" 
     (Matrix (Matrix.of_list [[1.;2.;3.]; [4.;5.;6.]; [7.;8.;9.]]))
     "[1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0]";
@@ -471,15 +480,22 @@ let parse_tests = [
     (Matrix (Matrix.of_list [[0.5;2.]; [1.;1.0]])) "[0.5, 2; 1, 1.0]";
 ]
 
-
-let matrix_tests = [
+let linalg_matrix_vector_tests = [
+  (* Row reduction and pivot column tests *)
   test_command "row reduce 3x3 matrix with two pivot columns" 
     (VMatrix (Matrix.of_list [[1.;0.;~-.1.];[0.;1.;2.];[0.;0.;0.]]))
     "rref" (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
   test_command "row reduce 3x4 matrix with three pivot columns"
-    (VMatrix (Matrix.of_list  [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]]))
+    (VMatrix (Matrix.of_list [[1.;0.;~-.1.;~-.0.];[0.;1.;2.;0.];[0.;0.;0.;1.]]))
     "rref" (Matrix (Matrix.of_list
                       [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]));
+  test_command "3x3 matrix with two pivot columns" 
+    (VList [VFloat 0.; VFloat 1.])
+    "pivots" (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
+  test_command "3x4 matrix with three pivot columns"
+    (VList [VFloat 0.; VFloat 1.; VFloat 3.])
+    "pivots" (Matrix (Matrix.of_list
+                        [[1.;2.;3.;4.];[5.;6.;7.;8.];[9.;10.;11.;~-.12.]]));
   test_command "row reduce 3x4 matrix with two pivot columns" 
     (VMatrix (Matrix.of_list [[1.;0.;~-.1.;~-.2.];[0.;1.;2.;3.];[0.;0.;0.;0.]]))
     "rref" (Matrix (Matrix.of_list
@@ -507,6 +523,8 @@ let matrix_tests = [
     (VMatrix (read_matrix_from_text_file "./tests/rref/25x50_int_out.txt"))
     "rref" (Matrix 
               (read_matrix_from_text_file "./tests/rref/25x50_int_in.txt"));
+
+  (* Vector and matrix multiplication *)
   test_binop "3x1 row vector times 3x3 matrix"
     (VVector (Vector.make_row_vec [30.;36.;42.]))
     Mul (Vector (Vector.make_row_vec [1.;2.;3.]))
@@ -515,6 +533,18 @@ let matrix_tests = [
     (VVector (Vector.make_col_vec [14.;32.;50.]))
     Mul (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))
     (Vector (Vector.make_col_vec [1.;2.;3.]));
+  failure_test "Multiply column vector times matrix"
+    "Shape error: first argument should be a row vector"
+    (fun () -> Matrix.matrix_vector_product 
+        (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
+        (Vector.make_col_vec [1.;2.;3.]) true);
+  failure_test "Multiply matrix times row vector"
+    "Shape error: second argument should be a column vector"
+    (fun () -> Matrix.matrix_vector_product 
+        (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
+        (Vector.make_row_vec [1.;2.;3.]) false);
+
+  (* Vector and matrix arithmetic tests *)
   test_binop "add two row vectors"
     (VVector (Vector.make_row_vec [2.;4.;6.]))
     Add (Vector (Vector.make_row_vec [1.;2.;3.]))
@@ -564,12 +594,26 @@ let matrix_tests = [
   test_binop "two vectors not equal" (VFloat 0.)
     Eq (Vector (Vector.make_col_vec [3.;2.;1.]))
     (Vector (Vector.make_row_vec [1.;2.;3.]));
-  test "Transpose a row vector" (ColVector [1.;2.;3.])
-    (Vector.(transpose (RowVector [1.;2.;3.]))) string_of_vector;
   failure_test "Cannot apply binop to two vectors of different lengths"
     "Vectors must be the same length"
     (fun () -> Vector.dot_product (Vector.make_col_vec [1.;2.;3.]) 
         (Vector.make_col_vec [1.;2.]));
+  test_binop "Add two matrices"
+    (VMatrix (Matrix.of_list [[2.;4.;6.];[2.;4.;6.];[2.;4.;6.]]))
+    Add (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Subtract two matrices"
+    (VMatrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]))
+    Sub (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Two matrices are equal"
+    (VFloat 1.0) Eq (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+  test_binop "Two matrices are not equal"
+    (VFloat 0.0) Eq (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
+    (Matrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]));
+
+  (* Vector and Matrix module tests *)
   test "Apply map to column vector" (ColVector [0.;0.;0.])
     (Vector.(map (fun x -> x -. x) (ColVector [1.;2.;3.]))) string_of_vector;
   test "3x4 zeros matrix"
@@ -589,6 +633,12 @@ let matrix_tests = [
     (Matrix.of_vectors
        [Vector.make_row_vec [1.;2.;3.]; Vector.make_row_vec [4.;5.;6.]]) 
     Matrix.string_of_matrix;
+  test "Create matrix out of column vectors"
+    (Matrix.of_list [[1.;2.;3.];[4.;5.;6.]])
+    (Matrix.of_vectors
+       [Vector.make_col_vec [1.;4.]; Vector.make_col_vec [2.;5.]; 
+        Vector.make_row_vec [3.;6.]]) 
+    Matrix.string_of_matrix;
   test "Map on a matrix" (Matrix.of_list [[1.;4.;9.];[1.;4.;9.]])
     (Matrix.map (fun vec -> Vector.map (fun x -> x ** 2.) vec)
        (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]]))
@@ -598,75 +648,18 @@ let matrix_tests = [
        (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]])
        (Matrix.of_list [[1.;2.;3.];[1.;2.;3.]]))
     Matrix.string_of_matrix;
-  failure_test "Multiply column vector times matrix"
-    "Shape error: first argument should be a row vector"
-    (fun () -> Matrix.matrix_vector_product 
-        (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
-        (Vector.make_col_vec [1.;2.;3.]) true);
-  failure_test "Multiply matrix times row vector"
-    "Shape error: second argument should be a column vector"
-    (fun () -> Matrix.matrix_vector_product 
-        (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
-        (Vector.make_row_vec [1.;2.;3.]) false);
   test "Not upper triangular" false
     (Matrix.(is_upper_triangular (of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])))
     string_of_bool;
   test "Not lower triangular" false
     (Matrix.(is_lower_triangular (of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])))
     string_of_bool;
-  eval_error_test "Solve system on floats"
-    "Left arg to \\ must be a matrix, right arg must be a vector"
-    (fun () -> Eval.eval_expr (Binop (SolveSys, Float 0., Float 1.)) []);
-  eval_error_test "Assign float to a float"
-    "Invalid operation between two floats: Assign"
-    (fun () -> Eval.eval_expr (Binop (Assign, Float 0., Float 1.)) []);
-  eval_error_test "Dot two floats"
-    "Invalid operation between two floats: Dot"
-    (fun () -> Eval.eval_expr (Binop (Dot, Float 0., Float 1.)) []);
-  eval_error_test "Solve system on vectors"
-    "Left arg to \\ must be a matrix"
-    (fun () -> Eval.eval_expr
-        (Binop (SolveSys,
-                Vector (Vector.make_col_vec [1.;2.;3.]),
-                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
-  eval_error_test "Assign vectors to a vectors"
-    "Invalid operation between two vectors: Assign"
-    (fun () -> Eval.eval_expr
-        (Binop (Assign,
-                Vector (Vector.make_col_vec [1.;2.;3.]),
-                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
-  eval_error_test "Mod two vectors"
-    "Invalid operation between two vectors: Mod"
-    (fun () -> Eval.eval_expr
-        (Binop (Mod,
-                Vector (Vector.make_col_vec [1.;2.;3.]),
-                Vector (Vector.make_col_vec [1.;2.;3.]))) []);
-  test_binop "Add two matrices"
-    (VMatrix (Matrix.of_list [[2.;4.;6.];[2.;4.;6.];[2.;4.;6.]]))
-    Add (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
-    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
-  eval_error_test "Solve system with two matrices"
-    "Right arg to \\ must be a vector"
-    (fun () -> Eval.eval_expr 
-        (Binop (SolveSys,
-                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
-                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])))) []);
-  test_binop "Subtract two matrices"
-    (VMatrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]))
-    Sub (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
-    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
-  test_binop "Two matrices are equal"
-    (VFloat 1.0) Eq (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
-    (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
-  test_binop "Two matrices are not equal"
-    (VFloat 0.0) Eq (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))
-    (Matrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]));
-  eval_error_test "Divide two matrices"
-    "Invalid operation between two matrices: Div"
-    (fun () -> Eval.eval_expr 
-        (Binop (Div,
-                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
-                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])))) []);
+  test_command "Transpose a column vector"
+    (VVector (Vector.RowVector [1.;2.;3.])) "transpose"
+    (Vector (Vector.ColVector [1.;2.;3.]));
+  test_command "Transpose a matrix"
+    (VMatrix (Matrix.of_list [[1.;4.;7.];[2.;5.;8.];[3.;6.;9.]])) "transpose"
+    (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
   test_binop "Multiply vector by 2" (VVector (Vector.make_col_vec [2.;4.;6.]))
     Mul (Float 2.0) (Vector (Vector.make_col_vec [1.;2.;3.]));
   test_binop "Square a vector" (VVector (Vector.make_col_vec [1.;4.;9.]))
@@ -677,6 +670,21 @@ let matrix_tests = [
   test_binop "Square a matrix" 
     (VMatrix (Matrix.of_list [[1.;4.;9.];[1.;4.;9.];[1.;4.;9.]]))
     Pow (Float 2.0) (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]));
+
+  eval_error_test "Solve system with two matrices"
+    "Right arg to \\ must be a vector"
+    (fun () -> Eval.eval_expr 
+        (Binop (SolveSys,
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))))
+        []);
+  eval_error_test "Divide two matrices"
+    "Invalid operation between two matrices: Div"
+    (fun () -> Eval.eval_expr 
+        (Binop (Div,
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
+                (Matrix (Matrix.of_list [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))))
+        []);
   eval_error_test "Add a float to a matrix" 
     "Invalid operation between scalar and matrix: Add"
     (fun () -> Eval.eval_expr 
@@ -700,59 +708,93 @@ let matrix_tests = [
         (Binop (SolveSys, (Matrix (Matrix.of_list 
                                      [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]])),
                 (Vector (Vector.make_row_vec [1.;2.;3.])))) []);
-]
+  eval_error_test "Row reduce a float" 
+    "Cannot row reduce a non-matrix"
+    (fun () -> Eval.eval_expr (Command ("rref", (Float 2.0))) []);
+  eval_error_test "Transpose a float" 
+    "Cannot transpose a non-matrix / non-vector"
+    (fun () -> Eval.eval_expr (Command ("transpose", (Float 2.0))) []);
+  eval_error_test "Determinant of a float" 
+    "Cannot calculate determinant of a non-matrix"
+    (fun () -> Eval.eval_expr (Command ("det", (Float 2.0))) []);
+  eval_error_test "Pivot columns of a float" 
+    "Cannot calculate pivots of a non-matrix"
+    (fun () -> Eval.eval_expr (Command ("pivots", (Float 2.0))) []);
+  eval_error_test "Inverse of a float" 
+    "Cannot calculate inverse of a non-matrix"
+    (fun () -> Eval.eval_expr (Command ("inv", (Float 2.0))) []);
+  eval_error_test "QR factorization of a matrix (which isn't supported)" 
+    "No such command: qr"
+    (fun () -> Eval.eval_expr
+        (Command ("qr", Matrix (Matrix.of_list 
+                                  [[1.;2.;3.];[1.;2.;3.];[1.;2.;3.]]))) []);
 
-let lin_alg_tests =
-  let open Linalg in [
-    test "Symmetric matrix" true
-      Matrix.(is_symmetric (of_list [[1.;7.;3.];[7.;4.;~-.5.];[3.;~-.5.;6.]]))
-      string_of_bool;
-    test_binop "Multiply two square matrices" 
-      (VMatrix (Matrix.of_list [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]]))
-      Mul (Matrix (Matrix.of_list [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]]))
-      (Matrix (Matrix.of_list [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]]));
-    test "PLU decomposition of 3x3 matrix with a zero in a non-pivot position"
-      (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]])
-      (let (p, l, u, _) = 
-         plu_decomposition (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]]) in
-       check_lu_decomp l u;
-       Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
-      (Matrix.string_of_matrix);
-    test "PLU decomposition of 3x3 matrix with no zeros"
-      (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
-      (let (p, l, u, _) = 
-         plu_decomposition (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]) in
-       check_lu_decomp l u;
-       Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
-      (Matrix.string_of_matrix);
-    test "PLU decomposition of 3x3 matrix with all zeros"
-      (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]])
-      (let (p, l, u, _) = 
-         plu_decomposition (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]) in
-       check_lu_decomp l u;
-       Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
-      (Matrix.string_of_matrix);
-    test_command "Determinant of 4x4 matrix" (VFloat ~-.6.) "det"
-      (Matrix (Matrix.of_list
-                 [[2.;4.;1.;1.];[2.;1.;3.;4.];[2.;1.;2.;3.];[4.;2.;1.;2.]]));
-    test_command "Determinant of 3x3 zeros matrix" (VFloat ~-.0.) "det"
-      (Matrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]));
-    test_command "Determinant of 3x3 non-zero matrix" (VFloat ~-.0.) "det"
-      (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
-    test_command "Determinant of 5x5 random float matrix" (VFloat ~-.0.0293)
-      "det" (Matrix (read_matrix_from_text_file "./tests/det/5x5_float_in.txt"));
-    test_command "Inverse of 4x4 int matrix" 
-      (VMatrix (Matrix.of_list [[~-.0.7857;0.3929;0.1071;0.4643];
-                                [1.1429;~-.1.0714;0.0714;~-.0.3571];
-                                [~-.0.5000;0.7500;~-.0.2500;0.2500];
-                                [0.5714;~-.0.2857; 0.2857;~-.0.4286]])) "inv"
-      (Matrix (Matrix.of_list [[2.;3.;4.;2.];[1.;1.;3.;2.];
-                               [3.;1.;1.;3.];[4.;4.;4.;1.]]));
-    test_command "Inverse of 3x3 float matrix"
-      (VMatrix (Matrix.of_list
-                  ([[0.75;0.5;0.25];[0.5;1.;0.5 ];[0.25;0.5;0.75]]))) "inv"
-      (Matrix (Matrix.of_list [[2.;~-.1.;0.];[~-.1.;2.;~-.1.];[0.;~-.1.;2.]]));
-  ]
+  test "Symmetric matrix" true
+    Matrix.(is_symmetric (of_list [[1.;7.;3.];[7.;4.;~-.5.];[3.;~-.5.;6.]]))
+    string_of_bool;
+  test_binop "Multiply two square matrices" 
+    (VMatrix (Matrix.of_list [[7.;7.;4.];[7.;7.;4.];[12.;9.;5.]]))
+    Mul (Matrix (Matrix.of_list [[1.;2.;1.];[1.;2.;1.];[1.;1.;3.]]))
+    (Matrix (Matrix.of_list [[2.;1.;1.];[1.;2.;1.];[3.;2.;1.]]));
+  test "PLU decomposition of 3x3 matrix with a zero in a non-pivot position"
+    (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]])
+    (let (p, l, u, _) = Linalg.plu_decomposition
+         (Matrix.of_list [[1.;0.;2.];[3.;4.;5.];[6.;7.;8.]])
+     in
+     check_lu_decomp l u;
+     Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
+    (Matrix.string_of_matrix);
+  test "PLU decomposition of 3x3 matrix with no zeros"
+    (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
+    (let (p, l, u, _) = Linalg.plu_decomposition
+         (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]])
+     in
+     check_lu_decomp l u;
+     Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
+    (Matrix.string_of_matrix);
+  test "PLU decomposition of 3x3 matrix with all zeros"
+    (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]])
+    (let (p, l, u, _) = Linalg.plu_decomposition
+         (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]])
+     in
+     check_lu_decomp l u;
+     Matrix.(matrix_multiply (transpose p) (matrix_multiply l u)))
+    (Matrix.string_of_matrix);
+  test_command "Determinant of 4x4 matrix" (VFloat ~-.6.) "det"
+    (Matrix (Matrix.of_list
+               [[2.;4.;1.;1.];[2.;1.;3.;4.];[2.;1.;2.;3.];[4.;2.;1.;2.]]));
+  test_command "Determinant of 3x3 zeros matrix" (VFloat ~-.0.) "det"
+    (Matrix (Matrix.of_list [[0.;0.;0.];[0.;0.;0.];[0.;0.;0.]]));
+  test_command "Determinant of 3x3 non-zero matrix" (VFloat ~-.0.) "det"
+    (Matrix (Matrix.of_list [[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]));
+  test_command "Determinant of 5x5 random float matrix" (VFloat ~-.0.0293)
+    "det" (Matrix (read_matrix_from_text_file "./tests/det/5x5_float_in.txt"));
+  test_command "Inverse of 4x4 int matrix" 
+    (VMatrix (Matrix.of_list [[~-.0.7857;0.3929;0.1071;0.4643];
+                              [1.1429;~-.1.0714;0.0714;~-.0.3571];
+                              [~-.0.5000;0.7500;~-.0.2500;0.2500];
+                              [0.5714;~-.0.2857; 0.2857;~-.0.4286]])) "inv"
+    (Matrix (Matrix.of_list [[2.;3.;4.;2.];[1.;1.;3.;2.];
+                             [3.;1.;1.;3.];[4.;4.;4.;1.]]));
+  test_command "Inverse of 3x3 float matrix"
+    (VMatrix (Matrix.of_list
+                ([[0.75;0.5;0.25];[0.5;1.;0.5 ];[0.25;0.5;0.75]]))) "inv"
+    (Matrix (Matrix.of_list [[2.;~-.1.;0.];[~-.1.;2.;~-.1.];[0.;~-.1.;2.]]));
+  test_binop "Solve Ax=b for 3x3 int matrix A"
+    (VVector (Vector.make_col_vec [0.;0.;1.])) SolveSys
+    (Matrix (Matrix.of_list ([[3.;3.;1.];[1.;2.;2.];[3.;3.;3.]]))) 
+    (Vector (Vector.make_col_vec [1.;2.;3.]));
+  test_binop "Solve Ax=b for 3x3 int matrix A with b vector of zeros"
+    (VVector (Vector.make_col_vec [0.;0.;0.])) SolveSys
+    (Matrix (Matrix.of_list ([[3.;2.;1.];[1.;3.;2.];[2.;3.;2.]]))) 
+    (Vector (Vector.make_col_vec [0.;0.;0.]));
+  failure_test "Solve non-singular system" 
+    "Matrix is not singular -- cannot solve numerically"
+    (fun () -> Eval.eval_expr 
+        (Binop (SolveSys,
+                (Matrix (Matrix.of_list ([[1.;2.;3.];[4.;5.;6.];[7.;8.;9.]]))),
+                (Vector (Vector.make_col_vec [1.;2.;3.])))) []);
+]
 
 let solve_tests = let open Solve in [
     (* has_var tests *)
@@ -1157,6 +1199,34 @@ let prob_tests = let open Prob in [
       "k must be <= n"
       (fun () -> Eval.eval_expr (Prob (Binomial (PDF,3.,0.5,5.))) []);
 
+    eval_error_test "Solve system on floats"
+      "Left arg to \\ must be a matrix, right arg must be a vector"
+      (fun () -> Eval.eval_expr (Binop (SolveSys, Float 0., Float 1.)) []);
+    eval_error_test "Assign float to a float"
+      "Invalid operation between two floats: Assign"
+      (fun () -> Eval.eval_expr (Binop (Assign, Float 0., Float 1.)) []);
+    eval_error_test "Dot two floats"
+      "Invalid operation between two floats: Dot"
+      (fun () -> Eval.eval_expr (Binop (Dot, Float 0., Float 1.)) []);
+    eval_error_test "Solve system on vectors"
+      "Left arg to \\ must be a matrix"
+      (fun () -> Eval.eval_expr
+          (Binop (SolveSys,
+                  Vector (Vector.make_col_vec [1.;2.;3.]),
+                  Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+    eval_error_test "Assign vectors to a vectors"
+      "Invalid operation between two vectors: Assign"
+      (fun () -> Eval.eval_expr
+          (Binop (Assign,
+                  Vector (Vector.make_col_vec [1.;2.;3.]),
+                  Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+    eval_error_test "Mod two vectors"
+      "Invalid operation between two vectors: Mod"
+      (fun () -> Eval.eval_expr
+          (Binop (Mod,
+                  Vector (Vector.make_col_vec [1.;2.;3.]),
+                  Vector (Vector.make_col_vec [1.;2.;3.]))) []);
+
     test "norm p" (exp ( 0.) /. ((acos (-1.) *. 2.) ** (0.5))) 
       (normal_pmf 0. 1. 0.) string_of_float;
     test "norm c" (0.5) (normal_cdf 0. 1. 0.) string_of_float;
@@ -1436,10 +1506,13 @@ let eval_tests =
   [
     test "Var x is float" (VFloat 0.) (eval_expr (Var "x") [("x", VFloat 0.)])
       string_of_value;
-    test "Negate var y" (VFloat (-5.)) (eval_expr (Negate "y") [("y", VFloat 5.)])
+    test "Assign to var x" (VFloat 0.)
+      (eval_expr (Binop (Assign, Var "x", Int 0)) [("x", VFloat 0.)])
       string_of_value;
-    test "Negate var y" (VFloat (5.)) (eval_expr (Negate "y") [("y", VFloat (-5.))])
-      string_of_value;
+    test "Negate var y" (VFloat (-5.)) (eval_expr (Negate "y")
+                                          [("y", VFloat 5.)]) string_of_value;
+    test "Negate var y" (VFloat (5.)) (eval_expr (Negate "y")
+                                         [("y", VFloat (-5.))]) string_of_value;
     "Unassigned var given Failure" >:: 
     (fun _ -> assert_raises 
         (Eval.ComputationError.EvalError
@@ -1448,6 +1521,7 @@ let eval_tests =
     eval_error_test "Variable x not defined"
       "Variable x is undefined in current context"
       (fun () -> Eval.eval_expr (Var "x") []);
+
     test "Zero int evaluates to itself as a float" (VFloat 0.)
       (eval_expr (Int 0) []) string_of_value;
     test "Postive int evaluates to itself as a float" (VFloat 1.)
@@ -1532,6 +1606,31 @@ let eval_tests =
     test "Equal one int and one float" (VFloat (Bool.to_float true))
       (eval_expr (Binop (Eq, Float 2., Int 2)) []) string_of_value;
 
+    test_command "Eval sin is equivelant to OCaml sin" (VFloat (sin 0.))
+      "sin" (Float(0.));
+    test_command "Eval cos is equivelant to OCaml cos" (VFloat (cos 0.))
+      "cos" (Float(0.));
+    test_command "Eval tan is equivelant to OCaml tan" (VFloat (tan 0.))
+      "tan" (Float(0.));
+    test_command "Eval sin is equivelant to OCaml sin" (VFloat (sin Float.pi))
+      "sin" (Float(Float.pi));
+    test_command "Eval cos is equivelant to OCaml cos" (VFloat (cos Float.pi))
+      "cos" (Float(Float.pi));
+    test_command "Eval tan is equivelant to OCaml tan" (VFloat (tan Float.pi))
+      "tan" (Float(Float.pi));
+    test_command "Eval arcsin is equivelant to OCaml arcsin" (VFloat (asin 0.))
+      "arcsin" (Float(0.));
+    test_command "Eval arccos is equivelant to OCaml arccos" (VFloat (acos 0.))
+      "arccos" (Float(0.));
+    test_command "Eval arctan is equivelant to OCaml arctan" (VFloat (atan 0.))
+      "arctan" (Float(0.));
+    test_command "Eval arcsin is equivelant to OCaml arcsin" 
+      (VFloat (asin (-1.))) "arcsin" (Float(-1.));
+    test_command "Eval arccos is equivelant to OCaml arccos"
+      (VFloat (acos (-1.))) "arccos" (Float(-1.));
+    test_command "Eval arctan is equivelant to OCaml arctan"
+      (VFloat (atan (-1.))) "arctan" (Float(-1.));
+
     test "Greater than two ints" (VFloat (Bool.to_float true))
       (eval_expr (Binop (GT, Int 3, Int 2)) []) string_of_value;
     test "Greater than two floats" (VFloat (Bool.to_float true))
@@ -1551,8 +1650,8 @@ let eval_tests =
     test "Greater than or equal to two floats" (VFloat (Bool.to_float true))
       (eval_expr (Binop (GTE, Float 3., Float 2.)) []) string_of_value;
     test "Greater than or equal to one int and one float"
-      (VFloat (Bool.to_float true)) (eval_expr (Binop (GTE, Float 3., Int 2)) [])
-      string_of_value;
+      (VFloat (Bool.to_float true)) (eval_expr (Binop (GTE, Float 3., Int 2))
+                                       []) string_of_value;
 
     test "Less than or equal to two ints" (VFloat (Bool.to_float false))
       (eval_expr (Binop (LTE, Int 3, Int 2)) []) string_of_value;
@@ -1566,12 +1665,11 @@ let eval_tests =
 let suite =
   "test suite for OCamulator"  >::: List.flatten [
     parse_tests;
-    lin_alg_tests;
+    linalg_matrix_vector_tests;
     solve_tests;
     prob_tests;
     stat_tests;
     eval_tests;
-    matrix_tests;
   ]
 
 let _ = run_test_tt_main suite
