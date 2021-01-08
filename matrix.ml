@@ -2,18 +2,18 @@ open Vector
 
 type t = Vector.t list
 
-let n_rows mat = 
+let n_rows mat =
   List.length mat
 
-let n_cols mat = 
+let n_cols mat =
   if List.length mat = 0 then 0
-  else 
+  else
     List.hd mat
     |> Vector.size 
 
 (** [rep_ok mat] is [mat] if [mat] satisfies its representation invariants and
     raises [Failure] otherwise. *)
-let rep_ok mat = 
+let rep_ok mat =
   let open Vector in
   let rec check_for_col_vecs = function
     | [] -> ()
@@ -39,11 +39,11 @@ let to_array mat =
   List.map Vector.to_array mat
   |> Array.of_list
 
-let of_list lst = 
+let of_list lst =
   List.map Vector.make_row_vec lst
   |> rep_ok
 
-let of_array arr = 
+let of_array arr =
   Array.(map to_list arr)
   |> Array.to_list
   |> of_list
@@ -55,7 +55,7 @@ let make n m init =
   |> rep_ok
 
 let zeros ?(n=(~-1)) m =
-  let matrix = 
+  let matrix =
     if n = ~-1 then make m m 0.
     else make n m 0. in
   rep_ok matrix
@@ -73,11 +73,11 @@ let is_square mat =
   n_cols mat = n_rows mat
 
 (** [string_of_matrix_row max_digits row] is the string representation of
-    [row] such that each entry in [row] is given [max_digits] number of 
+    [row] such that each entry in [row] is given [max_digits] number of
     digits. If a vector entry takes up [d] digits in a string, then there are
     [max_digits] - [d] whitespaces to ensure all columns are of equal width. *)
 let string_of_matrix_row max_digits row =
-  let string_of_entry e = 
+  let string_of_entry e =
     let float_str = string_of_float e in
     let n_spaces = max_digits - (String.length float_str) in
     float_str ^ (String.make n_spaces ' ')
@@ -88,7 +88,7 @@ let string_of_matrix_row max_digits row =
 let string_of_matrix mat =
   ignore(rep_ok mat);
   let max_digits =
-    let string_list = 
+    let string_list =
       let vec_to_float_strings vec =
         List.map string_of_float (Vector.to_list vec) in
       List.map vec_to_float_strings mat in
@@ -103,7 +103,7 @@ let string_of_matrix mat =
   to_list mat
   |> List.map (fun vec -> "| " ^ string_of_matrix_row max_digits vec)
   |> String.concat " |\n"
-  |> fun str -> str ^ " |" 
+  |> fun str -> str ^ " |"
 
 let transpose mat =
   let rec transpose_aux lst acc =
@@ -113,7 +113,7 @@ let transpose mat =
       if Vector.size h = 0 then
         List.rev acc
         |> of_list
-      else 
+      else
         let next_row = List.map Vector.head lst in
         let submatrix = List.map Vector.tail lst in
         transpose_aux submatrix (next_row :: acc)
@@ -126,7 +126,7 @@ let is_symmetric mat =
   ignore(rep_ok mat);
   mat = (transpose mat)
 
-let matrix_multiply m1 m2 = 
+let matrix_multiply m1 m2 =
   assert (n_cols m1 = n_rows m2);
   ignore(rep_ok m1);
   ignore(rep_ok m2);
@@ -141,12 +141,12 @@ let get_row mat i =
   List.nth mat i
   |> Vector.to_list
 
-let get_col mat j = 
+let get_col mat j =
   ignore(rep_ok mat);
   transpose mat
   |> (fun mat_t -> get_row mat_t j)
 
-let drop_row mat i = 
+let drop_row mat i =
   let rec drop_row_aux acc idx = function
     | [] -> List.rev acc
     | h :: t ->
@@ -164,7 +164,7 @@ let drop_col mat j =
   |> transpose
   |> rep_ok
 
-let apply_to_all f mat = 
+let apply_to_all f mat =
   ignore(rep_ok mat);
   List.map (fun row -> Vector.map f row) mat
   |> rep_ok
@@ -207,14 +207,14 @@ let map2 fn m1 m2 =
   List.map2 fn m1 m2
   |> rep_ok
 
-let row_sums mat = 
+let row_sums mat =
   List.map Vector.sum mat
 
 let matrix_vector_product mat vec swap_order =
   ignore(rep_ok mat);
   let open Vector in
   match vec, swap_order with
-  | Vector.RowVector _, true -> 
+  | Vector.RowVector _, true ->
     List.hd (matrix_multiply [vec] mat) (* Outputs a row vector *)
   | ColVector _, false ->
     let cvec = List.map (fun elem -> make_row_vec [elem]) (to_list vec) in
